@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { validatePassword } from '@/lib/security/password';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -29,6 +29,26 @@ export interface AuthUser {
   sessionStartedAt?: string;
 }
 
+// ─── Bootstrap data (from /api/me) ──────────────────────────
+
+export interface BootstrapData {
+  onboarding: {
+    isDone: boolean;
+    stepCompleted: string;
+    completedAt: string | null;
+  };
+  profileCompletion: {
+    isComplete: boolean;
+    percent: number;
+    missingFields: string[];
+  };
+  stats: {
+    followersCount: number;
+    followingCount: number;
+    postsCount: number;
+  };
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -36,13 +56,22 @@ interface AuthContextValue {
   isCreator: boolean;
   isModerator: boolean;
   isLoading: boolean;
+  /** True if account is < 7 days old (for cold-start feed algorithm) */
   isNewUser: boolean;
+  /** True once server confirms onboarding is done (carousel dismissed / register completed) */
+  onboardingDone: boolean;
+  /** Server-authoritative profile completion state */
+  profileCompletion: BootstrapData['profileCompletion'] | null;
+  /** Server-authoritative stats (followers, following, posts) */
+  stats: BootstrapData['stats'] | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, displayName: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   updateOnboarding: (profile: Partial<OnboardingProfile>) => void;
-  completeOnboarding: () => void;
+  completeOnboarding: () => Promise<void>;
+  /** Re-fetch /api/me to get fresh stats/profile/onboarding state */
+  refreshMe: () => Promise<void>;
 }
 
 // ─── Context ─────────────────────────────────────────────────
@@ -55,33 +84,31 @@ const AuthContext = createContext<AuthContextValue>({
   isModerator: false,
   isLoading: true,
   isNewUser: false,
+  onboardingDone: false,
+  profileCompletion: null,
+  stats: null,
   login: async () => ({ success: false }),
   signup: async () => ({ success: false }),
   logout: () => {},
   forgotPassword: async () => ({ success: false }),
   updateOnboarding: () => {},
-  completeOnboarding: () => {},
+  completeOnboarding: async () => {},
+  refreshMe: async () => {},
 });
 
 // ─── Secure storage helpers ──────────────────────────────────
-// NOTE: In production, replace localStorage with HttpOnly session
-// cookies set by the server. localStorage is used here for the
-// demo; the session cookie (civic-session) is set alongside
-// for API route auth validation.
 
 const STORAGE_KEY = 'civic-auth-user';
 const SESSION_COOKIE = 'civic-session';
 
 function setSessionCookie(user: AuthUser) {
-  // Set a cookie that API routes can read for auth.
-  // In production this MUST be HttpOnly and set by the server.
   const sessionData = JSON.stringify({
     id: user.id,
     email: user.email,
     role: user.role,
     displayName: user.displayName,
   });
-  const maxAge = 60 * 60 * 24; // 24 hours
+  const maxAge = 60 * 60 * 24;
   const secure = window.location.protocol === 'https:' ? '; Secure' : '';
   document.cookie = `${SESSION_COOKIE}=${encodeURIComponent(sessionData)}; path=/; max-age=${maxAge}; SameSite=Strict${secure}`;
 }
@@ -123,7 +150,7 @@ function clearPersistedUser() {
 
 const LOGIN_ATTEMPTS_KEY = 'civic-login-attempts';
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
 interface LoginAttemptRecord {
   count: number;
@@ -145,7 +172,6 @@ function recordFailedAttempt(): LoginAttemptRecord {
   const record = getLoginAttempts();
   const now = Date.now();
 
-  // Reset if window expired
   if (record.lockedUntil && now > record.lockedUntil) {
     const fresh = { count: 1, firstAttemptAt: now };
     sessionStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(fresh));
@@ -176,9 +202,9 @@ function isLockedOut(): { locked: boolean; remainingMs: number } {
   return { locked: false, remainingMs: 0 };
 }
 
-// ─── New user detection ──────────────────────────────────────
+// ─── Age-based new user check (for cold-start feed) ─────────
 
-function checkIsNewUser(user: AuthUser): boolean {
+function checkIsNewUserByAge(user: AuthUser): boolean {
   const createdAt = new Date(user.createdAt);
   const daysSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
   return daysSinceCreation <= 7;
@@ -200,60 +226,167 @@ function sanitizeDisplayName(input: string): string {
     .slice(0, 50);
 }
 
+// ─── Server bootstrap fetch ─────────────────────────────────
+
+async function fetchBootstrap(user: AuthUser): Promise<BootstrapData | null> {
+  try {
+    const res = await fetch('/api/me', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        onboarding: user.onboarding
+          ? {
+              completedAt: user.onboarding.completedAt || null,
+              country: user.onboarding.country,
+              affiliation: user.onboarding.affiliation,
+              topics: user.onboarding.topics,
+              bio: user.onboarding.bio,
+            }
+          : undefined,
+        profile: {
+          displayName: user.displayName,
+          username: user.username,
+          country: user.onboarding?.country,
+          affiliation: user.onboarding?.affiliation,
+          topics: user.onboarding?.topics,
+          bio: user.onboarding?.bio,
+        },
+      }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      onboarding: data.onboarding,
+      profileCompletion: data.profileCompletion,
+      stats: data.stats,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Fallback bootstrap from client-only data (no server available)
+function clientFallbackBootstrap(user: AuthUser): BootstrapData {
+  const hasDoneOnboarding = !!user.onboarding?.completedAt;
+  return {
+    onboarding: {
+      isDone: hasDoneOnboarding,
+      stepCompleted: hasDoneOnboarding ? 'done' : '',
+      completedAt: user.onboarding?.completedAt || null,
+    },
+    profileCompletion: {
+      isComplete: false,
+      percent: 0,
+      missingFields: [],
+    },
+    stats: { followersCount: 0, followingCount: 0, postsCount: 0 },
+  };
+}
+
 // ─── Provider ────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [bootstrap, setBootstrap] = useState<BootstrapData | null>(null);
+  const bootstrapInFlight = useRef(false);
 
-  // Hydrate from storage on mount
+  // Hydrate from storage on mount, then fetch server bootstrap
   useEffect(() => {
-    const stored = readPersistedUser();
-    if (stored) {
-      const hydrated = { ...stored, sessionStartedAt: stored.sessionStartedAt || new Date().toISOString() };
-      setUser(hydrated);
-      setSessionCookie(hydrated);
-    } else {
-      try {
-        const session = sessionStorage.getItem(STORAGE_KEY);
-        if (session) {
-          const parsed = JSON.parse(session);
-          const hydrated = {
-            ...parsed,
-            createdAt: new Date(parsed.createdAt),
-            sessionStartedAt: parsed.sessionStartedAt || new Date().toISOString(),
-          };
-          setUser(hydrated);
-          setSessionCookie(hydrated);
+    let cancelled = false;
+
+    async function hydrate() {
+      // Step 1: Read localStorage for instant user state
+      let hydratedUser: AuthUser | null = null;
+
+      const stored = readPersistedUser();
+      if (stored) {
+        hydratedUser = {
+          ...stored,
+          sessionStartedAt: stored.sessionStartedAt || new Date().toISOString(),
+        };
+      } else {
+        try {
+          const session = sessionStorage.getItem(STORAGE_KEY);
+          if (session) {
+            const parsed = JSON.parse(session);
+            hydratedUser = {
+              ...parsed,
+              createdAt: new Date(parsed.createdAt),
+              sessionStartedAt: parsed.sessionStartedAt || new Date().toISOString(),
+            };
+          }
+        } catch { /* noop */ }
+      }
+
+      if (hydratedUser) {
+        if (!cancelled) setUser(hydratedUser);
+        setSessionCookie(hydratedUser);
+
+        // Step 2: Fetch server bootstrap for authoritative state
+        bootstrapInFlight.current = true;
+        const serverData = await fetchBootstrap(hydratedUser);
+        bootstrapInFlight.current = false;
+
+        if (!cancelled) {
+          if (serverData) {
+            setBootstrap(serverData);
+          } else {
+            // Server unreachable — use client-only fallback
+            setBootstrap(clientFallbackBootstrap(hydratedUser));
+          }
         }
-      } catch { /* noop */ }
+      }
+
+      if (!cancelled) setIsLoading(false);
     }
-    setIsLoading(false);
+
+    hydrate();
+    return () => { cancelled = true; };
   }, []);
 
+  // refreshMe: re-fetch /api/me for latest stats/profile/onboarding
+  const refreshMe = useCallback(async () => {
+    const currentUser = user;
+    if (!currentUser) return;
+    if (bootstrapInFlight.current) return;
+
+    bootstrapInFlight.current = true;
+    try {
+      const res = await fetch('/api/me');
+      if (res.ok) {
+        const data = await res.json();
+        setBootstrap({
+          onboarding: data.onboarding,
+          profileCompletion: data.profileCompletion,
+          stats: data.stats,
+        });
+      }
+    } catch {
+      // Silently fail — keep existing bootstrap
+    } finally {
+      bootstrapInFlight.current = false;
+    }
+  }, [user]);
+
   const login = useCallback(async (email: string, password: string, rememberMe = false): Promise<{ success: boolean; error?: string }> => {
-    // Check lockout
     const lockout = isLockedOut();
     if (lockout.locked) {
       const mins = Math.ceil(lockout.remainingMs / 60_000);
       return { success: false, error: `Too many failed attempts. Please try again in ${mins} minute${mins !== 1 ? 's' : ''}.` };
     }
 
-    // Validate email
     if (!email || !isValidEmail(email)) {
       return { success: false, error: 'Please enter a valid email address.' };
     }
 
-    // Validate password (basic check for login; full policy on signup)
     if (!password || password.length < 8) {
       recordFailedAttempt();
       return { success: false, error: 'Invalid credentials.' };
     }
 
-    // PRODUCTION TODO: Send credentials to server, verify bcrypt hash.
-    // The server should return a signed session token (HttpOnly cookie).
-    // NEVER return the role from client-side email matching in production.
-
+    // Login = existing user → onboarding is already done
     const mockUser: AuthUser = {
       id: `user-${Date.now()}`,
       email,
@@ -261,7 +394,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       username: email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, ''),
       role: email === 'admin@civicsocial.com' ? 'creator' : email.includes('admin') ? 'admin' : email.includes('mod') ? 'moderator' : 'user',
       createdAt: new Date(),
+      isNewUser: false,
       sessionStartedAt: new Date().toISOString(),
+      onboarding: {
+        country: '',
+        affiliation: '',
+        topics: [],
+        bio: '',
+        completedAt: new Date().toISOString(),
+      },
     };
 
     setUser(mockUser);
@@ -276,36 +417,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSessionCookie(mockUser);
     }
 
+    // Fetch server bootstrap for the new session
+    const serverData = await fetchBootstrap(mockUser);
+    if (serverData) {
+      setBootstrap(serverData);
+    } else {
+      setBootstrap(clientFallbackBootstrap(mockUser));
+    }
+
     return { success: true };
   }, []);
 
   const signup = useCallback(async (email: string, password: string, displayName: string): Promise<{ success: boolean; error?: string }> => {
-    // Validate email
     if (!email || !isValidEmail(email)) {
       return { success: false, error: 'Please enter a valid email address.' };
     }
 
-    // Strong password validation
     const passwordResult = validatePassword(password, email);
     if (!passwordResult.valid) {
       return { success: false, error: passwordResult.errors[0] };
     }
 
-    // Sanitize display name
     const safeName = sanitizeDisplayName(displayName);
     if (!safeName || safeName.length < 2) {
       return { success: false, error: 'Display name must be at least 2 characters.' };
     }
 
-    // PRODUCTION TODO: Send to server, hash password with bcrypt/argon2,
-    // send verification email, return session token.
-
+    // Signup = new user → onboarding NOT done yet
     const newUser: AuthUser = {
       id: `user-${Date.now()}`,
       email,
       displayName: safeName,
       username: safeName.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9._-]/g, ''),
-      role: 'user', // Always 'user' on signup — never derive role from email
+      role: 'user',
       createdAt: new Date(),
       isNewUser: true,
       sessionStartedAt: new Date().toISOString(),
@@ -316,13 +460,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: '',
       },
     };
+
     setUser(newUser);
     persistUser(newUser);
+
+    // Set initial bootstrap — brand new user, nothing completed
+    setBootstrap({
+      onboarding: { isDone: false, stepCompleted: '', completedAt: null },
+      profileCompletion: {
+        isComplete: false,
+        percent: 0,
+        missingFields: ['display_name', 'username', 'country', 'party', 'topics'],
+      },
+      stats: { followersCount: 0, followingCount: 0, postsCount: 0 },
+    });
+
     return { success: true };
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
+    setBootstrap(null);
     clearPersistedUser();
     clearLoginAttempts();
     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
@@ -332,11 +490,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!email || !isValidEmail(email)) {
       return { success: false, error: 'Please enter a valid email address.' };
     }
-
-    // PRODUCTION: Send reset email with single-use token (15 min expiry).
-    // IMPORTANT: Always return success to prevent email enumeration.
-    // The response should be identical whether the email exists or not.
-
     return { success: true };
   }, []);
 
@@ -352,12 +505,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const completeOnboarding = useCallback(() => {
+  const completeOnboarding = useCallback(async () => {
     setUser((prev) => {
       if (!prev) return prev;
       const updated = {
         ...prev,
-        isNewUser: true,
+        isNewUser: false,
         onboarding: {
           ...prev.onboarding,
           completedAt: new Date().toISOString(),
@@ -366,13 +519,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       persistUser(updated);
       return updated;
     });
-  }, []);
+
+    // Optimistically mark as done in bootstrap
+    setBootstrap((prev) =>
+      prev
+        ? {
+            ...prev,
+            onboarding: {
+              isDone: true,
+              stepCompleted: 'done',
+              completedAt: new Date().toISOString(),
+            },
+          }
+        : prev,
+    );
+
+    // Tell the server
+    try {
+      const currentUser = user;
+      const res = await fetch('/api/me/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          country: currentUser?.onboarding?.country,
+          affiliation: currentUser?.onboarding?.affiliation,
+          topics: currentUser?.onboarding?.topics,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setBootstrap((prev) =>
+          prev
+            ? {
+                ...prev,
+                onboarding: data.onboarding,
+                profileCompletion: data.profileCompletion,
+                stats: data.stats,
+              }
+            : prev,
+        );
+      }
+    } catch {
+      // Server call failed — optimistic update still holds
+    }
+  }, [user]);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin' || user?.role === 'creator';
   const isCreator = user?.role === 'creator';
   const isModerator = user?.role === 'moderator' || isAdmin;
-  const isNewUser = user ? checkIsNewUser(user) : false;
+  const isNewUser = user ? checkIsNewUserByAge(user) : false;
+  const onboardingDone = bootstrap?.onboarding?.isDone ?? !!user?.onboarding?.completedAt;
 
   return (
     <AuthContext.Provider
@@ -384,12 +582,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isModerator,
         isLoading,
         isNewUser,
+        onboardingDone,
+        profileCompletion: bootstrap?.profileCompletion ?? null,
+        stats: bootstrap?.stats ?? null,
         login,
         signup,
         logout,
         forgotPassword,
         updateOnboarding,
         completeOnboarding,
+        refreshMe,
       }}
     >
       {children}

@@ -43,7 +43,7 @@ export function FeedView() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const { getPostsForFeed, userPosts, removePost } = usePostStore();
-  const { user, isNewUser } = useAuth();
+  const { user, isNewUser, onboardingDone, completeOnboarding, refreshMe } = useAuth();
   const { markFirstContent } = usePerf();
   const trackedFetch = useTrackedFetch();
   const feedTopRef = useRef<HTMLDivElement>(null);
@@ -153,25 +153,22 @@ export function FeedView() {
 
   // Called when a new post is created via ComposeModal
   const handlePostCreated = useCallback(() => {
-    // Reset the "new posts" timer so banner doesn't flash immediately
     setLastFetchTime(Date.now());
     setHasNewPosts(false);
-    // Scroll to top to show the new post
+    refreshMe();
     setTimeout(() => {
       feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
-  }, []);
+  }, [refreshMe]);
 
   // Called when a post is deleted — remove from client + refetch server truth
   const handlePostDeleted = useCallback(async (postId: string) => {
-    // 1. Remove from client-side user post store (user-created posts)
     removePost(postId);
-    // 2. Immediately filter out of current feed state (optimistic)
     setFeed((prev) => prev ? {
       ...prev,
       posts: prev.posts.filter((p) => p.id !== postId),
     } : prev);
-    // 3. Refetch from server to get the authoritative state
+    refreshMe();
     try {
       const res = await trackedFetch(`/api/feed?tab=${activeTab}&sort=${sortMode}${coldStartParams}&_t=${Date.now()}`);
       if (res.ok) {
@@ -183,7 +180,7 @@ export function FeedView() {
     } catch {
       // If refetch fails, the optimistic removal still holds
     }
-  }, [removePost, activeTab, sortMode, coldStartParams, trackedFetch]);
+  }, [removePost, activeTab, sortMode, coldStartParams, trackedFetch, refreshMe]);
 
   // ─── Merge user-created posts into feed ────────────────────
   const mergedPosts: PostData[] = useMemo(() => {
@@ -336,8 +333,8 @@ export function FeedView() {
         </div>
       )}
 
-      {/* ── Onboarding Carousel (new users only) ── */}
-      {isNewUser && <OnboardingCarousel />}
+      {/* ── Onboarding Carousel (shown until dismissed / completed) ── */}
+      {!onboardingDone && <OnboardingCarousel onComplete={completeOnboarding} />}
 
       {/* ── New Posts Banner ── */}
       {hasNewPosts && (

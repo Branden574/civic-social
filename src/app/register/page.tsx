@@ -130,24 +130,24 @@ export default function RegisterPage() {
   }, [email, password, displayName, auth]);
 
   // Step 2 → save onboarding preferences
-  const handleSavePersonalization = useCallback(() => {
+  const handleSavePersonalization = useCallback(async () => {
     auth.updateOnboarding({
       country: selectedCountry,
       affiliation: selectedParty,
       topics: selectedTopics.length > 0 ? selectedTopics : ['economy', 'healthcare', 'education'],
     });
-    auth.completeOnboarding();
+    await auth.completeOnboarding();
     setStep('complete');
   }, [selectedCountry, selectedParty, selectedTopics, auth]);
 
   // Skip personalization with defaults
-  const handleSkipPersonalization = useCallback(() => {
+  const handleSkipPersonalization = useCallback(async () => {
     auth.updateOnboarding({
       country: 'US',
       affiliation: '',
       topics: ['economy', 'healthcare', 'education', 'climate'],
     });
-    auth.completeOnboarding();
+    await auth.completeOnboarding();
     setStep('complete');
   }, [auth]);
 

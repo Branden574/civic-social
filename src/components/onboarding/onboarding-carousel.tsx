@@ -111,10 +111,6 @@ const ONBOARDING_SLIDES = [
   },
 ];
 
-// ─── Storage key ─────────────────────────────────────────────
-
-const ONBOARDING_COMPLETE_KEY = 'civic-onboarding-done';
-
 // ─── Component ───────────────────────────────────────────────
 
 interface OnboardingCarouselProps {
@@ -123,22 +119,12 @@ interface OnboardingCarouselProps {
 
 export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [dismissed, setDismissed] = useState(false);
 
   const slide = ONBOARDING_SLIDES[currentSlide];
   const isLast = currentSlide === ONBOARDING_SLIDES.length - 1;
 
   const handleDismiss = useCallback(() => {
-    try {
-      localStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
-    } catch { /* noop */ }
     setDismissed(true);
     onComplete?.();
   }, [onComplete]);
@@ -240,15 +226,4 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
       </div>
     </div>
   );
-}
-
-// ─── Hook to check onboarding status ─────────────────────────
-
-export function useOnboardingStatus(): boolean {
-  if (typeof window === 'undefined') return true;
-  try {
-    return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true';
-  } catch {
-    return false;
-  }
 }

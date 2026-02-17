@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
+import { useAuth } from '@/lib/auth-context';
 import {
   Award,
   Shield,
@@ -330,6 +331,7 @@ function BellDropdown({
 export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const { refreshMe } = useAuth();
   const username = params.username as string;
 
   // Redirect "user-current" to the authenticated user's own profile page
@@ -401,6 +403,7 @@ export default function UserProfilePage() {
         const data = await res.json();
         setIsFollowing(data.isFollowing);
         setIsNotifyEnabled(data.isNotifyEnabled);
+        refreshMe();
       } else {
         // Rollback
         setIsFollowing(wasFollowing);
@@ -413,7 +416,7 @@ export default function UserProfilePage() {
     } finally {
       setFollowLoading(false);
     }
-  }, [profile, isFollowing, followLoading]);
+  }, [profile, isFollowing, followLoading, refreshMe]);
 
   // ── Subscribe to posts ──────────────────────────────────
   const handleSubscribe = useCallback(async (level: 'all' | 'debates' | 'mentions') => {
