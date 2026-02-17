@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import {
@@ -17,6 +17,7 @@ import {
   PenLine,
   Loader2,
   X,
+  RefreshCw,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { usePostStore, type UserPost } from '@/lib/post-store';
@@ -26,19 +27,94 @@ import { useRouter } from 'next/navigation';
 import { CredibilityBadge } from '@/components/ui/credibility-badge';
 import { AuthGate } from '@/components/auth/auth-gate';
 
+const PULL_THRESHOLD = 72;
+const PULL_MAX = 120;
+
 type ProfileTab = 'posts' | 'overview' | 'debates' | 'activity' | 'credibility';
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [profileCardDismissed, setProfileCardDismissed] = useState(false);
-  const { getPostsForProfile, postCount, hydrated } = usePostStore();
+  const { getPostsForProfile, postCount, hydrated, refresh: refreshPosts } = usePostStore();
   const { user, isAuthenticated, onboardingDone, profileCompletion, stats, refreshMe } = useAuth();
   const router = useRouter();
+
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const scrollStartY = useRef(0);
+  const currentPullY = useRef(0);
+
+  const runRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshMe(), refreshPosts()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshMe, refreshPosts]);
 
   // Refetch /me on mount so followers/following/posts counts are always live
   useEffect(() => {
     if (isAuthenticated) refreshMe();
   }, [isAuthenticated, refreshMe]);
+
+  // Pull-to-refresh: when at top of page and user pulls down, refresh profile + posts
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handleStart = (clientY: number) => {
+      touchStartY.current = clientY;
+      scrollStartY.current = typeof window !== 'undefined' ? window.scrollY : 0;
+    };
+    const handleMove = (clientY: number) => {
+      if (scrollStartY.current > 8) return;
+      const delta = clientY - touchStartY.current;
+      if (delta > 0) {
+        const damped = Math.min(delta * 0.5, PULL_MAX);
+        currentPullY.current = damped;
+        setPullY(damped);
+      }
+    };
+    const handleEnd = () => {
+      if (currentPullY.current >= PULL_THRESHOLD) {
+        runRefresh();
+      }
+      currentPullY.current = 0;
+      setPullY(0);
+    };
+
+    const onTouchStart = (e: TouchEvent) => handleStart(e.touches[0].clientY);
+    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientY);
+    const onTouchEnd = () => handleEnd();
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse') return;
+      handleStart(e.clientY);
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse') return;
+      handleMove(e.clientY);
+    };
+    const onPointerUp = () => handleEnd();
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
+    };
+  }, [isAuthenticated, runRefresh]);
 
   // Load dismiss state from localStorage
   useEffect(() => {
@@ -92,7 +168,30 @@ export default function ProfilePage() {
     <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 relative">
+        {/* Pull-to-refresh indicator */}
+        {(pullY > 0 || isRefreshing) && (
+          <div
+            className="absolute left-0 right-0 top-0 z-20 flex items-center justify-center overflow-hidden transition-all duration-200"
+            style={{ height: isRefreshing ? 56 : Math.min(pullY + 8, 56) }}
+          >
+            <div className="flex items-center gap-2 rounded-full bg-surface-elevated/95 px-4 py-2 shadow-lg border border-border-subtle">
+              {isRefreshing ? (
+                <>
+                  <Loader2 className="w-5 h-5 text-civic-light animate-spin" />
+                  <span className="text-sm font-medium text-text-primary">Updating profile…</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-5 h-5 text-civic-light" />
+                  <span className="text-sm font-medium text-text-secondary">
+                    {pullY >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         <div className="max-w-2xl mx-auto">
           {/* Header banner */}
           <div className="h-32 bg-gradient-to-r from-civic-dark via-civic to-civic-light relative">

@@ -59,6 +59,8 @@ interface PostStoreContextValue {
   getPostsForProfile: () => UserPost[];
   postCount: number;
   hydrated: boolean;
+  /** Re-fetch current user's posts from server (e.g. pull-to-refresh on profile) */
+  refresh: () => Promise<void>;
 }
 
 const PostStoreContext = createContext<PostStoreContextValue>({
@@ -71,6 +73,7 @@ const PostStoreContext = createContext<PostStoreContextValue>({
   getPostsForProfile: () => [],
   postCount: 0,
   hydrated: false,
+  refresh: async () => {},
 });
 
 // ─── Provider ────────────────────────────────────────────────
@@ -80,62 +83,57 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const { user } = useAuth();
 
-  // ── Hydrate from server on mount ────────────────────────
-  useEffect(() => {
-    const currentUserId: string | undefined = user?.id;
+  const doHydrate = useCallback(async () => {
+    const currentUserId = user?.id;
     if (!currentUserId) return;
-    const authorId: string = currentUserId;
-    let cancelled = false;
-    async function hydrate() {
-      try {
-        const res = await fetch(`/api/posts?author=${encodeURIComponent(authorId)}&_t=${Date.now()}`);
-        if (!res.ok || cancelled) return;
-        const data = await res.json();
-        if (cancelled) return;
-        const fallbackAuthor: UserPost['author'] = {
-          id: authorId,
-          displayName: user?.displayName || 'You',
-          affiliations: [user?.onboarding?.affiliation || 'center'],
-          verificationLevel: 'EMAIL_VERIFIED',
-          civicReputation: 0.5,
-        };
-        // Convert server posts to UserPost shape (merge, don't overwrite optimistic)
-        const serverPosts: UserPost[] = (data.posts ?? []).map((p: Record<string, unknown>) => ({
-          id: p.id as string,
-          content: p.content as string,
-          createdAt: p.createdAt as string,
-          topics: (p.topics ?? []) as string[],
-          articleUrl: p.articleUrl as string | undefined,
-          author: (p.author ?? fallbackAuthor) as UserPost['author'],
-          thread: null,
-          sources: (p.sources ?? []) as UserPost['sources'],
-          reactions: (p.reactions ?? { agree: 0, disagree: 0, insightful: 0, nuance: 0 }) as UserPost['reactions'],
-          algorithm: (p.algorithm ?? {
-            qualityScore: 0.5,
-            signals: { engagementQuality: 0, civility: 0.8, viewpointDiversity: 0, sourceCredibility: 0, topicRelevance: 0.3, authorReputation: 0.92, penalty: 0 },
-            explanation: 'Your post.',
-            explanationTags: ['your-post'],
-          }) as UserPost['algorithm'],
-          replies: [] as never[],
-          _optimistic: false,
-          _failed: false,
-        }));
-        setUserPosts((prev) => {
-          // Keep any optimistic posts not yet confirmed, merge with server data
-          const optimisticIds = new Set(prev.filter((p) => p._optimistic).map((p) => p.id));
-          const serverIds = new Set(serverPosts.map((p) => p.id));
-          const optimisticOnly = prev.filter((p) => p._optimistic && !serverIds.has(p.id));
-          return [...optimisticOnly, ...serverPosts];
-        });
-      } catch {
-        // Offline or error — keep what we have
-      } finally {
-        if (!cancelled) setHydrated(true);
-      }
+    const authorId = currentUserId;
+    try {
+      const res = await fetch(`/api/posts?author=${encodeURIComponent(authorId)}&_t=${Date.now()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const fallbackAuthor: UserPost['author'] = {
+        id: authorId,
+        displayName: user?.displayName || 'You',
+        affiliations: [user?.onboarding?.affiliation || 'center'],
+        verificationLevel: 'EMAIL_VERIFIED',
+        civicReputation: 0.5,
+      };
+      const serverPosts: UserPost[] = (data.posts ?? []).map((p: Record<string, unknown>) => ({
+        id: p.id as string,
+        content: p.content as string,
+        createdAt: p.createdAt as string,
+        topics: (p.topics ?? []) as string[],
+        articleUrl: p.articleUrl as string | undefined,
+        author: (p.author ?? fallbackAuthor) as UserPost['author'],
+        thread: null,
+        sources: (p.sources ?? []) as UserPost['sources'],
+        reactions: (p.reactions ?? { agree: 0, disagree: 0, insightful: 0, nuance: 0 }) as UserPost['reactions'],
+        algorithm: (p.algorithm ?? {
+          qualityScore: 0.5,
+          signals: { engagementQuality: 0, civility: 0.8, viewpointDiversity: 0, sourceCredibility: 0, topicRelevance: 0.3, authorReputation: 0.92, penalty: 0 },
+          explanation: 'Your post.',
+          explanationTags: ['your-post'],
+        }) as UserPost['algorithm'],
+        replies: [] as never[],
+        _optimistic: false,
+        _failed: false,
+      }));
+      setUserPosts((prev) => {
+        const serverIds = new Set(serverPosts.map((p) => p.id));
+        const optimisticOnly = prev.filter((p) => p._optimistic && !serverIds.has(p.id));
+        return [...optimisticOnly, ...serverPosts];
+      });
+    } catch {
+      // Offline or error — keep what we have
+    } finally {
+      setHydrated(true);
     }
-    hydrate();
-    return () => { cancelled = true; };
   }, [user?.id, user?.displayName, user?.onboarding?.affiliation]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    doHydrate();
+  }, [user?.id, doHydrate]);
 
   const addPost = useCallback((input: {
     content: string;
@@ -239,6 +237,7 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
         getPostsForProfile,
         postCount: userPosts.filter((p) => !p._failed).length,
         hydrated,
+        refresh: doHydrate,
       }}
     >
       {children}
