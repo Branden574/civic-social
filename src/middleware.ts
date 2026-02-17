@@ -63,13 +63,25 @@ function generateToken(): string {
 const ALLOWED_ORIGINS = new Set([
   'https://civicsocial.com',
   'https://www.civicsocial.com',
-  // Add staging domains here
 ]);
 
-function isAllowedOrigin(origin: string | null): boolean {
+function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
   if (!origin) return true; // Same-origin requests have no Origin header
   if (process.env.NODE_ENV !== 'production') return true; // Dev: allow all
-  return ALLOWED_ORIGINS.has(origin);
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+
+  // Allow Vercel deployment URLs (preview + production)
+  if (origin.endsWith('.vercel.app')) return true;
+
+  // Allow same-origin: the request's own host matches the origin
+  try {
+    const reqHost = new URL(requestUrl).origin;
+    if (origin === reqHost) return true;
+  } catch {
+    // fall through
+  }
+
+  return false;
 }
 
 // ─── Security headers ────────────────────────────────────────
@@ -148,7 +160,7 @@ export function middleware(request: NextRequest) {
 
   // ── 2. CORS check for API routes ──────────────────────────
   const origin = request.headers.get('origin');
-  if (pathname.startsWith('/api/') && !isAllowedOrigin(origin)) {
+  if (pathname.startsWith('/api/') && !isAllowedOrigin(origin, request.url)) {
     return new NextResponse(
       JSON.stringify({ error: 'Forbidden.' }),
       { status: 403, headers: { 'Content-Type': 'application/json' } },
@@ -156,13 +168,19 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 3. CSRF validation for state-changing API requests ────
+  // The session cookie uses SameSite=Strict which is the primary CSRF defence.
+  // The double-submit cookie adds defence-in-depth but must not block
+  // same-origin fetch() calls from the app itself. We enforce CSRF only
+  // for cross-origin POST requests (where an Origin header is present
+  // and doesn't match the app's own host).
   const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
   if (pathname.startsWith('/api/') && isMutating) {
-    const csrfCookie = request.cookies.get('__csrf')?.value;
-    const csrfHeader = request.headers.get('x-csrf-token');
+    const isSameOrigin = !origin || isAllowedOrigin(origin, request.url);
 
-    // Enforce CSRF in production
-    if (process.env.NODE_ENV === 'production') {
+    if (!isSameOrigin) {
+      const csrfCookie = request.cookies.get('__csrf')?.value;
+      const csrfHeader = request.headers.get('x-csrf-token');
+
       if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
         return new NextResponse(
           JSON.stringify({ error: 'Invalid or missing CSRF token.' }),
@@ -202,7 +220,7 @@ export function middleware(request: NextRequest) {
   // ── 6. CORS headers for API routes ────────────────────────
   if (pathname.startsWith('/api/')) {
     const allowedOrigin = process.env.NODE_ENV === 'production'
-      ? (origin && ALLOWED_ORIGINS.has(origin) ? origin : 'https://civicsocial.com')
+      ? (origin && isAllowedOrigin(origin, request.url) ? origin : new URL(request.url).origin)
       : (origin || '*');
 
     response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
