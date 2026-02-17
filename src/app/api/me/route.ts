@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
   registerUser({
     id: sessionUser.id,
     displayName: sessionUser.displayName,
-    username: sessionUser.displayName.toLowerCase().replace(/\s+/g, '-'),
+    username: sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
     email: sessionUser.email,
   });
 

@@ -89,6 +89,7 @@ export default function SearchPage() {
   }, [debouncedQuery, selectedTopics]);
 
   // Fetch people from the real API
+  // Runs when: there is a query (any tab), OR on the "people" tab (even with empty query to show all users)
   const fetchPeople = useCallback(async () => {
     if (!debouncedQuery && activeTab !== 'people') { setPeople([]); return; }
     setPeopleLoading(true);

@@ -354,6 +354,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     bootstrapInFlight.current = true;
     try {
+      // Re-register user on server (handles Vercel cold starts wiping in-memory store)
+      fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: currentUser.id,
+          displayName: currentUser.displayName,
+          username: currentUser.username || currentUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
+          email: currentUser.email,
+        }),
+      }).catch(() => {});
+
       const res = await fetch('/api/me');
       if (res.ok) {
         const data = await res.json();
@@ -448,7 +460,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: `user-${Date.now()}`,
       email,
       displayName: safeName,
-      username: safeName.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9._-]/g, ''),
+      username: safeName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
       role: 'user',
       createdAt: new Date(),
       isNewUser: true,
@@ -463,6 +475,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(newUser);
     persistUser(newUser);
+
+    // Register user on the server so they are immediately searchable
+    try {
+      await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newUser.id,
+          displayName: newUser.displayName,
+          username: newUser.username,
+          email: newUser.email,
+        }),
+      });
+    } catch {
+      // Non-blocking — server registration will happen on next API call
+    }
 
     // Set initial bootstrap — brand new user, nothing completed
     setBootstrap({

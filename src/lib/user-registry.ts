@@ -220,9 +220,19 @@ export function registerUser(input: {
 }): RegisteredUser {
   const store = getStore();
 
-  // Don't overwrite if already exists
   const existing = store.users.get(input.id);
-  if (existing) return existing;
+  if (existing) {
+    // Update fields that may have changed (display name, username, bio, etc.)
+    // but preserve server-assigned fields (verification, credibility, counts)
+    existing.displayName = input.displayName || existing.displayName;
+    existing.username = input.username || existing.username;
+    existing.email = input.email || existing.email;
+    if (input.bio) existing.bio = input.bio;
+    if (input.affiliation) existing.affiliation = input.affiliation;
+    existing._displayNameNorm = existing.displayName.toLowerCase().trim();
+    existing._usernameNorm = existing.username.toLowerCase().trim();
+    return existing;
+  }
 
   const user: RegisteredUser = {
     id: input.id,
@@ -234,7 +244,7 @@ export function registerUser(input: {
     avatarUrl: null,
     verificationLevel: 'EMAIL_VERIFIED',
     isVerified: false,
-    credibilityScore: 50, // default for new users
+    credibilityScore: 50,
     followerCount: 0,
     followingCount: 0,
     postCount: 0,
