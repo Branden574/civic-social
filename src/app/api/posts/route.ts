@@ -17,27 +17,23 @@ import {
 import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeTopics, sanitizeUrl, isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
+import { getUserById, registerUser } from '@/lib/user-registry';
 
 // ─── Author profile (matches post-store.tsx) ─────────────────
-const AUTHOR_PROFILES: Record<string, {
-  displayName: string;
-  affiliations: string[];
-  verificationLevel: string;
-  civicReputation: number;
-}> = {
-  'user-current': {
-    displayName: 'Branden Vincent-Walker',
-    affiliations: ['center-left'],
-    verificationLevel: 'EXPERT_VERIFIED',
-    civicReputation: 0.92,
-  },
-};
-
 function getAuthorProfile(authorId: string) {
-  return AUTHOR_PROFILES[authorId] ?? {
-    displayName: 'Unknown User',
-    affiliations: [],
-    verificationLevel: 'CITIZEN_VERIFIED',
+  const u = getUserById(authorId);
+  if (u) {
+    return {
+      displayName: u.displayName,
+      affiliations: [u.affiliation || 'center'],
+      verificationLevel: u.verificationLevel,
+      civicReputation: Math.max(0, Math.min(1, u.credibilityScore / 100)),
+    };
+  }
+  return {
+    displayName: authorId === 'user-current' ? 'Branden Vincent-Walker' : 'Unknown User',
+    affiliations: ['center'],
+    verificationLevel: 'EMAIL_VERIFIED',
     civicReputation: 0.5,
   };
 }
@@ -126,7 +122,14 @@ export async function POST(request: NextRequest) {
   try {
     // Auth check
     const user = getSessionUser(request);
-    const userId = user?.id || 'user-current'; // Fallback for demo
+    if (!user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    const userId = user.id;
+    registerUser({
+      id: user.id,
+      displayName: user.displayName,
+      username: user.displayName.toLowerCase().replace(/\s+/g, '-'),
+      email: user.email,
+    });
 
     // Rate limit posting
     const rl = postLimiter.check(userId);
@@ -173,7 +176,10 @@ export async function POST(request: NextRequest) {
       comment_policy: safePolicy,
     });
 
-    secureLog.info('POST /api/posts', `Created post id=${post.id} author=${userId}`);
+    secureLog.info(
+      'POST /api/posts',
+      `created post_id=${post.id} author_id=${userId} status=${post.status} visibility=${post.visibility} created_at=${post.createdAt}`,
+    );
 
     return NextResponse.json({
       success: true,

@@ -12,9 +12,11 @@ import type { FeedCandidate } from '@/lib/algorithm';
 import { getDeletedPostIds } from '@/lib/deleted-posts';
 import { getAllPublishedPosts, getCommentCount, type PersistedPost } from '@/lib/post-data-store';
 import { getReleasedNewPosts } from '@/lib/simulated-new-posts';
-import { getClientIp, tooManyRequests } from '@/lib/security/api-guard';
+import { getClientIp, getSessionUser, tooManyRequests } from '@/lib/security/api-guard';
 import { readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeUrl, clampInt } from '@/lib/security/sanitize';
+import { getFollowingIds } from '@/lib/social-store';
+import { getUserById, registerUser } from '@/lib/user-registry';
 
 // ─── Safety filter (shared by both modes) ────────────────────
 function applySafetyFilter(candidates: FeedCandidate[]): { safe: FeedCandidate[]; filtered: number } {
@@ -106,12 +108,14 @@ function serializeChronologicalPost(c: FeedCandidate) {
 // ─── Serialize a user-created PersistedPost for feed response ─
 function serializeUserPost(p: PersistedPost) {
   const safeUrl = p.articleUrl ? sanitizeUrl(p.articleUrl) : null;
+  const registryUser = getUserById(p.authorId);
+  const civicRep = registryUser ? Math.max(0, Math.min(1, registryUser.credibilityScore / 100)) : 0.5;
   const authorProfile = {
     id: p.authorId,
-    displayName: p.authorId === 'user-current' ? 'Branden Vincent-Walker' : 'User',
-    affiliations: ['center-left'],
-    verificationLevel: 'EXPERT_VERIFIED',
-    civicReputation: 0.92,
+    displayName: registryUser?.displayName || (p.authorId === 'user-current' ? 'Branden Vincent-Walker' : 'User'),
+    affiliations: [registryUser?.affiliation || 'center'],
+    verificationLevel: registryUser?.verificationLevel || 'EMAIL_VERIFIED',
+    civicReputation: civicRep,
   };
   return {
     id: p.id,
@@ -132,7 +136,7 @@ function serializeUserPost(p: PersistedPost) {
         viewpointDiversity: 0,
         sourceCredibility: p.articleUrl ? 0.6 : 0,
         topicRelevance: p.topics.length > 0 ? 0.7 : 0.3,
-        authorReputation: 0.92,
+        authorReputation: civicRep,
         penalty: 0,
       },
       explanation: 'Your post — shown to you and your followers.',
@@ -156,11 +160,21 @@ export async function GET(request: NextRequest) {
   const hashtag = sanitizeText(searchParams.get('hashtag') || '').toLowerCase();
   const sort = searchParams.get('sort') === 'latest' ? 'latest' : 'top';
 
+  const sessionUser = getSessionUser(request);
+  if (sessionUser) {
+    registerUser({
+      id: sessionUser.id,
+      displayName: sessionUser.displayName,
+      username: sessionUser.displayName.toLowerCase().replace(/\s+/g, '-'),
+      email: sessionUser.email,
+    });
+  }
+  const viewerId = sessionUser?.id ?? mockUsers.current.id;
   const user = mockUsers.current;
 
   // ── Fetch user-created posts from server store ─────────────
   const deletedIds = getDeletedPostIds();
-  const userCreatedPosts = getAllPublishedPosts()
+  const allPublishedUserCreatedPosts = getAllPublishedPosts()
     .filter((p) => !deletedIds.has(p.id))
     .map(serializeUserPost);
 
@@ -177,7 +191,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const followingPlusSelf = [...new Set([...user.followingIds, user.id])];
+  const followingFromStore = getFollowingIds(viewerId);
+  const followingPlusSelf = [...new Set([...followingFromStore, viewerId])];
 
   // ════════════════════════════════════════════════════════════
   // LATEST MODE
@@ -195,8 +210,16 @@ export async function GET(request: NextRequest) {
 
     const trimmed = sorted.slice(0, limit);
     const mockSerialized = trimmed.map(serializeChronologicalPost);
-    const allPosts = [...userCreatedPosts, ...mockSerialized]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    const relevantUserPosts = tab === 'following'
+      ? allPublishedUserCreatedPosts.filter((p) => followingPlusSelf.includes(p.author.id))
+      : allPublishedUserCreatedPosts;
+    const allPosts = [...relevantUserPosts, ...mockSerialized]
+      .sort((a, b) => {
+        const bt = new Date(b.createdAt).getTime();
+        const at = new Date(a.createdAt).getTime();
+        if (bt !== at) return bt - at;
+        return b.id.localeCompare(a.id);
+      })
       .slice(0, limit);
 
     return NextResponse.json({
@@ -205,7 +228,7 @@ export async function GET(request: NextRequest) {
       posts: allPosts,
       diversity: null,
       meta: {
-        totalCandidates: pool.length + userCreatedPosts.length,
+        totalCandidates: pool.length + relevantUserPosts.length,
         filteredCount: filtered,
         hashtag: hashtag || null,
       },
@@ -220,14 +243,17 @@ export async function GET(request: NextRequest) {
       followingPlusSelf.includes(c.author.id),
     );
     const feed = generateFeed(followingCandidates, user, undefined, limit);
-    const followingPosts = [...userCreatedPosts, ...feed.posts.map(serializeRankedPost)];
+    const relevantUserPosts = allPublishedUserCreatedPosts.filter((p) =>
+      followingPlusSelf.includes(p.author.id),
+    );
+    const followingPosts = [...relevantUserPosts, ...feed.posts.map(serializeRankedPost)];
     return NextResponse.json({
       tab: 'following',
       sort: 'top',
       posts: followingPosts,
       diversity: feed.diversity,
       meta: {
-        totalCandidates: feed.totalCandidates + userCreatedPosts.length,
+        totalCandidates: feed.totalCandidates + relevantUserPosts.length,
         filteredCount: feed.filteredCount,
         hashtag: hashtag || null,
       },
@@ -275,7 +301,7 @@ export async function GET(request: NextRequest) {
 
   // For You tab: full algorithmic ranking
   const feed = generateFeed(candidates, user, undefined, limit);
-  const forYouPosts = [...userCreatedPosts, ...feed.posts.map(serializeRankedPost)];
+  const forYouPosts = [...allPublishedUserCreatedPosts, ...feed.posts.map(serializeRankedPost)];
 
   return NextResponse.json({
     tab: 'for-you',
@@ -283,7 +309,7 @@ export async function GET(request: NextRequest) {
     posts: forYouPosts,
     diversity: feed.diversity,
     meta: {
-      totalCandidates: feed.totalCandidates + userCreatedPosts.length,
+      totalCandidates: feed.totalCandidates + allPublishedUserCreatedPosts.length,
       filteredCount: feed.filteredCount,
       hashtag: hashtag || null,
     },

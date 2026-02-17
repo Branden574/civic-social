@@ -166,7 +166,7 @@ function analyzeCivility(text: string): { score: number; issues: string[] } {
 }
 
 export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalProps) {
-  const { addPost, confirmPost, markPostFailed } = usePostStore();
+  const { addPost, confirmPost, removePost } = usePostStore();
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [articleUrl, setArticleUrl] = useState('');
@@ -180,6 +180,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
   const [posting, setPosting] = useState(false);
   const [commentPolicy, setCommentPolicy] = useState<'everyone' | 'followers_only' | 'off'>('everyone');
   const [showReplyMenu, setShowReplyMenu] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
@@ -225,6 +226,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
   const handlePost = useCallback(async () => {
     if (!content.trim()) return;
     setPosting(true);
+    setSubmitError(null);
 
     const allTopics = [...selectedTopics, ...customHashtags];
 
@@ -235,19 +237,6 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
       articleUrl: articleUrl || undefined,
       civilityScore: civility.score,
     });
-
-    // Reset form and close immediately (post already visible)
-    setContent('');
-    setArticleUrl('');
-    setSelectedTopics([]);
-    setCustomHashtags([]);
-    setShowCivilityCheck(false);
-    setCommentPolicy('everyone');
-    setPosting(false);
-    onClose();
-
-    // Notify parent to refresh feed
-    onPostCreated?.();
 
     // ─── Server persistence ─────────────────────────────
     try {
@@ -269,11 +258,24 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
       const data = await res.json();
       // Mark post as confirmed with server-assigned data
       confirmPost(newPost.id, data.post);
+      // Notify parent only after confirmed persistence
+      onPostCreated?.();
+      // Reset form + close after successful persistence
+      setContent('');
+      setArticleUrl('');
+      setSelectedTopics([]);
+      setCustomHashtags([]);
+      setShowCivilityCheck(false);
+      setCommentPolicy('everyone');
+      onClose();
     } catch {
-      // Server failed — mark as failed for rollback UI
-      markPostFailed(newPost.id);
+      // Server failed — remove optimistic post so UI never pretends it posted
+      removePost(newPost.id);
+      setSubmitError('Post failed to publish. Please try again.');
+    } finally {
+      setPosting(false);
     }
-  }, [content, selectedTopics, customHashtags, articleUrl, civility.score, addPost, confirmPost, markPostFailed, onClose, onPostCreated]);
+  }, [content, selectedTopics, customHashtags, articleUrl, civility.score, addPost, confirmPost, removePost, onClose, onPostCreated]);
 
   const allTags = [...selectedTopics, ...customHashtags];
   const charCount = content.length;
@@ -545,6 +547,12 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
                   </p>
                 )}
               </div>
+            </div>
+          )}
+
+          {submitError && (
+            <div className="mt-3 p-3 rounded-lg border border-danger/30 bg-danger/10 text-danger-light text-xs">
+              {submitError}
             </div>
           )}
         </div>

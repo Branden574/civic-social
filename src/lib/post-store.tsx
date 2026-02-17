@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 // ─── Types matching PostData from post-card.tsx ──────────────
 
@@ -72,31 +73,32 @@ const PostStoreContext = createContext<PostStoreContextValue>({
   hydrated: false,
 });
 
-// ─── Current user constants ──────────────────────────────────
-
-const CURRENT_USER = {
-  id: 'user-current',
-  displayName: 'Branden Vincent-Walker',
-  affiliations: ['center-left'],
-  verificationLevel: 'EXPERT_VERIFIED',
-  civicReputation: 0.92,
-};
-
 // ─── Provider ────────────────────────────────────────────────
 
 export function PostStoreProvider({ children }: { children: ReactNode }) {
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const { user } = useAuth();
 
   // ── Hydrate from server on mount ────────────────────────
   useEffect(() => {
+    const currentUserId: string | undefined = user?.id;
+    if (!currentUserId) return;
+    const authorId: string = currentUserId;
     let cancelled = false;
     async function hydrate() {
       try {
-        const res = await fetch(`/api/posts?author=${CURRENT_USER.id}`);
+        const res = await fetch(`/api/posts?author=${encodeURIComponent(authorId)}&_t=${Date.now()}`);
         if (!res.ok || cancelled) return;
         const data = await res.json();
         if (cancelled) return;
+        const fallbackAuthor: UserPost['author'] = {
+          id: authorId,
+          displayName: user?.displayName || 'You',
+          affiliations: [user?.onboarding?.affiliation || 'center'],
+          verificationLevel: 'EMAIL_VERIFIED',
+          civicReputation: 0.5,
+        };
         // Convert server posts to UserPost shape (merge, don't overwrite optimistic)
         const serverPosts: UserPost[] = (data.posts ?? []).map((p: Record<string, unknown>) => ({
           id: p.id as string,
@@ -104,7 +106,7 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
           createdAt: p.createdAt as string,
           topics: (p.topics ?? []) as string[],
           articleUrl: p.articleUrl as string | undefined,
-          author: (p.author ?? CURRENT_USER) as UserPost['author'],
+          author: (p.author ?? fallbackAuthor) as UserPost['author'],
           thread: null,
           sources: (p.sources ?? []) as UserPost['sources'],
           reactions: (p.reactions ?? { agree: 0, disagree: 0, insightful: 0, nuance: 0 }) as UserPost['reactions'],
@@ -133,7 +135,7 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
     }
     hydrate();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.id, user?.displayName, user?.onboarding?.affiliation]);
 
   const addPost = useCallback((input: {
     content: string;
@@ -141,13 +143,20 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
     articleUrl?: string;
     civilityScore: number;
   }): UserPost => {
+    const currentAuthor = {
+      id: user?.id || 'user-current',
+      displayName: user?.displayName || 'You',
+      affiliations: [user?.onboarding?.affiliation || 'center'],
+      verificationLevel: 'EMAIL_VERIFIED',
+      civicReputation: 0.5,
+    };
     const newPost: UserPost = {
       id: `user-post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       content: input.content,
       createdAt: new Date().toISOString(),
       topics: input.topics,
       articleUrl: input.articleUrl,
-      author: { ...CURRENT_USER },
+      author: currentAuthor,
       thread: null,
       sources: input.articleUrl
         ? [{
@@ -165,7 +174,7 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
           viewpointDiversity: 0,
           sourceCredibility: input.articleUrl ? 0.6 : 0,
           topicRelevance: input.topics.length > 0 ? 0.7 : 0.3,
-          authorReputation: CURRENT_USER.civicReputation,
+          authorReputation: currentAuthor.civicReputation,
           penalty: 0,
         },
         explanation: 'Your post — shown to you and your followers.',
@@ -177,7 +186,7 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
 
     setUserPosts((prev) => [newPost, ...prev]);
     return newPost;
-  }, []);
+  }, [user?.id, user?.displayName, user?.onboarding?.affiliation]);
 
   const removePost = useCallback((id: string) => {
     setUserPosts((prev) => prev.filter((p) => p.id !== id));
