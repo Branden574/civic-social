@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { PostCard, type PostData } from '@/components/feed/post-card';
 import { CredibilityBadge, VerifiedBadge } from '@/components/ui/credibility-badge';
+import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import {
   Search,
@@ -56,6 +57,7 @@ interface SearchUser {
 // ─── Component ──────────────────────────────────────────────
 
 export default function SearchPage() {
+  const { refreshMe } = useAuth();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -269,7 +271,7 @@ export default function SearchPage() {
                   )}
                   <div className="divide-y divide-border-subtle">
                     {(activeTab === 'all' ? people.slice(0, 5) : people).map((person, i) => (
-                      <PersonCard key={person.id} person={person} index={i} />
+                      <PersonCard key={person.id} person={person} index={i} onFollowChange={refreshMe} />
                     ))}
                   </div>
                 </div>
@@ -369,7 +371,7 @@ export default function SearchPage() {
 
 // ─── Person Card (used in search results) ────────────────────
 
-function PersonCard({ person, index }: { person: SearchUser; index: number }) {
+function PersonCard({ person, index, onFollowChange }: { person: SearchUser; index: number; onFollowChange?: () => void }) {
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [errorToast, setErrorToast] = useState<string | null>(null);
@@ -419,6 +421,7 @@ function PersonCard({ person, index }: { person: SearchUser; index: number }) {
       if (res.ok) {
         const data = await res.json();
         setFollowing(data.isFollowing);
+        onFollowChange?.();
       } else if (res.status === 401) {
         setFollowing(wasFollowing);
         setErrorToast('Please log in to follow users');

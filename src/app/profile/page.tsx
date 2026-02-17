@@ -32,8 +32,13 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [profileCardDismissed, setProfileCardDismissed] = useState(false);
   const { getPostsForProfile, postCount, hydrated } = usePostStore();
-  const { user, isAuthenticated, onboardingDone, profileCompletion, stats } = useAuth();
+  const { user, isAuthenticated, onboardingDone, profileCompletion, stats, refreshMe } = useAuth();
   const router = useRouter();
+
+  // Refetch /me on mount so followers/following/posts counts are always live
+  useEffect(() => {
+    if (isAuthenticated) refreshMe();
+  }, [isAuthenticated, refreshMe]);
 
   // Load dismiss state from localStorage
   useEffect(() => {

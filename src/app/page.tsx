@@ -8,7 +8,7 @@ import { LandingPage } from '@/components/landing/landing-page';
 import { useAuth } from '@/lib/auth-context';
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, refreshMe } = useAuth();
   const [composeOpen, setComposeOpen] = useState(false);
 
   // Logged-out users see the premium landing page
@@ -31,8 +31,7 @@ export default function HomePage() {
         isOpen={composeOpen}
         onClose={() => setComposeOpen(false)}
         onPostCreated={() => {
-          // FeedView will pick up the new post from PostStoreContext automatically
-          // on next render since mergedPosts recalculates from userPosts
+          refreshMe();
         }}
       />
     </div>
