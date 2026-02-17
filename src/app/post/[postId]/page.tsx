@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Heart,
   MessageSquare,
   Bookmark,
   Share2,
@@ -26,12 +26,15 @@ import {
   UserX,
   Loader2,
   AlertCircle,
+  Check,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { ReplySheet } from '@/components/compose/reply-sheet';
 import { ThreadSkeleton } from '@/components/ui/skeleton';
 import { DeleteConfirmModal } from '@/components/ui/delete-confirm-modal';
+import { useAuth } from '@/lib/auth-context';
 import type { PostData } from '@/components/feed/post-card';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -92,6 +95,8 @@ interface PostDetail {
   replies?: LegacyReply[];
 }
 
+type ReactionType = 'agree' | 'disagree' | 'insightful' | 'nuance';
+
 // ─── Verification icons ──────────────────────────────────────
 
 const verificationIcons: Record<string, { icon: typeof ShieldCheck; label: string; color: string }> = {
@@ -101,11 +106,148 @@ const verificationIcons: Record<string, { icon: typeof ShieldCheck; label: strin
   OFFICIAL_VERIFIED: { icon: Award, label: 'Verified Official', color: 'text-warning' },
 };
 
+// ─── Inline Toast ────────────────────────────────────────────
+
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2500);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return createPortal(
+    <div className="fixed bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 bg-surface-elevated border border-border-subtle rounded-xl shadow-lg text-sm text-text-primary animate-slide-up">
+      {message}
+    </div>,
+    document.body,
+  );
+}
+
+// ─── Feedback Reasons ────────────────────────────────────────
+
+const FEEDBACK_REASONS: Record<string, { id: string; label: string }[]> = {
+  agree: [
+    { id: 'well-sourced', label: 'Well-sourced & cited' },
+    { id: 'solution-oriented', label: 'Solution-oriented thinking' },
+    { id: 'changed-perspective', label: 'Changed my perspective' },
+    { id: 'fair-to-all', label: 'Fair to all sides' },
+    { id: 'expert-analysis', label: 'Expert-level analysis' },
+    { id: 'strong-evidence', label: 'Strong evidence presented' },
+  ],
+  disagree: [
+    { id: 'missing-sources', label: 'Missing credible sources' },
+    { id: 'misleading-claims', label: 'Contains misleading claims' },
+    { id: 'ignores-counter', label: 'Ignores counter-arguments' },
+    { id: 'one-sided', label: 'One-sided perspective' },
+    { id: 'inflammatory', label: 'Inflammatory language' },
+    { id: 'logical-fallacy', label: 'Logical fallacy' },
+  ],
+};
+
+// ─── Feedback Modal (Portal) ─────────────────────────────────
+
+function FeedbackModal({
+  reactionType,
+  onSubmit,
+  onSkip,
+}: {
+  reactionType: ReactionType;
+  onSubmit: (reasons: string[]) => void;
+  onSkip: () => void;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [submitted, setSubmitted] = useState(false);
+  const reasons = FEEDBACK_REASONS[reactionType] || FEEDBACK_REASONS.agree;
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSubmit = () => {
+    if (selected.size === 0) return;
+    setSubmitted(true);
+    onSubmit(Array.from(selected));
+  };
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  const isAgree = reactionType === 'agree';
+  const title = isAgree ? 'Why do you agree?' : 'Why do you disagree?';
+  const Icon = isAgree ? ThumbsUp : ThumbsDown;
+  const color = isAgree ? 'text-positive-light' : 'text-danger-light';
+
+  if (submitted) {
+    return createPortal(
+      <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
+        <div className="absolute inset-0 bg-black/50" onClick={onSkip} />
+        <div className="relative bg-bg rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-6 pb-safe text-center animate-slide-up">
+          <div className="w-12 h-12 rounded-full bg-positive/10 flex items-center justify-center mx-auto mb-3">
+            <Check className="w-6 h-6 text-positive-light" />
+          </div>
+          <p className="text-base font-semibold text-text-primary mb-1">Thanks for your feedback!</p>
+          <p className="text-sm text-text-muted mb-4">Your input helps improve content ranking.</p>
+          <button onClick={onSkip} className="px-6 py-2.5 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors">Done</button>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onSkip} />
+      <div className="relative bg-bg rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md animate-slide-up shadow-2xl">
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <div className="flex items-center gap-2">
+            <Icon className={clsx('w-5 h-5', color)} />
+            <span className={clsx('text-sm font-semibold', color)}>{title}</span>
+          </div>
+          <button onClick={onSkip} className="p-2 -mr-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex justify-center mb-2"><div className="w-10 h-1 rounded-full bg-surface-active" /></div>
+        <div className="px-5 pb-5 space-y-2">
+          {reasons.map((reason) => {
+            const isSelected = selected.has(reason.id);
+            return (
+              <button key={reason.id} onClick={() => toggle(reason.id)} className={clsx(
+                'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-all min-h-[48px] active:scale-[0.98]',
+                isSelected ? 'bg-civic/10 border border-civic/30 text-text-primary font-medium' : 'bg-surface-elevated border border-border-subtle text-text-secondary hover:bg-surface-hover',
+              )}>
+                <div className={clsx('w-5 h-5 rounded border-2 flex items-center justify-center shrink-0', isSelected ? 'bg-civic border-civic text-white' : 'border-border-strong')}>
+                  {isSelected && <Check className="w-3.5 h-3.5" />}
+                </div>
+                <span>{reason.label}</span>
+              </button>
+            );
+          })}
+          <div className="flex gap-2 pt-2">
+            <button onClick={onSkip} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:bg-surface-hover transition-colors min-h-[44px]">Skip</button>
+            <button onClick={handleSubmit} disabled={selected.size === 0} className={clsx(
+              'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px]',
+              selected.size > 0 ? 'bg-civic text-white hover:bg-civic-dark' : 'bg-surface-active text-text-muted cursor-not-allowed',
+            )}>Submit ({selected.size})</button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 // ─── Thread Page ─────────────────────────────────────────────
 
 export default function ThreadPage() {
   const { postId } = useParams<{ postId: string }>();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   // Post state
   const [postDetail, setPostDetail] = useState<PostDetail | null>(null);
@@ -126,6 +268,14 @@ export default function ThreadPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Reaction state
+  const [viewerReaction, setViewerReaction] = useState<ReactionType | null>(null);
+  const [reactionDeltas, setReactionDeltas] = useState<Record<ReactionType, number>>({ agree: 0, disagree: 0, insightful: 0, nuance: 0 });
+  const [reactionLoading, setReactionLoading] = useState(false);
+  const [showFeedback, setShowFeedback] = useState<ReactionType | null>(null);
+  const [hasFeedback, setHasFeedback] = useState(false);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -141,7 +291,6 @@ export default function ThreadPage() {
 
     (async () => {
       try {
-        // Try the detail API first
         const detailRes = await fetch(`/api/posts/${encodeURIComponent(postId)}`);
         if (detailRes.ok) {
           const data = await detailRes.json();
@@ -150,7 +299,6 @@ export default function ThreadPage() {
             setCommentCount(data.post.comment_count ?? 0);
           }
         } else {
-          // Fall back to feed search for mock posts
           const feedRes = await fetch(`/api/feed?tab=for-you&sort=top&limit=50&_t=${Date.now()}`);
           if (feedRes.ok) {
             const feedData = await feedRes.json();
@@ -170,6 +318,24 @@ export default function ThreadPage() {
 
     return () => { cancelled = true; };
   }, [postId]);
+
+  // ── Fetch viewer reaction state ────────────────────────
+  useEffect(() => {
+    if (!postId || !isAuthenticated) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/posts/${encodeURIComponent(postId)}/reactions`);
+        if (res.ok) {
+          const data = await res.json();
+          setViewerReaction(data.viewer_reaction);
+          setReactionDeltas(data.deltas);
+          setHasFeedback(data.has_feedback);
+        }
+      } catch {
+        // Non-critical
+      }
+    })();
+  }, [postId, isAuthenticated]);
 
   // ── Fetch comments ───────────────────────────────────────
   const fetchComments = useCallback(async (cursor?: string) => {
@@ -198,11 +364,98 @@ export default function ThreadPage() {
     if (!loading) fetchComments();
   }, [loading, fetchComments]);
 
+  // ── Reaction handler ────────────────────────────────────
+  const handleReaction = useCallback(async (reaction: ReactionType) => {
+    if (!isAuthenticated) {
+      setToast('Please log in to react to posts');
+      return;
+    }
+    if (reactionLoading) return;
+
+    const prevReaction = viewerReaction;
+    const prevDeltas = { ...reactionDeltas };
+    const newDeltas = { ...reactionDeltas };
+
+    if (prevReaction === reaction) {
+      setViewerReaction(null);
+      newDeltas[reaction] = Math.max(0, newDeltas[reaction] - 1);
+    } else {
+      if (prevReaction) newDeltas[prevReaction] = Math.max(0, newDeltas[prevReaction] - 1);
+      newDeltas[reaction] = newDeltas[reaction] + 1;
+      setViewerReaction(reaction);
+    }
+    setReactionDeltas(newDeltas);
+    setReactionLoading(true);
+
+    try {
+      const res = await fetch(`/api/posts/${encodeURIComponent(postId)}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setViewerReaction(data.viewer_reaction);
+        setReactionDeltas(data.deltas);
+        setHasFeedback(data.has_feedback);
+        if (data.viewer_reaction && !hasFeedback && !data.has_feedback &&
+            (data.viewer_reaction === 'agree' || data.viewer_reaction === 'disagree')) {
+          setShowFeedback(data.viewer_reaction);
+        }
+      } else if (res.status === 401) {
+        setToast('Please log in to react to posts');
+        setViewerReaction(prevReaction);
+        setReactionDeltas(prevDeltas);
+      } else {
+        setViewerReaction(prevReaction);
+        setReactionDeltas(prevDeltas);
+        setToast('Failed to save reaction');
+      }
+    } catch {
+      setViewerReaction(prevReaction);
+      setReactionDeltas(prevDeltas);
+      setToast('Network error — please try again');
+    } finally {
+      setReactionLoading(false);
+    }
+  }, [isAuthenticated, viewerReaction, reactionDeltas, reactionLoading, postId, hasFeedback]);
+
+  // ── Feedback submit ─────────────────────────────────────
+  const handleFeedbackSubmit = useCallback(async (reasons: string[]) => {
+    try {
+      await fetch(`/api/posts/${encodeURIComponent(postId)}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'feedback', reaction: showFeedback, reasons }),
+      });
+      setHasFeedback(true);
+    } catch {
+      // Best-effort
+    }
+    setShowFeedback(null);
+  }, [postId, showFeedback]);
+
+  // ── Share handler ───────────────────────────────────────
+  const handleShare = useCallback(async () => {
+    const url = `${window.location.origin}/post/${encodeURIComponent(postId)}`;
+    const displayPost = postDetail || fallbackPost;
+    const title = displayPost ? `${displayPost.author.displayName} on Civic Social` : 'Civic Social';
+    const text = displayPost ? displayPost.content.slice(0, 140) : '';
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try { await navigator.share({ title, text, url }); return; } catch { /* cancelled */ }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setToast('Link copied to clipboard');
+    } catch {
+      setToast('Could not copy link');
+    }
+  }, [postId, postDetail, fallbackPost]);
+
   // ── Submit reply ─────────────────────────────────────────
   const handleReplySubmit = useCallback(async (content: string) => {
     setCommentError(null);
-
-    // Optimistic insert
     const optimisticComment: ServerComment = {
       id: `optimistic-${Date.now()}`,
       postId,
@@ -220,33 +473,25 @@ export default function ThreadPage() {
       },
       _optimistic: true,
     };
-
     setComments((prev) => [optimisticComment, ...prev]);
     setCommentCount((c) => c + 1);
-
     try {
       const res = await fetch(`/api/posts/${encodeURIComponent(postId)}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body: content }),
       });
-
       if (res.ok) {
         const data = await res.json();
-        // Replace optimistic with server response
-        setComments((prev) =>
-          prev.map((c) => c.id === optimisticComment.id ? { ...data.comment, _optimistic: false } : c),
-        );
+        setComments((prev) => prev.map((c) => c.id === optimisticComment.id ? { ...data.comment, _optimistic: false } : c));
         setCommentCount(data.commentCount);
       } else {
         const err = await res.json().catch(() => ({}));
-        // Rollback
         setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
         setCommentCount((c) => Math.max(0, c - 1));
         setCommentError(err.error || 'Failed to post comment.');
       }
     } catch {
-      // Rollback
       setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
       setCommentCount((c) => Math.max(0, c - 1));
       setCommentError('Network error. Please try again.');
@@ -258,11 +503,8 @@ export default function ThreadPage() {
     const prev = comments;
     setComments((c) => c.filter((x) => x.id !== commentId));
     setCommentCount((c) => Math.max(0, c - 1));
-
     try {
-      const res = await fetch(`/api/posts/${encodeURIComponent(postId)}/comments?commentId=${commentId}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(`/api/posts/${encodeURIComponent(postId)}/comments?commentId=${commentId}`, { method: 'DELETE' });
       if (!res.ok) {
         setComments(prev);
         setCommentCount((c) => c + 1);
@@ -297,13 +539,19 @@ export default function ThreadPage() {
     }
   }, [post, router]);
 
-  // Resolve display data (prefer detail API, fall back to feed data)
   const displayPost = postDetail || fallbackPost;
   const verification = displayPost ? verificationIcons[displayPost.author.verificationLevel] : null;
   const VerifIcon = verification?.icon || ShieldCheck;
-
-  // Legacy mock replies from the post detail API or fallback feed data
   const legacyReplies: LegacyReply[] = (postDetail?.replies ?? fallbackPost?.replies ?? []) as LegacyReply[];
+
+  // Merged counts
+  const baseCounts = displayPost?.reactions ?? { agree: 0, disagree: 0, insightful: 0, nuance: 0 };
+  const mergedCounts = {
+    agree: baseCounts.agree + reactionDeltas.agree,
+    disagree: baseCounts.disagree + reactionDeltas.disagree,
+    insightful: baseCounts.insightful + reactionDeltas.insightful,
+    nuance: baseCounts.nuance + reactionDeltas.nuance,
+  };
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -315,7 +563,7 @@ export default function ThreadPage() {
             <div className="flex items-center gap-3 px-4 sm:px-6 py-3">
               <button
                 onClick={() => router.back()}
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-all duration-150 active:scale-90"
+                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-all duration-150 active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -331,13 +579,10 @@ export default function ThreadPage() {
             </div>
           </header>
 
-          {/* ── Loading State ── */}
           {loading && <ThreadSkeleton />}
 
-          {/* ── Thread Content ── */}
           {!loading && displayPost && (
             <div className="screen-enter">
-              {/* ── Main Post (expanded) ── */}
               <article className="px-4 sm:px-6 py-6 border-b border-border-subtle">
                 <div className="flex items-start gap-3 mb-4">
                   <Link
@@ -348,15 +593,10 @@ export default function ThreadPage() {
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <Link
-                        href={`/profile/${encodeURIComponent(displayPost.author.id)}`}
-                        className="text-base font-semibold text-text-primary hover:text-civic-light transition-colors"
-                      >
+                      <Link href={`/profile/${encodeURIComponent(displayPost.author.id)}`} className="text-base font-semibold text-text-primary hover:text-civic-light transition-colors">
                         {displayPost.author.displayName}
                       </Link>
-                      {verification && (
-                        <VerifIcon className={clsx('w-4 h-4', verification.color)} />
-                      )}
+                      {verification && <VerifIcon className={clsx('w-4 h-4', verification.color)} />}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-text-muted">
                       <time>{new Date(displayPost.createdAt).toLocaleString()}</time>
@@ -376,11 +616,7 @@ export default function ThreadPage() {
                 {displayPost.topics && displayPost.topics.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {displayPost.topics.map((topic) => (
-                      <Link
-                        key={topic}
-                        href={`/hashtag/${encodeURIComponent(topic)}`}
-                        className="text-xs font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full hover:bg-civic/15 transition-colors"
-                      >
+                      <Link key={topic} href={`/hashtag/${encodeURIComponent(topic)}`} className="text-xs font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full hover:bg-civic/15 transition-colors">
                         #{topic}
                       </Link>
                     ))}
@@ -390,19 +626,10 @@ export default function ThreadPage() {
                 {displayPost.sources && displayPost.sources.length > 0 && (
                   <div className="mb-4 space-y-1.5">
                     {displayPost.sources.map((src, i) => (
-                      <a
-                        key={i}
-                        href={src.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-xs text-civic-light hover:text-civic bg-surface rounded-lg px-3 py-2 border border-border-subtle hover:border-civic/30 transition-all"
-                      >
+                      <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-civic-light hover:text-civic bg-surface rounded-lg px-3 py-2 border border-border-subtle hover:border-civic/30 transition-all">
                         <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{src.domain}</span>
-                        <span className={clsx(
-                          'ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded',
-                          src.trustScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light',
-                        )}>
+                        <span className={clsx('ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded', src.trustScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light')}>
                           {Math.round(src.trustScore * 100)}%
                         </span>
                       </a>
@@ -410,36 +637,72 @@ export default function ThreadPage() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-4 py-3 border-y border-border-subtle text-xs text-text-muted">
-                  <span><strong className="text-text-primary">{displayPost.reactions.agree}</strong> Agree</span>
-                  <span><strong className="text-text-primary">{displayPost.reactions.disagree}</strong> Disagree</span>
-                  <span><strong className="text-text-primary">{displayPost.reactions.insightful}</strong> Insightful</span>
-                  <span><strong className="text-text-primary">{displayPost.reactions.nuance}</strong> Nuanced</span>
+                {/* ── Reaction Counts Row ── */}
+                <div className="flex items-center gap-4 py-3 border-y border-border-subtle text-xs text-text-muted flex-wrap">
+                  <span><strong className="text-text-primary">{mergedCounts.agree}</strong> Agree</span>
+                  <span><strong className="text-text-primary">{mergedCounts.disagree}</strong> Disagree</span>
+                  <span><strong className="text-text-primary">{mergedCounts.insightful}</strong> Insightful</span>
+                  <span><strong className="text-text-primary">{mergedCounts.nuance}</strong> Nuanced</span>
                 </div>
 
-                <div className="flex items-center justify-around py-2 -mx-2">
-                  <ActionButton icon={ThumbsUp} label="Agree" onClick={() => {}} />
-                  <ActionButton icon={ThumbsDown} label="Disagree" onClick={() => {}} />
-                  <ActionButton icon={Lightbulb} label="Insightful" onClick={() => {}} />
-                  <ActionButton icon={Scale} label="Nuanced" onClick={() => {}} />
-                  <ActionButton
-                    icon={bookmarked ? BookmarkCheck : Bookmark}
-                    label="Save"
-                    active={bookmarked}
+                {/* ── Action Buttons (API-connected) ── */}
+                <div className="flex items-center justify-around py-2 -mx-2 flex-wrap gap-1">
+                  {([
+                    { type: 'agree' as ReactionType, icon: ThumbsUp, label: 'Agree', color: 'text-positive-light', bg: 'bg-positive/10' },
+                    { type: 'disagree' as ReactionType, icon: ThumbsDown, label: 'Disagree', color: 'text-danger-light', bg: 'bg-danger/10' },
+                    { type: 'insightful' as ReactionType, icon: Lightbulb, label: 'Insightful', color: 'text-warning-light', bg: 'bg-warning/10' },
+                    { type: 'nuance' as ReactionType, icon: Scale, label: 'Nuanced', color: 'text-civic-light', bg: 'bg-civic/10' },
+                  ]).map((btn) => {
+                    const isActive = viewerReaction === btn.type;
+                    return (
+                      <button
+                        key={btn.type}
+                        onClick={() => handleReaction(btn.type)}
+                        disabled={reactionLoading}
+                        className={clsx(
+                          'flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 active:scale-90 min-h-[44px] select-none',
+                          isActive ? `${btn.color} ${btn.bg} font-semibold` : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                          reactionLoading && 'opacity-60',
+                        )}
+                      >
+                        <btn.icon className={clsx('w-4 h-4', isActive && btn.color)} />
+                        <span className="hidden sm:inline">{btn.label}</span>
+                      </button>
+                    );
+                  })}
+                  <button
                     onClick={() => setBookmarked(!bookmarked)}
-                  />
-                  <ActionButton icon={Share2} label="Share" onClick={() => {}} />
+                    className={clsx(
+                      'flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 active:scale-90 min-h-[44px]',
+                      bookmarked ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                    )}
+                  >
+                    {bookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                    <span className="hidden sm:inline">Save</span>
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-all duration-150 active:scale-90 min-h-[44px]"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
                   {isOwnPost && (
-                    <ActionButton icon={Trash2} label="Delete" onClick={() => setShowDeleteConfirm(true)} />
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium text-text-muted hover:text-danger-light hover:bg-danger/5 transition-all duration-150 active:scale-90 min-h-[44px]"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Delete</span>
+                    </button>
                   )}
                 </div>
 
-                {/* Algorithm explanation */}
                 {'algorithm' in displayPost && (displayPost as PostData).algorithm && (
                   <>
                     <button
                       onClick={() => setShowAlgo(!showAlgo)}
-                      className="flex items-center gap-2 mt-2 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                      className="flex items-center gap-2 mt-2 text-xs text-text-muted hover:text-text-secondary transition-colors min-h-[44px]"
                     >
                       <BarChart3 className="w-3.5 h-3.5" />
                       Why am I seeing this?
@@ -459,37 +722,30 @@ export default function ThreadPage() {
                 {canComment ? (
                   <button
                     onClick={() => setReplyOpen(true)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-surface-elevated rounded-xl border border-border-subtle text-sm text-text-muted hover:text-text-secondary hover:border-border-strong transition-all duration-150 active:scale-[0.99]"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-surface-elevated rounded-xl border border-border-subtle text-sm text-text-muted hover:text-text-secondary hover:border-border-strong transition-all duration-150 active:scale-[0.99] min-h-[44px]"
                   >
                     <MessageSquare className="w-4 h-4" />
                     Post your reply...
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2 px-4 py-2.5 bg-surface/50 rounded-xl border border-border-subtle text-sm text-text-muted">
-                    {blockReason?.includes('locked') ? (
-                      <Lock className="w-4 h-4 text-warning-light shrink-0" />
-                    ) : blockReason?.includes('Blocked') ? (
-                      <UserX className="w-4 h-4 text-danger-light shrink-0" />
-                    ) : (
-                      <MessageSquare className="w-4 h-4 shrink-0" />
-                    )}
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-surface/50 rounded-xl border border-border-subtle text-sm text-text-muted min-h-[44px]">
+                    {blockReason?.includes('locked') ? <Lock className="w-4 h-4 text-warning-light shrink-0" />
+                      : blockReason?.includes('Blocked') ? <UserX className="w-4 h-4 text-danger-light shrink-0" />
+                        : <MessageSquare className="w-4 h-4 shrink-0" />}
                     <span>{blockReason || 'Comments are not available'}</span>
                   </div>
                 )}
               </div>
 
-              {/* ── Comment error ── */}
               {commentError && (
                 <div className="mx-4 sm:mx-6 mt-2 flex items-center gap-2 p-2.5 bg-danger/5 border border-danger/20 rounded-lg text-xs text-danger-light">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   {commentError}
-                  <button onClick={() => setCommentError(null)} className="ml-auto text-text-muted hover:text-text-secondary">×</button>
+                  <button onClick={() => setCommentError(null)} className="ml-auto text-text-muted hover:text-text-secondary p-1 min-w-[44px] min-h-[44px] flex items-center justify-center">×</button>
                 </div>
               )}
 
-              {/* ── Comments list ── */}
               <div>
-                {/* Server-persisted comments */}
                 {comments.map((comment, i) => (
                   <CommentCard
                     key={comment.id}
@@ -499,26 +755,15 @@ export default function ThreadPage() {
                     onDelete={() => handleDeleteComment(comment.id)}
                   />
                 ))}
-
-                {/* Legacy mock replies (from feed data) */}
                 {legacyReplies.map((reply, i) => {
                   const replyVerif = verificationIcons[reply.author.verificationLevel];
                   const ReplyVerifIcon = replyVerif?.icon || ShieldCheck;
                   return (
-                    <div
-                      key={reply.id}
-                      className="px-4 sm:px-6 py-4 border-b border-border-subtle hover:bg-surface/30 transition-colors duration-150 animate-fade-in"
-                      style={{ animationDelay: `${(comments.length + i) * 50}ms`, animationFillMode: 'forwards', opacity: 0 }}
-                    >
+                    <div key={reply.id} className="px-4 sm:px-6 py-4 border-b border-border-subtle hover:bg-surface/30 transition-colors duration-150 animate-fade-in" style={{ animationDelay: `${(comments.length + i) * 50}ms`, animationFillMode: 'forwards', opacity: 0 }}>
                       <div className="flex items-start gap-3">
-                        <div className="flex flex-col items-center">
-                          <Link
-                            href={`/profile/${encodeURIComponent(reply.author.id)}`}
-                            className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle hover:border-civic/50 transition-all shrink-0"
-                          >
-                            {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                          </Link>
-                        </div>
+                        <Link href={`/profile/${encodeURIComponent(reply.author.id)}`} className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle hover:border-civic/50 transition-all shrink-0">
+                          {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                        </Link>
                         <div className="flex-1 min-w-0 pb-1">
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-sm font-semibold text-text-primary">{reply.author.displayName}</span>
@@ -531,23 +776,17 @@ export default function ThreadPage() {
                     </div>
                   );
                 })}
-
-                {/* Empty state — only show if there are truly no comments or replies */}
                 {comments.length === 0 && legacyReplies.length === 0 && !commentsLoading && (
                   <div className="px-4 sm:px-6 py-12 text-center">
                     <MessageSquare className="w-8 h-8 text-text-muted mx-auto mb-2" />
                     <p className="text-sm text-text-secondary">No comments yet. Be the first to contribute.</p>
                   </div>
                 )}
-
-                {/* Loading more */}
                 {commentsLoading && (
                   <div className="flex justify-center py-6">
                     <Loader2 className="w-5 h-5 text-civic animate-spin" />
                   </div>
                 )}
-
-                {/* Load more */}
                 {hasMore && !commentsLoading && (
                   <div className="flex justify-center py-4">
                     <button
@@ -555,7 +794,7 @@ export default function ThreadPage() {
                         const last = comments[comments.length - 1];
                         if (last) fetchComments(last.id);
                       }}
-                      className="text-xs text-civic-light hover:text-civic font-medium px-4 py-2 rounded-lg hover:bg-civic/10 transition-all"
+                      className="text-xs text-civic-light hover:text-civic font-medium px-4 py-2.5 rounded-lg hover:bg-civic/10 transition-all min-h-[44px]"
                     >
                       Load more comments
                     </button>
@@ -567,22 +806,18 @@ export default function ThreadPage() {
             </div>
           )}
 
-          {/* ── Not Found ── */}
           {!loading && !displayPost && (
             <div className="px-4 sm:px-6 py-16 text-center">
               <Shield className="w-10 h-10 text-text-muted mx-auto mb-3" />
               <h3 className="text-sm font-semibold text-text-primary mb-1">Post not found</h3>
-              <p className="text-xs text-text-muted">This post may have been removed or does not exist.</p>
-              <Link href="/" className="inline-block mt-4 text-sm text-civic-light hover:underline">
-                Return to feed
-              </Link>
+              <p className="text-xs text-text-muted">This post may have been removed.</p>
+              <Link href="/" className="inline-block mt-4 text-sm text-civic-light hover:underline">Return to feed</Link>
             </div>
           )}
         </div>
       </main>
       <MobileNav />
 
-      {/* Reply Sheet */}
       <ReplySheet
         isOpen={replyOpen}
         onClose={() => setReplyOpen(false)}
@@ -590,7 +825,6 @@ export default function ThreadPage() {
         replyingTo={displayPost ? { displayName: displayPost.author.displayName, content: displayPost.content.slice(0, 120) } : undefined}
       />
 
-      {/* Delete Confirmation Modal */}
       {displayPost && (
         <DeleteConfirmModal
           isOpen={showDeleteConfirm}
@@ -601,6 +835,18 @@ export default function ThreadPage() {
           error={deleteError}
         />
       )}
+
+      {/* Feedback modal (portal) */}
+      {showFeedback && (
+        <FeedbackModal
+          reactionType={showFeedback}
+          onSubmit={handleFeedbackSubmit}
+          onSkip={() => setShowFeedback(null)}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   );
 }
@@ -630,48 +876,35 @@ function CommentCard({
       style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards', opacity: 0 }}
     >
       <div className="flex items-start gap-3">
-        <div className="flex flex-col items-center">
-          <Link
-            href={`/profile/${encodeURIComponent(comment.author.id)}`}
-            className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle hover:border-civic/50 transition-all shrink-0"
-          >
-            {comment.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-          </Link>
-        </div>
-
+        <Link
+          href={`/profile/${encodeURIComponent(comment.author.id)}`}
+          className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle hover:border-civic/50 transition-all shrink-0"
+        >
+          {comment.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+        </Link>
         <div className="flex-1 min-w-0 pb-1">
           <div className="flex items-center gap-1.5 mb-1">
-            <Link
-              href={`/profile/${encodeURIComponent(comment.author.id)}`}
-              className="text-sm font-semibold text-text-primary hover:text-civic-light transition-colors"
-            >
+            <Link href={`/profile/${encodeURIComponent(comment.author.id)}`} className="text-sm font-semibold text-text-primary hover:text-civic-light transition-colors">
               {comment.author.displayName}
             </Link>
             {verif && <VerifIcon className={clsx('w-3.5 h-3.5', verif.color)} />}
             <span className="text-[11px] text-text-muted">· {formatRelativeTime(comment.createdAt)}</span>
-            {comment._optimistic && (
-              <Loader2 className="w-3 h-3 text-text-muted animate-spin" />
-            )}
+            {comment._optimistic && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
           </div>
-          <p className="text-[14px] text-text-secondary leading-relaxed">
-            {comment.body}
-          </p>
+          <p className="text-[14px] text-text-secondary leading-relaxed">{comment.body}</p>
           <div className="flex items-center gap-3 mt-2">
-            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-positive-light transition-colors active:scale-90">
+            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-positive-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center">
               <ThumbsUp className="w-3.5 h-3.5" />
             </button>
-            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-danger-light transition-colors active:scale-90">
+            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-danger-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center">
               <ThumbsDown className="w-3.5 h-3.5" />
             </button>
-            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-civic-light transition-colors active:scale-90">
+            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-civic-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center">
               <MessageSquare className="w-3.5 h-3.5" />
               {comment.replyCount > 0 && comment.replyCount}
             </button>
             {isOwn && (
-              <button
-                onClick={onDelete}
-                className="flex items-center gap-1 text-xs text-text-muted hover:text-danger-light transition-colors ml-auto"
-              >
+              <button onClick={onDelete} className="flex items-center gap-1 text-xs text-text-muted hover:text-danger-light transition-colors ml-auto p-1 min-w-[44px] min-h-[44px] justify-center">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
@@ -682,40 +915,7 @@ function CommentCard({
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────────
-
-function ActionButton({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: typeof Heart;
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-}) {
-  const [animating, setAnimating] = useState(false);
-
-  return (
-    <button
-      onClick={() => {
-        setAnimating(true);
-        onClick();
-        setTimeout(() => setAnimating(false), 600);
-      }}
-      className={clsx(
-        'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 active:scale-90',
-        active
-          ? 'text-civic-light bg-civic/10'
-          : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
-      )}
-    >
-      <Icon className={clsx('w-4 h-4', animating && 'animate-heart-beat', active && 'text-civic')} />
-      <span className="hidden sm:inline">{label}</span>
-    </button>
-  );
-}
+// ─── Helpers ─────────────────────────────────────────────────
 
 function formatRelativeTime(dateStr: string): string {
   const now = Date.now();
