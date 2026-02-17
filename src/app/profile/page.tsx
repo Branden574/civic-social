@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   PenLine,
   Loader2,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { usePostStore, type UserPost } from '@/lib/post-store';
@@ -27,9 +28,24 @@ type ProfileTab = 'posts' | 'overview' | 'debates' | 'activity' | 'credibility';
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
+  const [profileCardDismissed, setProfileCardDismissed] = useState(false);
   const { getPostsForProfile, postCount, hydrated } = usePostStore();
   const { user, isAuthenticated, onboardingDone, profileCompletion, stats } = useAuth();
   const router = useRouter();
+
+  // Load dismiss state from localStorage
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('profile_card_dismissed') === 'true') {
+        setProfileCardDismissed(true);
+      }
+    } catch { /* SSR or private browsing */ }
+  }, []);
+
+  const dismissProfileCard = () => {
+    setProfileCardDismissed(true);
+    try { localStorage.setItem('profile_card_dismissed', 'true'); } catch { /* ignore */ }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -62,8 +78,8 @@ export default function ProfilePage() {
   const followingCount = stats?.followingCount ?? 0;
   const postsCount = stats?.postsCount ?? postCount;
 
-  // Profile completion: show card only if NOT complete (from server)
-  const showFinishProfile = !!profileCompletion && !profileCompletion.isComplete && !onboardingDone;
+  // Profile completion: show card only if NOT complete, NOT dismissed
+  const showFinishProfile = !!profileCompletion && !profileCompletion.isComplete && !onboardingDone && !profileCardDismissed;
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -145,20 +161,28 @@ export default function ProfilePage() {
           {/* Complete your profile card — shows only when profile is incomplete */}
           {showFinishProfile && (
             <div className="mx-4 sm:mx-6 mb-4">
-              <div className="bg-civic/5 border border-civic/20 rounded-xl p-4 flex items-center gap-3">
+              <div className="bg-civic/5 border border-civic/20 rounded-xl p-4 flex items-center gap-3 relative">
+                <button
+                  onClick={dismissProfileCard}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                  title="Dismiss"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
                 <div className="w-10 h-10 rounded-xl bg-civic/15 flex items-center justify-center shrink-0">
                   <User className="w-5 h-5 text-civic-light" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-text-primary">Complete your profile</p>
                   <p className="text-xs text-text-muted">
-                    {profileCompletion.missingFields.length > 0
-                      ? `Missing: ${profileCompletion.missingFields.join(', ')}`
+                    {profileCompletion!.missingFields.length > 0
+                      ? `Missing: ${profileCompletion!.missingFields.join(', ')}`
                       : 'Add topics and preferences for a better feed experience.'}
                   </p>
                 </div>
                 <Link
                   href="/settings"
+                  onClick={dismissProfileCard}
                   className="px-3 py-1.5 bg-civic text-white text-xs font-semibold rounded-lg hover:bg-civic-dark transition-colors shrink-0"
                 >
                   Finish
