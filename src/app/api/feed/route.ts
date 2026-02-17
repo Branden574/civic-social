@@ -1,0 +1,364 @@
+// ═══════════════════════════════════════════════════════════════
+// Civic Social — Feed API (Hardened)
+// ═══════════════════════════════════════════════════════════════
+// GET /api/feed?tab=for-you|following&limit=50&hashtag=topic&sort=top|latest
+// ═══════════════════════════════════════════════════════════════
+
+import { NextRequest, NextResponse } from 'next/server';
+import { generateFeed } from '@/lib/algorithm';
+import { generateColdStartFeed, type ColdStartProfile } from '@/lib/algorithm/cold-start';
+import { mockCandidates, mockUsers, mockReplies } from '@/lib/data/mock-data';
+import type { FeedCandidate } from '@/lib/algorithm';
+import { getDeletedPostIds } from '@/lib/deleted-posts';
+import { getAllPublishedPosts, getCommentCount, type PersistedPost } from '@/lib/post-data-store';
+import { getReleasedNewPosts } from '@/lib/simulated-new-posts';
+import { getClientIp, tooManyRequests } from '@/lib/security/api-guard';
+import { readLimiter } from '@/lib/security/rate-limiter';
+import { sanitizeText, sanitizeUrl, clampInt } from '@/lib/security/sanitize';
+
+// ─── Safety filter (shared by both modes) ────────────────────
+function applySafetyFilter(candidates: FeedCandidate[]): { safe: FeedCandidate[]; filtered: number } {
+  const deletedIds = getDeletedPostIds();
+  const safe = candidates.filter((c) => {
+    if (deletedIds.has(c.post.id)) return false;
+    if (c.post.botLikelihood > 0.9) return false;
+    if (c.post.flagCount > 20) return false;
+    if (c.post.toxicityScore > 0.95) return false;
+    return true;
+  });
+  return { safe, filtered: candidates.length - safe.length };
+}
+
+// ─── Serialize for "latest" mode (no algorithm scores) ───────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function serializeChronologicalPost(c: FeedCandidate) {
+  return {
+    id: c.post.id,
+    content: c.post.content,
+    createdAt: c.post.createdAt.toISOString(),
+    topics: c.post.topics,
+    author: {
+      id: c.author.id,
+      displayName: c.author.displayName,
+      affiliations: c.author.affiliations,
+      verificationLevel: c.author.verificationLevel,
+      civicReputation: c.author.civicReputation,
+    },
+    thread: c.thread
+      ? {
+          id: c.thread.id,
+          type: c.thread.type,
+          topics: c.thread.topics,
+          participantCount: c.thread.participantCount,
+          civilityScore: c.thread.civilityScore,
+          diversityScore: c.thread.diversityScore,
+        }
+      : null,
+    sources: c.post.sources.map((s: any) => ({
+      url: s.url,
+      domain: s.domain,
+      trustScore: s.trustScore,
+    })),
+    reactions: {
+      agree: c.post.agreeCount,
+      disagree: c.post.disagreeCount,
+      insightful: c.post.insightfulCount,
+      nuance: c.post.nuanceCount,
+    },
+    algorithm: {
+      qualityScore: 0,
+      signals: {
+        engagementQuality: 0,
+        civility: Math.round(c.post.civilityScore * 100) / 100,
+        viewpointDiversity: 0,
+        sourceCredibility: 0,
+        topicRelevance: 0,
+        authorReputation: Math.round(c.author.civicReputation * 100) / 100,
+        penalty: 0,
+      },
+      explanation: 'Showing in chronological order — most recent first.',
+      explanationTags: ['chronological'],
+    },
+    comment_policy: 'everyone' as const,
+    comment_count: getCommentCount(c.post.id) + mockReplies.filter((r) => r.postId === c.post.id).length,
+    replies: mockReplies
+      .filter((r) => r.postId === c.post.id)
+      .map((r) => ({
+        id: r.id,
+        content: r.content,
+        author: {
+          id: r.author.id,
+          displayName: r.author.displayName,
+          affiliations: r.author.affiliations,
+          verificationLevel: r.author.verificationLevel,
+        },
+        createdAt: r.createdAt.toISOString(),
+        civilityScore: r.civilityScore,
+        reactions: {
+          agree: r.agreeCount,
+          disagree: r.disagreeCount,
+          insightful: r.insightfulCount,
+        },
+      })),
+  };
+}
+
+// ─── Serialize a user-created PersistedPost for feed response ─
+function serializeUserPost(p: PersistedPost) {
+  const safeUrl = p.articleUrl ? sanitizeUrl(p.articleUrl) : null;
+  const authorProfile = {
+    id: p.authorId,
+    displayName: p.authorId === 'user-current' ? 'Branden Vincent-Walker' : 'User',
+    affiliations: ['center-left'],
+    verificationLevel: 'EXPERT_VERIFIED',
+    civicReputation: 0.92,
+  };
+  return {
+    id: p.id,
+    content: p.content,
+    createdAt: p.createdAt,
+    topics: p.topics,
+    author: authorProfile,
+    thread: null,
+    sources: safeUrl
+      ? [{ url: safeUrl, domain: new URL(safeUrl).hostname.replace('www.', ''), trustScore: 0.7 }]
+      : [],
+    reactions: { agree: 0, disagree: 0, insightful: 0, nuance: 0 },
+    algorithm: {
+      qualityScore: 0.5 + p.civilityScore * 0.3,
+      signals: {
+        engagementQuality: 0,
+        civility: Math.round(p.civilityScore * 100) / 100,
+        viewpointDiversity: 0,
+        sourceCredibility: p.articleUrl ? 0.6 : 0,
+        topicRelevance: p.topics.length > 0 ? 0.7 : 0.3,
+        authorReputation: 0.92,
+        penalty: 0,
+      },
+      explanation: 'Your post — shown to you and your followers.',
+      explanationTags: ['your-post'],
+    },
+    comment_policy: p.comment_policy ?? 'everyone',
+    comment_count: getCommentCount(p.id),
+    replies: [],
+  };
+}
+
+export async function GET(request: NextRequest) {
+  // Rate limit
+  const ip = getClientIp(request);
+  const rl = readLimiter.check(ip);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
+  const { searchParams } = new URL(request.url);
+  const tab = searchParams.get('tab') || 'for-you';
+  const limit = clampInt(searchParams.get('limit'), 1, 100, 50); // Capped at 100 (was 250)
+  const hashtag = sanitizeText(searchParams.get('hashtag') || '').toLowerCase();
+  const sort = searchParams.get('sort') === 'latest' ? 'latest' : 'top';
+
+  const user = mockUsers.current;
+
+  // ── Fetch user-created posts from server store ─────────────
+  const deletedIds = getDeletedPostIds();
+  const userCreatedPosts = getAllPublishedPosts()
+    .filter((p) => !deletedIds.has(p.id))
+    .map(serializeUserPost);
+
+  // ── Merge mock candidates + simulated new posts ────────────
+  const simulatedPosts = getReleasedNewPosts();
+  const existingIds = new Set(mockCandidates.map((c) => c.post.id));
+  const newSimulated = simulatedPosts.filter((s) => !existingIds.has(s.post.id));
+  let candidates: FeedCandidate[] = [...newSimulated, ...mockCandidates];
+
+  // Filter by hashtag if provided
+  if (hashtag) {
+    candidates = candidates.filter((c) =>
+      c.post.topics.some((t) => t.toLowerCase().includes(hashtag)),
+    );
+  }
+
+  const followingPlusSelf = [...new Set([...user.followingIds, user.id])];
+
+  // ════════════════════════════════════════════════════════════
+  // LATEST MODE
+  // ════════════════════════════════════════════════════════════
+  if (sort === 'latest') {
+    let pool = candidates;
+    if (tab === 'following') {
+      pool = pool.filter((c) => followingPlusSelf.includes(c.author.id));
+    }
+
+    const { safe, filtered } = applySafetyFilter(pool);
+    const sorted = [...safe].sort(
+      (a, b) => b.post.createdAt.getTime() - a.post.createdAt.getTime(),
+    );
+
+    const trimmed = sorted.slice(0, limit);
+    const mockSerialized = trimmed.map(serializeChronologicalPost);
+    const allPosts = [...userCreatedPosts, ...mockSerialized]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+
+    return NextResponse.json({
+      tab,
+      sort: 'latest',
+      posts: allPosts,
+      diversity: null,
+      meta: {
+        totalCandidates: pool.length + userCreatedPosts.length,
+        filteredCount: filtered,
+        hashtag: hashtag || null,
+      },
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // TOP MODE — Full algorithmic ranking
+  // ════════════════════════════════════════════════════════════
+  if (tab === 'following') {
+    const followingCandidates = candidates.filter((c) =>
+      followingPlusSelf.includes(c.author.id),
+    );
+    const feed = generateFeed(followingCandidates, user, undefined, limit);
+    const followingPosts = [...userCreatedPosts, ...feed.posts.map(serializeRankedPost)];
+    return NextResponse.json({
+      tab: 'following',
+      sort: 'top',
+      posts: followingPosts,
+      diversity: feed.diversity,
+      meta: {
+        totalCandidates: feed.totalCandidates + userCreatedPosts.length,
+        filteredCount: feed.filteredCount,
+        hashtag: hashtag || null,
+      },
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // COLD-START MODE
+  // ════════════════════════════════════════════════════════════
+  const isNewUser = searchParams.get('newUser') === 'true';
+  const userTopics = (searchParams.get('topics') || '').split(',').filter(Boolean).map((t) => sanitizeText(t)).slice(0, 10);
+  const userCountry = sanitizeText(searchParams.get('country') || 'US').slice(0, 5);
+  const userAffiliation = sanitizeText(searchParams.get('affiliation') || '').slice(0, 30);
+  const daysSinceSignup = clampInt(searchParams.get('days'), 0, 365, 0);
+
+  if (isNewUser && daysSinceSignup < 7) {
+    const interactions = clampInt(searchParams.get('interactions'), 0, 10000, 0);
+    const coldStartProfile: ColdStartProfile = {
+      topics: userTopics.length > 0 ? userTopics : user.topicInterests,
+      country: userCountry,
+      affiliation: userAffiliation,
+      daysSinceSignup,
+      interactionCount: interactions,
+    };
+
+    const coldFeed = generateColdStartFeed(candidates, user, coldStartProfile, limit);
+
+    return NextResponse.json({
+      tab: 'for-you',
+      sort: 'top',
+      posts: coldFeed.posts.map(serializeRankedPost),
+      diversity: coldFeed.diversity,
+      meta: {
+        totalCandidates: coldFeed.totalCandidates,
+        filteredCount: coldFeed.filteredCount,
+        hashtag: hashtag || null,
+        coldStart: {
+          active: coldFeed.coldStartActive,
+          warmupProgress: coldFeed.warmupProgress,
+          phase: coldFeed.phase,
+        },
+      },
+    });
+  }
+
+  // For You tab: full algorithmic ranking
+  const feed = generateFeed(candidates, user, undefined, limit);
+  const forYouPosts = [...userCreatedPosts, ...feed.posts.map(serializeRankedPost)];
+
+  return NextResponse.json({
+    tab: 'for-you',
+    sort: 'top',
+    posts: forYouPosts,
+    diversity: feed.diversity,
+    meta: {
+      totalCandidates: feed.totalCandidates + userCreatedPosts.length,
+      filteredCount: feed.filteredCount,
+      hashtag: hashtag || null,
+    },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function serializeRankedPost(rp: any) {
+  return {
+    id: rp.candidate.post.id,
+    content: rp.candidate.post.content,
+    createdAt: rp.candidate.post.createdAt.toISOString(),
+    topics: rp.candidate.post.topics,
+    author: {
+      id: rp.candidate.author.id,
+      displayName: rp.candidate.author.displayName,
+      affiliations: rp.candidate.author.affiliations,
+      verificationLevel: rp.candidate.author.verificationLevel,
+      civicReputation: rp.candidate.author.civicReputation,
+    },
+    thread: rp.candidate.thread
+      ? {
+          id: rp.candidate.thread.id,
+          type: rp.candidate.thread.type,
+          topics: rp.candidate.thread.topics,
+          participantCount: rp.candidate.thread.participantCount,
+          civilityScore: rp.candidate.thread.civilityScore,
+          diversityScore: rp.candidate.thread.diversityScore,
+        }
+      : null,
+    sources: rp.candidate.post.sources.map((s: any) => ({
+      url: s.url,
+      domain: s.domain,
+      trustScore: s.trustScore,
+    })),
+    reactions: {
+      agree: rp.candidate.post.agreeCount,
+      disagree: rp.candidate.post.disagreeCount,
+      insightful: rp.candidate.post.insightfulCount,
+      nuance: rp.candidate.post.nuanceCount,
+    },
+    algorithm: {
+      qualityScore: Math.round(rp.qualityScore * 1000) / 1000,
+      signals: {
+        engagementQuality: Math.round(rp.signals.engagementQuality * 100) / 100,
+        civility: Math.round(rp.signals.civility * 100) / 100,
+        viewpointDiversity: Math.round(rp.signals.viewpointDiversity * 100) / 100,
+        sourceCredibility: Math.round(rp.signals.sourceCredibility * 100) / 100,
+        topicRelevance: Math.round(rp.signals.topicRelevance * 100) / 100,
+        authorReputation: Math.round(rp.signals.authorReputation * 100) / 100,
+        penalty: Math.round(rp.signals.penalty * 100) / 100,
+      },
+      explanation: rp.explanation,
+      explanationTags: rp.explanationTags,
+    },
+    comment_policy: 'everyone' as const,
+    comment_count: getCommentCount(rp.candidate.post.id) + mockReplies.filter((r) => r.postId === rp.candidate.post.id).length,
+    replies: mockReplies
+      .filter((r) => r.postId === rp.candidate.post.id)
+      .map((r) => ({
+        id: r.id,
+        content: r.content,
+        author: {
+          id: r.author.id,
+          displayName: r.author.displayName,
+          affiliations: r.author.affiliations,
+          verificationLevel: r.author.verificationLevel,
+        },
+        createdAt: r.createdAt.toISOString(),
+        civilityScore: r.civilityScore,
+        reactions: {
+          agree: r.agreeCount,
+          disagree: r.disagreeCount,
+          insightful: r.insightfulCount,
+        },
+      })),
+  };
+}

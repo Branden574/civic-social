@@ -1,26 +1,652 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ═══════════════════════════════════════════════════════════════
+   Civic Social — Design System Tokens
+   Premium, fintech-grade dark-mode UI
+   ═══════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Core surfaces ── */
+  --color-bg: #0A0B0F;
+  --color-bg-alt: #0E0F14;
+  --color-surface: #141520;
+  --color-surface-elevated: #1A1B28;
+  --color-surface-hover: #1F2032;
+  --color-surface-active: #252638;
+
+  /* ── Borders ── */
+  --color-border: #262840;
+  --color-border-subtle: #1C1D30;
+  --color-border-strong: #363858;
+
+  /* ── Text ── */
+  --color-text-primary: #F0F1F8;
+  --color-text-secondary: #9294B0;
+  --color-text-muted: #5C5E78;
+  --color-text-inverse: #0A0B0F;
+
+  /* ── Brand / Civic colors ── */
+  --color-civic: #6366F1;
+  --color-civic-light: #818CF8;
+  --color-civic-dark: #4F46E5;
+  --color-civic-glow: #6366F120;
+
+  /* ── Signal colors ── */
+  --color-positive: #10B981;
+  --color-positive-light: #34D399;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FBBF24;
+  --color-danger: #EF4444;
+  --color-danger-light: #F87171;
+  --color-info: #3B82F6;
+  --color-info-light: #60A5FA;
+
+  /* ── Political spectrum (subtle, non-aggressive) ── */
+  --color-ideology-left: #818CF8;
+  --color-ideology-center-left: #A78BFA;
+  --color-ideology-center: #C4B5FD;
+  --color-ideology-center-right: #FB923C;
+  --color-ideology-right: #F87171;
+
+  /* ── Civility scale ── */
+  --color-civility-high: #10B981;
+  --color-civility-medium: #F59E0B;
+  --color-civility-low: #EF4444;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 20px rgba(99,102,241,0.15);
+
+  /* ── Radii ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ── Typography ── */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Light mode overrides ──
+   Uses html.light for higher specificity than :root (from @theme).
+   :root = (0,1,0), html.light = (0,1,1) — always wins.
+   ────────────────────────── */
+html.light {
+  --color-bg: #F8F9FC;
+  --color-bg-alt: #F0F1F6;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-hover: #F3F4F8;
+  --color-surface-active: #EBEDF4;
+  --color-border: #E2E4EC;
+  --color-border-subtle: #EEF0F6;
+  --color-border-strong: #CDD0DC;
+  --color-text-primary: #111318;
+  --color-text-secondary: #5C5F70;
+  --color-text-muted: #9194A4;
+  --color-text-inverse: #F0F1F8;
+  --color-civic-glow: #6366F110;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-glow: 0 0 20px rgba(99,102,241,0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base styles ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+html {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
+
+/* ── Selection ── */
+::selection {
+  background: var(--color-civic);
+  color: white;
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-civic-glow); }
+  50% { box-shadow: 0 0 20px 4px var(--color-civic-glow); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Smooth theme transition ── */
+html, body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html *:not([class*="animate-"]) {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ── Staggered animations for feed posts ── */
+.feed-item:nth-child(1) { animation-delay: 0ms; }
+.feed-item:nth-child(2) { animation-delay: 50ms; }
+.feed-item:nth-child(3) { animation-delay: 100ms; }
+.feed-item:nth-child(4) { animation-delay: 150ms; }
+.feed-item:nth-child(5) { animation-delay: 200ms; }
+.feed-item:nth-child(6) { animation-delay: 250ms; }
+.feed-item:nth-child(7) { animation-delay: 300ms; }
+.feed-item:nth-child(8) { animation-delay: 350ms; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOTION SYSTEM — Premium transitions & animations
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Easing curves ── */
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-decel: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accel: cubic-bezier(0.4, 0, 1, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Transition durations */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --duration-slower: 500ms;
+  
+  /* Spacing scale (design tokens) */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  
+  /* Typography scale */
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+}
+
+/* ── Shared element transitions ── */
+@keyframes sharedExpand {
+  from { 
+    opacity: 0.8; 
+    transform: scale(0.97) translateY(4px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+  }
+}
+
+@keyframes sharedCollapse {
+  from { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+  }
+  to { 
+    opacity: 0.8; 
+    transform: scale(0.97) translateY(4px); 
+  }
+}
+
+@keyframes bottomSheetUp {
+  from { 
+    transform: translateY(100%); 
+    opacity: 0.5;
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1;
+  }
+}
+
+@keyframes bottomSheetDown {
+  from { 
+    transform: translateY(0); 
+    opacity: 1;
+  }
+  to { 
+    transform: translateY(100%); 
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideDown {
+  from { 
+    transform: translateY(-100%); 
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1;
+  }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes tabIndicatorSlide {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.3); }
+  30% { transform: scale(0.9); }
+  45% { transform: scale(1.1); }
+  60% { transform: scale(1); }
+}
+
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.6; }
+  to { transform: scale(2.5); opacity: 0; }
+}
+
+/* ── Animation utility classes ── */
+.animate-shared-expand {
+  animation: sharedExpand var(--duration-normal) var(--ease-decel) forwards;
+}
+
+.animate-shared-collapse {
+  animation: sharedCollapse var(--duration-fast) var(--ease-accel) forwards;
+}
+
+.animate-bottom-sheet-up {
+  animation: bottomSheetUp var(--duration-slow) var(--ease-spring) forwards;
+}
+
+.animate-bottom-sheet-down {
+  animation: bottomSheetDown var(--duration-normal) var(--ease-accel) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown var(--duration-normal) var(--ease-decel) forwards;
+}
+
+.animate-skeleton {
+  animation: skeletonPulse 1.8s var(--ease-smooth) infinite;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-normal) var(--ease-spring) forwards;
+}
+
+.animate-pop-in {
+  animation: popIn var(--duration-slow) var(--ease-spring) forwards;
+}
+
+.animate-heart-beat {
+  animation: heartBeat 0.6s var(--ease-spring) forwards;
+}
+
+.animate-tab-indicator {
+  animation: tabIndicatorSlide var(--duration-fast) var(--ease-decel) forwards;
+}
+
+/* Shimmer gradient for skeletons */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-elevated) 25%,
+    var(--color-surface-active) 50%,
+    var(--color-surface-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Transition utilities ── */
+.transition-spring {
+  transition-timing-function: var(--ease-spring);
+}
+
+.transition-smooth {
+  transition-timing-function: var(--ease-smooth);
+}
+
+.duration-instant { transition-duration: var(--duration-instant); }
+.duration-fast { transition-duration: var(--duration-fast); }
+.duration-normal { transition-duration: var(--duration-normal); }
+.duration-slow { transition-duration: var(--duration-slow); }
+
+/* ── Bottom sheet backdrop ── */
+.backdrop-sheet {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ── Screen transition wrapper ── */
+.screen-enter {
+  animation: sharedExpand var(--duration-normal) var(--ease-decel) forwards;
+}
+
+.screen-exit {
+  animation: sharedCollapse var(--duration-fast) var(--ease-accel) forwards;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-shared-expand,
+  .animate-bottom-sheet-up,
+  .animate-scale-in,
+  .animate-pop-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  
+  .skeleton-shimmer {
+    animation: skeletonPulse 1.8s ease infinite !important;
+  }
+}
+
+/* ── Focus states (web accessibility) ── */
+*:focus-visible {
+  outline: 2px solid var(--color-civic);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-civic);
+  outline-offset: 2px;
+}
+
+/* ── Tab bar active indicator ── */
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+  background: var(--color-civic);
+  border-radius: 1px;
+  transition: left var(--duration-normal) var(--ease-spring),
+              width var(--duration-normal) var(--ease-spring);
+}
+
+/* ── Ripple effect base ── */
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, var(--color-civic) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+}
+
+.ripple-container:active::after {
+  animation: ripple 0.4s var(--ease-decel) forwards;
+}
+
+/* ── Virtualized list performance ── */
+.will-change-scroll {
+  will-change: scroll-position;
+  contain: layout style;
+}
+
+.will-change-transform {
+  will-change: transform;
+  contain: layout;
+}
+
+/* ── Safe area insets for mobile ── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SPLASH SCREEN — Premium cold-start experience
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes splash-check {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes splash-logo-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes splash-text-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes splash-shimmer-move {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes splash-glow-pulse {
+  0%, 100% { opacity: 0; transform: scale(0.9); }
+  50% { opacity: 0.3; transform: scale(1.2); }
+}
+
+.splash-logo {
+  animation: splash-logo-in 0.5s var(--ease-decel) forwards;
+}
+
+.splash-text {
+  animation: splash-text-in 0.4s 0.15s var(--ease-decel) both;
+}
+
+.splash-shimmer {
+  animation: splash-shimmer-move 1.5s var(--ease-smooth) infinite;
+}
+
+.splash-glow {
+  background: radial-gradient(circle, var(--color-civic) 0%, transparent 70%);
+  opacity: 0;
+  animation: splash-glow-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-logo,
+  .splash-text {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .splash-shimmer {
+    animation: none !important;
+  }
+  .splash-glow {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .splash-logo-svg path[style] {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENHANCED SKELETON SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Notification skeleton */
+.skeleton-notif {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+/* Content reveal transition */
+@keyframes content-reveal {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.content-reveal > * {
+  animation: content-reveal 0.25s var(--ease-decel) both;
+}
+
+.content-reveal > *:nth-child(1) { animation-delay: 0ms; }
+.content-reveal > *:nth-child(2) { animation-delay: 40ms; }
+.content-reveal > *:nth-child(3) { animation-delay: 80ms; }
+.content-reveal > *:nth-child(4) { animation-delay: 120ms; }
+.content-reveal > *:nth-child(5) { animation-delay: 160ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .content-reveal > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PWA STANDALONE / FULL-SCREEN MODE
+   Handles notch, home indicator, and status bar areas.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* When running as installed PWA (standalone), fill the full screen */
+@media all and (display-mode: standalone) {
+  html {
+    /* Prevent overscroll bounce for native feel */
+    overscroll-behavior: none;
+  }
+
+  body {
+    /* Pad for the notch/dynamic island and home indicator */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Status bar background — blends with app bg */
+  body::before {
+    content: '';
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background: var(--color-bg);
+    z-index: 9999;
+  }
+}
+
+/* Bottom nav safe area padding (for devices with home indicator) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Disable text selection and callout for native app feel in standalone */
+@media all and (display-mode: standalone) {
+  img, a, button {
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Smooth momentum scrolling everywhere */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }

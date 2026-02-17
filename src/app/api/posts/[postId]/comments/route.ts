@@ -1,0 +1,201 @@
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  getPostById,
+  createComment,
+  getCommentsByPost,
+  getCommentCount,
+  deleteComment,
+  getCommentById,
+  getReplyCounts,
+  canComment,
+  canCommentMockPost,
+} from '@/lib/post-data-store';
+import { isFollowing } from '@/lib/social-store';
+import { getSessionUser, getClientIp, tooManyRequests, badRequest, internalError } from '@/lib/security/api-guard';
+import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
+import { sanitizeText, clampInt, isValidId } from '@/lib/security/sanitize';
+import { secureLog } from '@/lib/security/logger';
+import { mockCandidates } from '@/lib/data/mock-data';
+
+// Helper stubs for permission checks (replace with real DB lookups in production)
+const permissionHelpers = {
+  isFollower: (viewerId: string, authorId: string) => isFollowing(viewerId, authorId),
+  isBlocked: () => false, // No block system yet
+  isBanned: () => false,  // No ban system yet
+};
+
+// Author profiles for serialization
+const AUTHOR_PROFILES: Record<string, { displayName: string; affiliations: string[]; verificationLevel: string }> = {
+  'user-current': { displayName: 'You', affiliations: ['center-left'], verificationLevel: 'EXPERT_VERIFIED' },
+};
+
+function getAuthorMeta(authorId: string) {
+  return AUTHOR_PROFILES[authorId] ?? { displayName: 'User', affiliations: [], verificationLevel: 'CITIZEN_VERIFIED' };
+}
+
+function serializeComment(c: { id: string; postId: string; authorId: string; parentCommentId: string | null; body: string; createdAt: string; status: string }, replyCount = 0) {
+  const author = getAuthorMeta(c.authorId);
+  return {
+    id: c.id,
+    postId: c.postId,
+    authorId: c.authorId,
+    parentCommentId: c.parentCommentId,
+    body: c.body,
+    createdAt: c.createdAt,
+    status: c.status,
+    replyCount,
+    author: {
+      id: c.authorId,
+      displayName: author.displayName,
+      affiliations: author.affiliations,
+      verificationLevel: author.verificationLevel,
+    },
+  };
+}
+
+// ─── GET /api/posts/:postId/comments ─────────────────────────
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> },
+) {
+  const { postId } = await params;
+  if (!postId) return badRequest('Post ID required.');
+
+  const ip = getClientIp(request);
+  const rl = readLimiter.check(ip);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
+  const { searchParams } = new URL(request.url);
+  const limit = clampInt(searchParams.get('limit'), 1, 100, 50);
+  const cursor = searchParams.get('cursor') || undefined;
+
+  const result = getCommentsByPost(postId, { limit, cursor });
+  const replyCounts = getReplyCounts(postId);
+
+  return NextResponse.json({
+    comments: result.comments.map((c) => serializeComment(c, replyCounts.get(c.id) ?? 0)),
+    total: result.total,
+    hasMore: result.hasMore,
+    serverTime: new Date().toISOString(),
+  });
+}
+
+// ─── POST /api/posts/:postId/comments ────────────────────────
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> },
+) {
+  const { postId } = await params;
+  if (!postId) return badRequest('Post ID required.');
+
+  try {
+    const user = getSessionUser(request);
+    const userId = user?.id || 'user-current';
+
+    // Rate limit
+    const rl = postLimiter.check(userId);
+    if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
+    // Parse body
+    const body = await request.json();
+    const rawBody = body.body as string | undefined;
+    const parentCommentId = body.parent_comment_id as string | undefined;
+
+    // Validate body
+    if (!rawBody || typeof rawBody !== 'string' || rawBody.trim().length === 0) {
+      return badRequest('Comment body is required.');
+    }
+
+    const sanitizedBody = sanitizeText(rawBody);
+    if (sanitizedBody.length === 0) return badRequest('Comment body cannot be empty after sanitization.');
+    if (sanitizedBody.length > 1000) return badRequest('Comment exceeds maximum length of 1000 characters.');
+    if (sanitizedBody.length < 1) return badRequest('Comment is too short.');
+
+    // Validate parent comment if provided
+    if (parentCommentId) {
+      if (!isValidId(parentCommentId)) return badRequest('Invalid parent comment ID.');
+      const parent = getCommentById(parentCommentId);
+      if (!parent || parent.postId !== postId) return badRequest('Parent comment not found on this post.');
+    }
+
+    // Permission check — try persisted post first, then mock
+    const persistedPost = getPostById(postId);
+    let permResult;
+
+    if (persistedPost) {
+      permResult = canComment(userId, persistedPost, permissionHelpers);
+    } else {
+      // Check mock posts — all mock posts are public with comments enabled
+      const mockCandidate = mockCandidates.find((c) => c.post.id === postId);
+      if (!mockCandidate) return badRequest('Post not found.');
+      permResult = canCommentMockPost(userId, {
+        authorId: mockCandidate.author.id,
+        comment_policy: 'everyone',
+        visibility: 'public',
+        status: 'published',
+      }, permissionHelpers);
+    }
+
+    if (!permResult.allowed) {
+      return NextResponse.json(
+        { error: permResult.reason, code: 'COMMENT_DENIED' },
+        { status: 403 },
+      );
+    }
+
+    // Create comment
+    const comment = createComment({
+      postId,
+      authorId: userId,
+      body: sanitizedBody,
+      parentCommentId: parentCommentId || undefined,
+    });
+
+    const commentCount = getCommentCount(postId);
+
+    secureLog.info('POST comment', `comment=${comment.id} post=${postId} author=${userId}`);
+
+    return NextResponse.json({
+      success: true,
+      comment: serializeComment(comment),
+      commentCount,
+      serverTime: new Date().toISOString(),
+    });
+  } catch (err) {
+    secureLog.error('POST comment', err);
+    return internalError('Failed to create comment.');
+  }
+}
+
+// ─── DELETE /api/posts/:postId/comments?commentId=xxx ────────
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> },
+) {
+  const { postId } = await params;
+  const { searchParams } = new URL(request.url);
+  const commentId = searchParams.get('commentId');
+
+  if (!commentId || !isValidId(commentId)) return badRequest('Valid commentId required.');
+
+  const user = getSessionUser(request);
+  const userId = user?.id || 'user-current';
+
+  const ok = deleteComment(commentId, userId);
+  if (!ok) {
+    return NextResponse.json({ error: 'Comment not found or not authorized.' }, { status: 404 });
+  }
+
+  const commentCount = getCommentCount(postId);
+
+  secureLog.audit('comment_deleted', userId, { commentId, postId });
+
+  return NextResponse.json({
+    success: true,
+    commentCount,
+    serverTime: new Date().toISOString(),
+  });
+}

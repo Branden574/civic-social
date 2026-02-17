@@ -3,24 +3,39 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
+    "dev:mobile": "next dev --turbopack --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "start:mobile": "next start --hostname 0.0.0.0",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "perf:build": "ANALYZE=true next build",
+    "local-ip": "node -e \"const os=require('os');const i=Object.values(os.networkInterfaces()).flat().find(n=>n.family==='IPv4'&&!n.internal);console.log(i?i.address:'127.0.0.1')\""
   },
   "dependencies": {
+    "@prisma/client": "^7.4.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.563.0",
     "next": "16.1.6",
+    "prisma": "^7.4.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

@@ -1,0 +1,332 @@
+// Civic Social — Full Data Model
+// Production: PostgreSQL | Dev: SQLite-compatible types noted
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// USERS & IDENTITY
+// ─────────────────────────────────────────────
+
+model User {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  username        String            @unique
+  displayName     String
+  avatar          String?
+  bio             String?
+  country         String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Verification tier
+  verificationLevel VerificationLevel @default(UNVERIFIED)
+  verifiedAt        DateTime?
+
+  // Settings
+  showAffiliation   Boolean @default(true)
+  darkMode          Boolean @default(true)
+  anonymousBrowsing Boolean @default(false)
+
+  // Reputation metrics (cached, recomputed periodically)
+  civicReputation    Float @default(0.0)  // 0–1
+  civilityAvg        Float @default(0.5)  // 0–1
+  accuracyScore      Float @default(0.5)  // 0–1 fact-check outcomes
+  crossPartyEngagement Float @default(0.0) // 0–1
+
+  // Relations
+  affiliations  UserAffiliation[]
+  posts         Post[]
+  reactions     Reaction[]
+  threads       Thread[]          @relation("ThreadCreator")
+  following     Follow[]          @relation("Following")
+  followers     Follow[]          @relation("Followers")
+  readEvents    ReadEvent[]
+  reports       Report[]          @relation("Reporter")
+  modActions    ModerationAction[] @relation("Moderator")
+}
+
+enum VerificationLevel {
+  UNVERIFIED
+  EMAIL_VERIFIED
+  CITIZEN_VERIFIED
+  EXPERT_VERIFIED
+  OFFICIAL_VERIFIED
+}
+
+// ─────────────────────────────────────────────
+// POLITICAL AFFILIATIONS
+// ─────────────────────────────────────────────
+
+model UserAffiliation {
+  id        String  @id @default(cuid())
+  userId    String
+  partyId   String
+  isPrimary Boolean @default(false)
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  party PoliticalParty @relation(fields: [partyId], references: [id])
+
+  @@unique([userId, partyId])
+}
+
+model PoliticalParty {
+  id           String  @id @default(cuid())
+  name         String
+  abbreviation String
+  country      String
+  ideology     String  // "left", "center-left", "center", "center-right", "right"
+  color        String  // hex
+  isSpecial    Boolean @default(false) // Independent / Undeclared
+
+  affiliations UserAffiliation[]
+
+  @@unique([name, country])
+}
+
+// ─────────────────────────────────────────────
+// SOCIAL GRAPH
+// ─────────────────────────────────────────────
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+// ─────────────────────────────────────────────
+// THREADS & CONVERSATIONS
+// ─────────────────────────────────────────────
+
+enum ThreadType {
+  OPEN_DISCUSSION
+  STRUCTURED_DEBATE
+  POLICY_PROPOSAL
+  CROSS_PARTY_ROUNDTABLE
+  EXPERT_AMA
+  NEWS_DISCUSSION
+}
+
+model Thread {
+  id          String     @id @default(cuid())
+  type        ThreadType
+  title       String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  creatorId String
+  creator   User   @relation("ThreadCreator", fields: [creatorId], references: [id])
+
+  topics  String[] // e.g. ["healthcare", "economy"]
+  country String?
+
+  // Cached aggregate metrics
+  civilityScore    Float @default(0.5)
+  diversityScore   Float @default(0.0)
+  engagementScore  Float @default(0.0)
+  participantCount Int   @default(0)
+
+  // Policy proposals
+  problemStatement String?
+  proposedSolution String?
+  evidence         String?
+
+  // Structured debates
+  sides String[] // ["For universal healthcare", "Against universal healthcare"]
+
+  // Linked news
+  newsArticleId String?
+  newsArticle   NewsArticle? @relation(fields: [newsArticleId], references: [id])
+
+  posts Post[]
+}
+
+// ─────────────────────────────────────────────
+// POSTS
+// ─────────────────────────────────────────────
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  threadId String?
+  thread   Thread? @relation(fields: [threadId], references: [id])
+
+  parentId String?
+  parent   Post?  @relation("Replies", fields: [parentId], references: [id])
+  replies  Post[] @relation("Replies")
+
+  sources Source[]
+
+  // ── AI-computed content signals ──
+  civilityScore       Float @default(0.5) // 0 = hostile, 1 = exemplary
+  toxicityScore       Float @default(0.0) // 0 = clean, 1 = toxic
+  solutionOrientation Float @default(0.0) // 0 = no solutions, 1 = solution-rich
+  empathyScore        Float @default(0.0) // 0 = dismissive, 1 = deeply empathetic
+
+  // ── Engagement metrics (aggregated from ReadEvents) ──
+  avgReadTime        Float @default(0.0) // seconds
+  expectedReadTime   Float @default(0.0) // seconds (word_count / avg_reading_speed)
+  completionRate     Float @default(0.0) // 0–1
+  replyCount         Int   @default(0)
+  substantiveReplies Int   @default(0)
+
+  // ── Anti-abuse signals ──
+  rageBaitScore  Float @default(0.0)
+  allCapsRatio   Float @default(0.0)
+  botLikelihood  Float @default(0.0)
+  flagCount      Int   @default(0)
+
+  reactions    Reaction[]
+  readEvents   ReadEvent[]
+  reports      Report[]
+  modActions   ModerationAction[]
+}
+
+model Source {
+  id         String  @id @default(cuid())
+  url        String
+  title      String?
+  domain     String
+  trustScore Float   @default(0.5)
+  isPrimary  Boolean @default(false)
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// REACTIONS (nuanced, beyond like/dislike)
+// ─────────────────────────────────────────────
+
+enum ReactionType {
+  AGREE
+  DISAGREE
+  INSIGHTFUL
+  ADD_NUANCE
+  BOOKMARK
+  SHARE
+}
+
+model Reaction {
+  id        String       @id @default(cuid())
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, type])
+}
+
+// ─────────────────────────────────────────────
+// ENGAGEMENT TRACKING
+// ─────────────────────────────────────────────
+
+model ReadEvent {
+  id              String   @id @default(cuid())
+  readTimeMs      Int      // time spent reading
+  completedThread Boolean  @default(false)
+  scrollDepth     Float    @default(0.0) // 0–1
+  createdAt       DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// NEWS INTEGRATION
+// ─────────────────────────────────────────────
+
+model NewsArticle {
+  id             String   @id @default(cuid())
+  title          String
+  summary        String   // AI-generated neutral summary
+  url            String
+  source         String   // publisher name
+  sourceDomain   String
+  sourceLogoUrl  String?
+  imageUrl       String?
+  publishedAt    DateTime
+  createdAt      DateTime @default(now())
+
+  topics  String[]
+  country String?
+
+  factCheckStatus FactCheckStatus @default(UNCHECKED)
+  factCheckNote   String?
+  sourceTrustScore Float @default(0.5)
+
+  threads Thread[]
+}
+
+enum FactCheckStatus {
+  UNCHECKED
+  VERIFIED
+  PARTIALLY_TRUE
+  DISPUTED
+  MISLEADING
+}
+
+// ─────────────────────────────────────────────
+// MODERATION
+// ─────────────────────────────────────────────
+
+model Report {
+  id        String       @id @default(cuid())
+  reason    String
+  details   String?
+  status    ReportStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  reporterId String
+  reporter   User @relation("Reporter", fields: [reporterId], references: [id])
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id])
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+model ModerationAction {
+  id        String   @id @default(cuid())
+  action    String   // "warn", "hide", "remove", "suspend"
+  reason    String
+  automated Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  moderatorId String?
+  moderator   User? @relation("Moderator", fields: [moderatorId], references: [id])
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id])
+}
