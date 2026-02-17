@@ -1,13 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 // ═══════════════════════════════════════════════════════════════
 // Notification Context — Single Source of Truth for Badge Count
 // ═══════════════════════════════════════════════════════════════
 //
 // Polls /api/notifications?action=unread-count every 30s
-// Provides markAllRead that immediately clears badge then syncs
+// Only polls when the user is authenticated.
 // ═══════════════════════════════════════════════════════════════
 
 interface NotificationContextValue {
@@ -27,6 +28,7 @@ const NotificationContext = createContext<NotificationContextValue>({
 const POLL_INTERVAL = 30_000; // 30 seconds
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -41,14 +43,26 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  // Initial fetch + polling
+  // Only fetch + poll when authenticated. Reset to 0 on logout.
   useEffect(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      setUnreadCount(0);
+      return;
+    }
+
     fetchUnreadCount();
     pollRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [fetchUnreadCount]);
+  }, [isAuthenticated, isLoading, fetchUnreadCount]);
 
   const markAllRead = useCallback(async () => {
     // Optimistic: clear badge immediately

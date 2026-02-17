@@ -18,7 +18,18 @@ export async function GET(request: NextRequest) {
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   const user = getSessionUser(request);
-  const currentUser = user?.id || 'user-current';
+
+  // Unauthenticated: return zero counts, no notifications
+  if (!user) {
+    return NextResponse.json({
+      unreadCount: 0,
+      notifications: [],
+      total: 0,
+      serverTime: new Date().toISOString(),
+    });
+  }
+
+  const currentUser = user.id;
 
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'list';
@@ -49,7 +60,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const user = getSessionUser(request);
-  const currentUser = user?.id || 'user-current';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+  }
+  const currentUser = user.id;
 
   const rl = socialLimiter.check(currentUser);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
