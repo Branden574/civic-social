@@ -427,6 +427,14 @@ export default function UserProfilePage() {
     if (profile) setFollowerCount(profile.stats.followers);
   }, [profile]);
 
+  // ── Toast state for error surfacing ─────────────────────
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   // ── Fetch follow + subscription state on mount ──────────
   useEffect(() => {
     if (!profile) return;
@@ -439,11 +447,12 @@ export default function UserProfilePage() {
         setIsFollowing(data.isFollowing ?? false);
         setIsNotifyEnabled(data.isNotifyEnabled ?? false);
         setNotifyLevel(data.notifyLevel ?? null);
-        if (data.followerCount !== undefined) {
-          setFollowerCount(profile!.stats.followers + data.followerCount);
+        // Use server follower count directly (includes mock + real edges)
+        if (typeof data.followerCount === 'number') {
+          setFollowerCount(data.followerCount);
         }
       } catch {
-        // offline — keep defaults
+        // offline — keep defaults from profile.stats
       } finally {
         if (!cancelled) setLoaded(true);
       }
@@ -456,14 +465,17 @@ export default function UserProfilePage() {
   const handleFollowToggle = useCallback(async () => {
     if (!profile || followLoading) return;
     const wasFollowing = isFollowing;
-    // Optimistic
+    const prevCount = followerCount;
+
+    // Optimistic update
     setIsFollowing(!wasFollowing);
-    setFollowerCount((c) => c + (wasFollowing ? -1 : 1));
+    setFollowerCount(prevCount + (wasFollowing ? -1 : 1));
     if (wasFollowing) {
       setIsNotifyEnabled(false);
       setNotifyLevel(null);
     }
     setFollowLoading(true);
+
     try {
       const res = await fetch('/api/follow', {
         method: 'POST',
@@ -473,24 +485,37 @@ export default function UserProfilePage() {
           target_user_id: profile.id,
         }),
       });
+
       if (res.ok) {
         const data = await res.json();
+        // Reconcile with server-authoritative state
         setIsFollowing(data.isFollowing);
-        setIsNotifyEnabled(data.isNotifyEnabled);
+        setIsNotifyEnabled(data.isNotifyEnabled ?? false);
+        if (typeof data.followerCount === 'number') {
+          setFollowerCount(data.followerCount);
+        }
         refreshMe();
-      } else {
-        // Rollback
+      } else if (res.status === 401) {
+        // Not authenticated — rollback and show login prompt
         setIsFollowing(wasFollowing);
-        setFollowerCount((c) => c + (wasFollowing ? 1 : -1));
+        setFollowerCount(prevCount);
+        setToast('Please log in to follow users');
+      } else {
+        // Other server error — rollback
+        setIsFollowing(wasFollowing);
+        setFollowerCount(prevCount);
+        const errData = await res.json().catch(() => null);
+        setToast(errData?.error || 'Follow failed. Please try again.');
       }
     } catch {
-      // Rollback
+      // Network error — rollback
       setIsFollowing(wasFollowing);
-      setFollowerCount((c) => c + (wasFollowing ? 1 : -1));
+      setFollowerCount(prevCount);
+      setToast('Network error. Please check your connection.');
     } finally {
       setFollowLoading(false);
     }
-  }, [profile, isFollowing, followLoading, refreshMe]);
+  }, [profile, isFollowing, followLoading, followerCount, refreshMe]);
 
   // ── Subscribe to posts ──────────────────────────────────
   const handleSubscribe = useCallback(async (level: 'all' | 'debates' | 'mentions') => {
@@ -790,6 +815,15 @@ export default function UserProfilePage() {
         </div>
       </main>
       <MobileNav />
+
+      {/* Toast for errors */}
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] animate-fade-in">
+          <div className="bg-surface-elevated border border-border-subtle text-text-primary text-sm font-medium px-4 py-3 rounded-xl shadow-xl max-w-xs text-center">
+            {toast}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

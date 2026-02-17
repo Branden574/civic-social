@@ -368,6 +368,31 @@ export default function SearchPage() {
 function PersonCard({ person, index }: { person: SearchUser; index: number }) {
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+
+  // Fetch initial follow state
+  useEffect(() => {
+    let cancelled = false;
+    async function checkFollow() {
+      try {
+        const res = await fetch(`/api/follow?target=${encodeURIComponent(person.id)}`);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled) setFollowing(data.isFollowing ?? false);
+      } catch {
+        // offline — keep default
+      }
+    }
+    checkFollow();
+    return () => { cancelled = true; };
+  }, [person.id]);
+
+  // Auto-dismiss error toast
+  useEffect(() => {
+    if (!errorToast) return;
+    const t = setTimeout(() => setErrorToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [errorToast]);
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -390,23 +415,27 @@ function PersonCard({ person, index }: { person: SearchUser; index: number }) {
       if (res.ok) {
         const data = await res.json();
         setFollowing(data.isFollowing);
+      } else if (res.status === 401) {
+        setFollowing(wasFollowing);
+        setErrorToast('Please log in to follow users');
       } else {
         setFollowing(wasFollowing);
+        setErrorToast('Follow failed. Try again.');
       }
     } catch {
       setFollowing(wasFollowing);
+      setErrorToast('Network error');
     } finally {
       setFollowLoading(false);
     }
   };
 
-  // Link uses username slug for mock users, falls back to user ID
   const profilePath = `/profile/${encodeURIComponent(person.username || person.id)}`;
 
   return (
     <Link
       href={profilePath}
-      className="feed-item animate-fade-in opacity-0 px-4 sm:px-6 py-4 hover:bg-surface/40 transition-colors block"
+      className="feed-item animate-fade-in opacity-0 px-4 sm:px-6 py-4 hover:bg-surface/40 transition-colors block relative"
       style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'forwards' }}
     >
       <div className="flex items-start gap-3">
@@ -436,6 +465,7 @@ function PersonCard({ person, index }: { person: SearchUser; index: number }) {
           </div>
         </div>
         <button
+          type="button"
           onClick={handleFollow}
           disabled={followLoading}
           className={clsx(
@@ -453,6 +483,11 @@ function PersonCard({ person, index }: { person: SearchUser; index: number }) {
           )}
         </button>
       </div>
+      {errorToast && (
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-50 bg-surface-elevated border border-border-subtle text-text-primary text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-fade-in">
+          {errorToast}
+        </div>
+      )}
     </Link>
   );
 }

@@ -29,7 +29,22 @@ export async function GET(request: NextRequest) {
   }
 
   const user = getSessionUser(request);
-  const currentUser = user?.id || 'user-current';
+
+  // Unauthenticated: return counts but no relationship state
+  if (!user) {
+    return NextResponse.json({
+      isFollowing: false,
+      isNotifyEnabled: false,
+      notifyLevel: null,
+      followerCount: getFollowerCount(targetUserId),
+      followingCount: getFollowingCount(targetUserId),
+      viewerFollowingCount: 0,
+      authenticated: false,
+      serverTime: new Date().toISOString(),
+    });
+  }
+
+  const currentUser = user.id;
 
   return NextResponse.json({
     isFollowing: isFollowing(currentUser, targetUserId),
@@ -37,6 +52,8 @@ export async function GET(request: NextRequest) {
     notifyLevel: getSubscriptionLevel(currentUser, targetUserId),
     followerCount: getFollowerCount(targetUserId),
     followingCount: getFollowingCount(targetUserId),
+    viewerFollowingCount: getFollowingCount(currentUser),
+    authenticated: true,
     serverTime: new Date().toISOString(),
   });
 }
@@ -45,13 +62,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const user = getSessionUser(request);
-  const currentUser = user?.id || 'user-current';
+
+  // Auth required — no silent fallback
+  if (!user) {
+    return NextResponse.json(
+      { error: 'Authentication required. Please log in to follow users.', code: 'AUTH_REQUIRED' },
+      { status: 401 },
+    );
+  }
+
+  const currentUser = user.id;
 
   // Rate limit social actions
   const rl = socialLimiter.check(currentUser);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  const body = await request.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('Invalid JSON body.');
+  }
+
   const action = body.action as string;
   const targetUserId = body.target_user_id as string;
 
@@ -71,6 +103,8 @@ export async function POST(request: NextRequest) {
         isFollowing: true,
         isNotifyEnabled: isSubscribedToPosts(currentUser, targetUserId),
         followerCount: getFollowerCount(targetUserId),
+        followingCount: getFollowingCount(targetUserId),
+        viewerFollowingCount: getFollowingCount(currentUser),
       });
 
     case 'unfollow':
@@ -80,16 +114,20 @@ export async function POST(request: NextRequest) {
         isFollowing: false,
         isNotifyEnabled: false,
         followerCount: getFollowerCount(targetUserId),
+        followingCount: getFollowingCount(targetUserId),
+        viewerFollowingCount: getFollowingCount(currentUser),
       });
 
     case 'subscribe': {
-      const level = (['all', 'debates', 'mentions'].includes(body.level) ? body.level : 'all') as 'all' | 'debates' | 'mentions';
+      const level = (['all', 'debates', 'mentions'].includes(body.level as string) ? body.level : 'all') as 'all' | 'debates' | 'mentions';
       subscribeToPosts(currentUser, targetUserId, level);
       return NextResponse.json({
         success: true,
         isFollowing: isFollowing(currentUser, targetUserId),
         isNotifyEnabled: true,
         notifyLevel: level,
+        followerCount: getFollowerCount(targetUserId),
+        viewerFollowingCount: getFollowingCount(currentUser),
       });
     }
 
@@ -99,6 +137,8 @@ export async function POST(request: NextRequest) {
         success: true,
         isFollowing: isFollowing(currentUser, targetUserId),
         isNotifyEnabled: false,
+        followerCount: getFollowerCount(targetUserId),
+        viewerFollowingCount: getFollowingCount(currentUser),
       });
 
     default:
