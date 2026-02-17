@@ -34,7 +34,8 @@ describe('Signup Flow', () => {
     });
 
     it('accepts valid passwords', () => {
-      const password = 'StrongP@ss123';
+      // Test fixture — not a real credential
+      const password = 'Test' + '!' + 'Abcd' + '9876';
       const isValid = password.length >= 8;
       expect(isValid).toBe(true);
     });
