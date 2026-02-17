@@ -16,6 +16,7 @@ import {
 } from '@/lib/user-state-store';
 import { getFollowerCount, getFollowingCount } from '@/lib/social-store';
 import { getPostCount } from '@/lib/post-data-store';
+import { registerUser } from '@/lib/user-registry';
 
 // ─── Response shape ──────────────────────────────────────────
 
@@ -68,6 +69,14 @@ export async function GET(request: NextRequest) {
   if (!sessionUser) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
+
+  // Auto-register in user registry for search discoverability
+  registerUser({
+    id: sessionUser.id,
+    displayName: sessionUser.displayName,
+    username: sessionUser.displayName.toLowerCase().replace(/\s+/g, '-'),
+    email: sessionUser.email,
+  });
 
   const state = getUserState(sessionUser.id);
   if (!state) {

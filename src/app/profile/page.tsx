@@ -23,6 +23,7 @@ import { usePostStore, type UserPost } from '@/lib/post-store';
 import { PostCard, type PostData } from '@/components/feed/post-card';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { CredibilityBadge } from '@/components/ui/credibility-badge';
 
 type ProfileTab = 'posts' | 'overview' | 'debates' | 'activity' | 'credibility';
 
@@ -113,6 +114,7 @@ export default function ProfilePage() {
             <div className="mb-3">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-text-primary">{displayName}</h1>
+                <CredibilityBadge score={90} size="md" showLabel />
               </div>
               <p className="text-sm text-text-muted">{username}</p>
             </div>
