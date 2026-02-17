@@ -251,6 +251,15 @@ export function getUserById(id: string): RegisteredUser | null {
   return getStore().users.get(id) ?? null;
 }
 
+export function getUserByUsername(username: string): RegisteredUser | null {
+  const store = getStore();
+  const norm = username.toLowerCase().trim();
+  for (const user of store.users.values()) {
+    if (user._usernameNorm === norm || user.username === username) return user;
+  }
+  return null;
+}
+
 export function updateUserProfile(id: string, updates: Partial<Pick<RegisteredUser, 'displayName' | 'username' | 'bio' | 'affiliation' | 'avatarUrl'>>): RegisteredUser | null {
   const user = getStore().users.get(id);
   if (!user) return null;

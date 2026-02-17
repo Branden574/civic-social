@@ -15,6 +15,7 @@ import {
   Hash,
   Loader2,
   UserPlus,
+  UserCheck,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -365,9 +366,46 @@ export default function SearchPage() {
 // ─── Person Card (used in search results) ────────────────────
 
 function PersonCard({ person, index }: { person: SearchUser; index: number }) {
+  const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const handleFollow = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (followLoading) return;
+
+    setFollowLoading(true);
+    const wasFollowing = following;
+    setFollowing(!wasFollowing);
+
+    try {
+      const res = await fetch('/api/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: wasFollowing ? 'unfollow' : 'follow',
+          target_user_id: person.id,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFollowing(data.isFollowing);
+      } else {
+        setFollowing(wasFollowing);
+      }
+    } catch {
+      setFollowing(wasFollowing);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  // Link uses username slug for mock users, falls back to user ID
+  const profilePath = `/profile/${encodeURIComponent(person.username || person.id)}`;
+
   return (
     <Link
-      href={`/profile/${encodeURIComponent(person.id)}`}
+      href={profilePath}
       className="feed-item animate-fade-in opacity-0 px-4 sm:px-6 py-4 hover:bg-surface/40 transition-colors block"
       style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'forwards' }}
     >
@@ -398,11 +436,21 @@ function PersonCard({ person, index }: { person: SearchUser; index: number }) {
           </div>
         </div>
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          className="text-xs font-semibold text-civic-light bg-civic/10 px-3 py-2 rounded-lg hover:bg-civic/20 transition-colors shrink-0 min-h-[44px] flex items-center"
+          onClick={handleFollow}
+          disabled={followLoading}
+          className={clsx(
+            'text-xs font-semibold px-3 py-2 rounded-lg transition-colors shrink-0 min-h-[44px] flex items-center',
+            following
+              ? 'text-text-secondary bg-surface-elevated border border-border-subtle hover:border-danger/40 hover:text-danger-light'
+              : 'text-civic-light bg-civic/10 hover:bg-civic/20',
+            followLoading && 'opacity-60',
+          )}
         >
-          <UserPlus className="w-3.5 h-3.5 mr-1" />
-          Follow
+          {following ? (
+            <><UserCheck className="w-3.5 h-3.5 mr-1" />Following</>
+          ) : (
+            <><UserPlus className="w-3.5 h-3.5 mr-1" />Follow</>
+          )}
         </button>
       </div>
     </Link>

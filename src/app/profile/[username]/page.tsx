@@ -326,6 +326,39 @@ function BellDropdown({
   );
 }
 
+// ─── API user → PublicProfile adapter ────────────────────────
+
+function apiUserToProfile(data: Record<string, unknown>): PublicProfile {
+  const affLabel = (data.affiliation as string) || '';
+  return {
+    id: data.id as string,
+    displayName: data.displayName as string,
+    username: `@${data.username as string}`,
+    bio: (data.bio as string) || '',
+    country: 'United States',
+    joinedDate: data.createdAt
+      ? new Date(data.createdAt as string).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : 'Recently',
+    affiliation: affLabel ? { label: affLabel.charAt(0).toUpperCase() + affLabel.slice(1), ideology: affLabel } : null,
+    verificationLevel: (data.verificationLevel as string) || 'EMAIL_VERIFIED',
+    credibilityScore: (data.credibilityScore as number) ?? 50,
+    stats: {
+      posts: (data.postCount as number) ?? 0,
+      threads: 0,
+      following: (data.followingCount as number) ?? 0,
+      followers: (data.followerCount as number) ?? 0,
+    },
+    reputation: {
+      civility: 0.5,
+      accuracy: 0.5,
+      crossParty: 0.5,
+      solutionFocus: 0.5,
+      sourceQuality: 0.5,
+    },
+    recentTopics: [],
+  };
+}
+
 // ─── Page ─────────────────────────────────────────────────────
 
 export default function UserProfilePage() {
@@ -342,16 +375,57 @@ export default function UserProfilePage() {
   }, [username, router]);
 
   // Resolve: accepts slug ("sarah-chen"), user ID ("user-sarah"), or mixed case
-  const profile = resolveProfile(username);
+  const mockProfile = resolveProfile(username);
+
+  // ── Dynamic profile state (for real users not in mock data) ─
+  const [dynamicProfile, setDynamicProfile] = useState<PublicProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(!mockProfile);
+  const [profileNotFound, setProfileNotFound] = useState(false);
+
+  // If no mock profile, fetch from API
+  useEffect(() => {
+    if (mockProfile || username === 'user-current') return;
+
+    let cancelled = false;
+    setProfileLoading(true);
+    setProfileNotFound(false);
+
+    async function fetchProfile() {
+      try {
+        const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
+        if (cancelled) return;
+        if (!res.ok) {
+          setProfileNotFound(true);
+          return;
+        }
+        const data = await res.json();
+        setDynamicProfile(apiUserToProfile(data));
+      } catch {
+        if (!cancelled) setProfileNotFound(true);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    }
+    fetchProfile();
+    return () => { cancelled = true; };
+  }, [mockProfile, username]);
+
+  // Unified profile: mock takes priority, then dynamic
+  const profile: PublicProfile | null = mockProfile ?? dynamicProfile;
 
   // ── Social state (API-backed) ───────────────────────────
   const [isFollowing, setIsFollowing] = useState(false);
   const [isNotifyEnabled, setIsNotifyEnabled] = useState(false);
   const [notifyLevel, setNotifyLevel] = useState<string | null>(null);
-  const [followerCount, setFollowerCount] = useState(profile?.stats.followers ?? 0);
+  const [followerCount, setFollowerCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
   const [bellLoading, setBellLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  // Sync followerCount when profile loads
+  useEffect(() => {
+    if (profile) setFollowerCount(profile.stats.followers);
+  }, [profile]);
 
   // ── Fetch follow + subscription state on mount ──────────
   useEffect(() => {
@@ -468,8 +542,24 @@ export default function UserProfilePage() {
     }
   }, [profile]);
 
+  // ── Loading state ────────────────────────────────────────
+  if (profileLoading) {
+    return (
+      <div className="flex min-h-screen bg-bg">
+        <Sidebar />
+        <main className="flex-1 min-w-0 flex items-center justify-center">
+          <div className="text-center px-4 animate-fade-in">
+            <Loader2 className="w-8 h-8 text-civic-light animate-spin mx-auto mb-4" />
+            <p className="text-sm text-text-muted">Loading profile...</p>
+          </div>
+        </main>
+        <MobileNav />
+      </div>
+    );
+  }
+
   // ── Not found ────────────────────────────────────────────
-  if (!profile) {
+  if (!profile || profileNotFound) {
     return (
       <div className="flex min-h-screen bg-bg">
         <Sidebar />
