@@ -13,6 +13,7 @@ import {
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { socialLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { isValidId } from '@/lib/security/sanitize';
+import { getUserById } from '@/lib/user-registry';
 
 // ─── GET /api/follow?target=user-xxx ─────────────────────────
 
@@ -96,8 +97,11 @@ export async function POST(request: NextRequest) {
   }
 
   switch (action) {
-    case 'follow':
-      follow(currentUser, targetUserId);
+    case 'follow': {
+      const registryUser = getUserById(currentUser);
+      const actorDisplayName = registryUser?.displayName ?? user.displayName;
+      const actorUsername = registryUser?.username ?? user.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
+      follow(currentUser, targetUserId, actorDisplayName, actorUsername);
       return NextResponse.json({
         success: true,
         isFollowing: true,
@@ -106,6 +110,7 @@ export async function POST(request: NextRequest) {
         followingCount: getFollowingCount(targetUserId),
         viewerFollowingCount: getFollowingCount(currentUser),
       });
+    }
 
     case 'unfollow':
       unfollow(currentUser, targetUserId);

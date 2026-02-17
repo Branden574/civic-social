@@ -9,6 +9,7 @@ import {
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
 import { clampInt, isValidId } from '@/lib/security/sanitize';
+import { getUserById } from '@/lib/user-registry';
 
 // ─── GET /api/notifications ──────────────────────────────────
 
@@ -48,8 +49,23 @@ export async function GET(request: NextRequest) {
 
   const result = getNotifications(currentUser, { limit, offset, unreadOnly });
 
+  // Enrich actor display names from user registry (fixes follow notifications showing ID or wrong name)
+  const enriched = result.notifications.map((n) => {
+    if (!n.actorUserId) return n;
+    const actor = getUserById(n.actorUserId);
+    if (!actor) return n;
+    return {
+      ...n,
+      metadata: {
+        ...n.metadata,
+        actorName: actor.displayName,
+        actorUsername: actor.username,
+      },
+    };
+  });
+
   return NextResponse.json({
-    notifications: result.notifications,
+    notifications: enriched,
     total: result.total,
     unreadCount: result.unreadCount,
     serverTime: new Date().toISOString(),

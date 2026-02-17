@@ -211,7 +211,12 @@ export function isFollowing(followerId: string, followingId: string): boolean {
   );
 }
 
-export function follow(followerId: string, followingId: string): void {
+export function follow(
+  followerId: string,
+  followingId: string,
+  actorDisplayName?: string,
+  actorUsername?: string,
+): void {
   const store = getStore();
   if (!isFollowing(followerId, followingId)) {
     store.follows.push({
@@ -219,14 +224,16 @@ export function follow(followerId: string, followingId: string): void {
       followingId,
       createdAt: new Date().toISOString(),
     });
-    // Generate notification for the person being followed
     createNotification({
       recipientUserId: followingId,
       actorUserId: followerId,
       type: 'follow',
       entityType: 'user',
       entityId: followingId,
-      metadata: { actorName: followerId }, // caller should pass real name
+      metadata: {
+        actorName: actorDisplayName || followerId,
+        actorUsername: actorUsername || '',
+      },
     });
   }
 }

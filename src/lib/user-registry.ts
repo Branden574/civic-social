@@ -7,6 +7,9 @@
 // verified-first ranking.
 //
 // In production: Replace with Prisma/DB queries + full-text index.
+// With in-memory store, users only appear in search on the instance
+// where they were registered (signup or refreshMe); use a DB for
+// full discoverability of all users across serverless instances.
 // ═══════════════════════════════════════════════════════════════
 
 import { getFollowingIds } from './social-store';
