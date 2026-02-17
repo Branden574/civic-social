@@ -20,6 +20,7 @@ import {
   Pause as PauseIcon,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 // ─── Types (matching debate-store.ts) ────────────────────────────
 
@@ -138,6 +139,7 @@ export default function DebatesPage() {
   const completedDebates = debates.filter((d) => d.status === 'completed');
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -261,6 +263,7 @@ export default function DebatesPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }
 

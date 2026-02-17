@@ -19,6 +19,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 // ─── Data ───────────────────────────────────────────────────
 
@@ -160,6 +161,7 @@ export default function CredibilityPage() {
   const [expandedFactor, setExpandedFactor] = useState<string | null>(null);
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -398,5 +400,6 @@ export default function CredibilityPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }

@@ -3,6 +3,7 @@
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { Radio, Calendar, Users, MapPin, Clock, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 const liveEvents = [
   {
@@ -63,6 +64,7 @@ const statusConfig: Record<string, { label: string; style: string; dot: string }
 
 export default function LivePage() {
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -177,5 +179,6 @@ export default function LivePage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }

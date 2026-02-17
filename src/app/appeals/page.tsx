@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 // ─── Data ───────────────────────────────────────────────────
 
@@ -132,6 +133,7 @@ export default function AppealsPage() {
   ).length;
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -467,5 +469,6 @@ export default function AppealsPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }

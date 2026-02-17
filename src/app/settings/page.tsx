@@ -5,9 +5,11 @@ import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moo
 import clsx from 'clsx';
 import { useState } from 'react';
 import { useTheme } from '@/lib/theme-context';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 export default function SettingsPage() {
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -139,6 +141,7 @@ export default function SettingsPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }
 

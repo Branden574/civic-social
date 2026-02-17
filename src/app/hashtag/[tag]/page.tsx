@@ -6,6 +6,7 @@ import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { PostCard, PostData } from '@/components/feed/post-card';
 import { Hash, TrendingUp, Users, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 export default function HashtagPage() {
   const params = useParams();
@@ -26,6 +27,7 @@ export default function HashtagPage() {
   }, [tag]);
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -103,5 +105,6 @@ export default function HashtagPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }

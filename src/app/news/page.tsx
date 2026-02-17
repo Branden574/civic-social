@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 const factCheckStyles: Record<string, { icon: typeof CheckCircle2; label: string; color: string }> = {
   VERIFIED: { icon: CheckCircle2, label: 'Fact-Checked', color: 'text-positive bg-positive/10' },
@@ -57,6 +58,7 @@ function getPerspectives(topics: string[]) {
 
 export default function NewsPage() {
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -97,6 +99,7 @@ export default function NewsPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }
 

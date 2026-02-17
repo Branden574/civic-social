@@ -512,6 +512,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearPersistedUser();
     clearLoginAttempts();
     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
+    // Clear any profile card dismissal state
+    try { localStorage.removeItem('profile_card_dismissed'); } catch { /* noop */ }
+    // Navigate to landing page
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   }, []);
 
   const forgotPassword = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {

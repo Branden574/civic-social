@@ -35,6 +35,7 @@ import {
 import clsx from 'clsx';
 import type { OfficialBillData } from '@/lib/legislation/types';
 import type { BillListingItem } from '@/lib/legislation/types';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -285,6 +286,7 @@ export default function LegislativeTrackerPage() {
   // ═══════════════════════════════════════════════════════
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -826,6 +828,7 @@ export default function LegislativeTrackerPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }
 

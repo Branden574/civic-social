@@ -24,6 +24,7 @@ import { PostCard, type PostData } from '@/components/feed/post-card';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { CredibilityBadge } from '@/components/ui/credibility-badge';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 type ProfileTab = 'posts' | 'overview' | 'debates' | 'activity' | 'credibility';
 
@@ -83,6 +84,7 @@ export default function ProfilePage() {
   const showFinishProfile = !!profileCompletion && !profileCompletion.isComplete && !onboardingDone && !profileCardDismissed;
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -231,6 +233,7 @@ export default function ProfilePage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }
 

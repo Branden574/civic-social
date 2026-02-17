@@ -4,9 +4,17 @@ import { useState } from 'react';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { FeedView } from '@/components/feed/feed-view';
 import { ComposeModal } from '@/components/compose/compose-modal';
+import { LandingPage } from '@/components/landing/landing-page';
+import { useAuth } from '@/lib/auth-context';
 
 export default function HomePage() {
+  const { isAuthenticated } = useAuth();
   const [composeOpen, setComposeOpen] = useState(false);
+
+  // Logged-out users see the premium landing page
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
 
   return (
     <div className="flex min-h-screen bg-bg">

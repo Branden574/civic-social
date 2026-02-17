@@ -158,6 +158,19 @@ export function middleware(request: NextRequest) {
     );
   }
 
+  // ── 1b. Auth-gate: redirect unauthenticated users from private routes ──
+  const PUBLIC_ROUTES = new Set([
+    '/', '/login', '/register', '/forgot-password', '/terms', '/privacy',
+  ]);
+  const isPublicRoute = PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/_next/');
+  if (!isPublicRoute) {
+    const sessionCookie = request.cookies.get('civic-session')?.value;
+    if (!sessionCookie) {
+      const loginUrl = new URL('/', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // ── 2. CORS check for API routes ──────────────────────────
   const origin = request.headers.get('origin');
   if (pathname.startsWith('/api/') && !isAllowedOrigin(origin, request.url)) {

@@ -18,6 +18,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -130,6 +131,7 @@ export default function SearchPage() {
   const hasQuery = debouncedQuery.length > 0 || selectedTopics.size > 0;
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -361,6 +363,7 @@ export default function SearchPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }
 

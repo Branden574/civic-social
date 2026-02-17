@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { Notification, NotificationType } from '@/lib/social-store';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 // ─── Notification type config ─────────────────────────────────
 
@@ -237,6 +238,7 @@ export default function NotificationsPage() {
   const grouped = groupByDay(filtered);
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0 border-r border-border-subtle">
@@ -425,5 +427,6 @@ export default function NotificationsPage() {
       </main>
       <MobileNav />
     </div>
+    </AuthGate>
   );
 }

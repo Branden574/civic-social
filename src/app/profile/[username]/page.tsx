@@ -26,6 +26,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 // ─── Mock Public Profiles ─────────────────────────────────────
 
@@ -570,6 +571,7 @@ export default function UserProfilePage() {
   // ── Loading state ────────────────────────────────────────
   if (profileLoading) {
     return (
+      <AuthGate>
       <div className="flex min-h-screen bg-bg">
         <Sidebar />
         <main className="flex-1 min-w-0 flex items-center justify-center">
@@ -580,12 +582,14 @@ export default function UserProfilePage() {
         </main>
         <MobileNav />
       </div>
+      </AuthGate>
     );
   }
 
   // ── Not found ────────────────────────────────────────────
   if (!profile || profileNotFound) {
     return (
+      <AuthGate>
       <div className="flex min-h-screen bg-bg">
         <Sidebar />
         <main className="flex-1 min-w-0 flex items-center justify-center">
@@ -610,6 +614,7 @@ export default function UserProfilePage() {
         </main>
         <MobileNav />
       </div>
+      </AuthGate>
     );
   }
 
@@ -623,6 +628,7 @@ export default function UserProfilePage() {
     .toUpperCase();
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -825,6 +831,7 @@ export default function UserProfilePage() {
         </div>
       )}
     </div>
+    </AuthGate>
   );
 }
 

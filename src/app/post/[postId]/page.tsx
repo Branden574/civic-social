@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AuthGate } from '@/components/auth/auth-gate';
 import {
   ArrowLeft,
   MessageSquare,
@@ -554,6 +555,7 @@ export default function ThreadPage() {
   };
 
   return (
+    <AuthGate>
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0 border-r border-border-subtle">
@@ -848,6 +850,7 @@ export default function ThreadPage() {
       {/* Toast */}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
+    </AuthGate>
   );
 }
 
