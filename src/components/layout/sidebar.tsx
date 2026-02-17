@@ -18,10 +18,13 @@ import {
   Scale,
   LogOut,
   Plus,
+  MoreHorizontal,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/lib/notification-context';
+import { useState, useCallback, useEffect } from 'react';
 
 // ─── Navigation items ────────────────────────────────────────
 
@@ -110,7 +113,6 @@ export function Sidebar({ onCompose }: SidebarProps) {
                     isActive ? 'text-civic-light scale-110' : 'group-hover:scale-105',
                   )}
                 />
-                {/* Active indicator dot */}
                 {isActive && (
                   <span className="absolute -right-0.5 -top-0.5 w-1.5 h-1.5 rounded-full bg-civic animate-scale-in" />
                 )}
@@ -229,7 +231,9 @@ export function Sidebar({ onCompose }: SidebarProps) {
   );
 }
 
-// ─── Mobile Bottom Tab Bar (6 items + FAB) ───────────────────
+// ═══════════════════════════════════════════════════════════════
+// Mobile Bottom Tab Bar (5 tabs + More sheet + Compose FAB)
+// ═══════════════════════════════════════════════════════════════
 
 interface MobileNavProps {
   onCompose?: () => void;
@@ -237,16 +241,65 @@ interface MobileNavProps {
 
 export function MobileNav({ onCompose }: MobileNavProps) {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin, isCreator, user, logout } = useAuth();
   const { unreadCount: mobileUnreadCount } = useNotifications();
+  const [moreOpen, setMoreOpen] = useState(false);
 
+  // Close "More" sheet on route change
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMoreOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [moreOpen]);
+
+  // Lock body scroll when More sheet is open
+  useEffect(() => {
+    if (moreOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [moreOpen]);
+
+  const handleToggleMore = useCallback(() => {
+    setMoreOpen((prev) => !prev);
+  }, []);
+
+  const handleCloseMore = useCallback(() => {
+    setMoreOpen(false);
+  }, []);
+
+  // Bottom tab items (4 primary + More)
   const tabs = [
-    { href: '/', icon: Home, label: 'For You' },
+    { href: '/', icon: Home, label: 'Home' },
     { href: '/news', icon: Newspaper, label: 'News' },
-    { href: '/labs', icon: Landmark, label: 'Bills' },
-    { href: '/notifications', icon: Bell, label: 'Alerts' },
+    { href: '/notifications', icon: Bell, label: 'Alerts', badge: true },
     { href: isAuthenticated ? '/profile' : '/login', icon: User, label: isAuthenticated ? 'Profile' : 'Sign In' },
   ];
+
+  // Items shown in the "More" sheet
+  const moreItems = [
+    { href: '/debates', icon: MessageSquare, label: 'Debates', desc: 'Structured live debate rooms' },
+    { href: '/labs', icon: Landmark, label: 'Legislation', desc: 'Track bills and policy' },
+    { href: '/search', icon: Search, label: 'Search', desc: 'Find posts, people, and topics' },
+    { href: '/saved', icon: Bookmark, label: 'Saved', desc: 'Your bookmarked posts' },
+    { href: '/settings', icon: Settings, label: 'Settings', desc: 'Account and preferences' },
+  ];
+
+  // Check if any "More" route is currently active
+  const moreRoutePaths = moreItems.map((m) => m.href);
+  const isMoreRouteActive = moreRoutePaths.some(
+    (p) => pathname === p || (p !== '/' && pathname.startsWith(p + '/')),
+  );
 
   return (
     <>
@@ -261,7 +314,125 @@ export function MobileNav({ onCompose }: MobileNavProps) {
         </button>
       )}
 
-      {/* Bottom Tab Bar */}
+      {/* ── More Sheet Overlay ── */}
+      {moreOpen && (
+        <div className="lg:hidden fixed inset-0 z-[70]">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
+            onClick={handleCloseMore}
+          />
+
+          {/* Sheet */}
+          <div className="absolute bottom-0 left-0 right-0 bg-bg rounded-t-2xl border-t border-border-subtle pb-safe animate-slide-up shadow-2xl">
+            {/* Handle + header */}
+            <div className="flex items-center justify-between px-5 pt-3 pb-2">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-civic-light" />
+                <span className="text-sm font-semibold text-text-primary">More</span>
+              </div>
+              <button
+                onClick={handleCloseMore}
+                className="p-2 -mr-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Drag indicator */}
+            <div className="flex justify-center -mt-1 mb-1">
+              <div className="w-10 h-1 rounded-full bg-surface-active" />
+            </div>
+
+            {/* Navigation items */}
+            <nav className="px-3 pb-3 space-y-0.5">
+              {moreItems.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== '/' && pathname.startsWith(item.href + '/'));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={handleCloseMore}
+                    className={clsx(
+                      'flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-150 active:scale-[0.98]',
+                      isActive
+                        ? 'bg-civic/10 text-civic-light'
+                        : 'text-text-secondary hover:bg-surface-hover active:bg-surface-active',
+                    )}
+                  >
+                    <div className={clsx(
+                      'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                      isActive ? 'bg-civic/15' : 'bg-surface-elevated',
+                    )}>
+                      <item.icon className={clsx(
+                        'w-5 h-5',
+                        isActive ? 'text-civic-light' : 'text-text-muted',
+                      )} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={clsx(
+                        'text-sm font-medium',
+                        isActive ? 'text-civic-light font-semibold' : 'text-text-primary',
+                      )}>
+                        {item.label}
+                      </p>
+                      <p className="text-xs text-text-muted truncate">{item.desc}</p>
+                    </div>
+                    {isActive && (
+                      <span className="w-2 h-2 rounded-full bg-civic shrink-0" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Admin links */}
+            {(isAdmin || isCreator) && (
+              <div className="px-3 pb-3">
+                <div className="border-t border-border-subtle pt-2">
+                  <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest px-4 py-1.5">
+                    Admin
+                  </p>
+                  {adminItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={handleCloseMore}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-all"
+                    >
+                      <item.icon className="w-5 h-5 text-text-muted" />
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sign out */}
+            {isAuthenticated && (
+              <div className="px-3 pb-4">
+                <div className="border-t border-border-subtle pt-2">
+                  <button
+                    onClick={() => {
+                      handleCloseMore();
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger-light hover:bg-danger/5 transition-all"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Bottom Tab Bar ── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-alt/90 backdrop-blur-2xl border-t border-border-subtle pb-safe">
         <div className="flex items-center justify-around px-1 pt-1.5 pb-1">
           {tabs.map((item) => {
@@ -286,12 +457,10 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                     )}
                     strokeWidth={isActive ? 2.2 : 1.8}
                   />
-                  {/* Active dot */}
                   {isActive && (
                     <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-civic animate-scale-in" />
                   )}
-                  {/* Notification badge */}
-                  {item.label === 'Alerts' && mobileUnreadCount > 0 && (
+                  {item.badge && mobileUnreadCount > 0 && (
                     <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-0.5 bg-danger text-white text-[8px] font-bold rounded-full flex items-center justify-center">
                       {mobileUnreadCount > 99 ? '99+' : mobileUnreadCount}
                     </span>
@@ -303,6 +472,33 @@ export function MobileNav({ onCompose }: MobileNavProps) {
               </Link>
             );
           })}
+
+          {/* More tab */}
+          <button
+            onClick={handleToggleMore}
+            className={clsx(
+              'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all duration-150 relative min-w-[52px]',
+              moreOpen || isMoreRouteActive
+                ? 'text-civic-light'
+                : 'text-text-muted active:text-text-secondary',
+            )}
+          >
+            <div className="relative">
+              <MoreHorizontal
+                className={clsx(
+                  'w-[22px] h-[22px] transition-all duration-200',
+                  (moreOpen || isMoreRouteActive) && 'scale-110',
+                )}
+                strokeWidth={moreOpen || isMoreRouteActive ? 2.2 : 1.8}
+              />
+              {isMoreRouteActive && !moreOpen && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-civic animate-scale-in" />
+              )}
+            </div>
+            <span className={clsx('text-[10px] font-medium', (moreOpen || isMoreRouteActive) && 'font-semibold')}>
+              More
+            </span>
+          </button>
         </div>
       </nav>
     </>

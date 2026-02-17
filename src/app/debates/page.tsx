@@ -161,9 +161,9 @@ export default function DebatesPage() {
               </button>
             </div>
             {/* Format explainer */}
-            <div className="flex items-center gap-3 mt-3 text-[11px] text-text-muted">
+            <div className="flex items-center gap-2 sm:gap-3 mt-3 text-[11px] text-text-muted flex-wrap">
               <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" />Opening</span>
-              <span>→</span><span>Rebuttal</span><span>→</span><span>Cross-Examination</span><span>→</span><span>Closing</span><span>→</span><span>Sources</span>
+              <span>→</span><span>Rebuttal</span><span>→</span><span className="hidden sm:inline">Cross-Exam</span><span className="sm:hidden">X-Exam</span><span>→</span><span>Closing</span><span>→</span><span>Sources</span>
             </div>
           </header>
 
@@ -407,7 +407,7 @@ function DebateRow({ debate, index }: { debate: Debate; index: number }) {
       </div>
 
       {/* Meta */}
-      <div className="flex items-center gap-4 text-xs text-text-muted">
+      <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-xs text-text-muted">
         <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{debate.spectatorCount} spectators</span>
         {debate.civilityScore > 0 && (
           <span className="flex items-center gap-1">

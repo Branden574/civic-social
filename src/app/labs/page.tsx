@@ -762,7 +762,7 @@ export default function LegislativeTrackerPage() {
                               key={p}
                               onClick={() => goToPage(p)}
                               className={clsx(
-                                'text-xs font-medium w-8 h-8 rounded-lg transition-colors',
+                                'text-xs font-medium w-10 h-10 sm:w-8 sm:h-8 rounded-lg transition-colors',
                                 p === currentPage
                                   ? 'bg-civic text-white'
                                   : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover',

@@ -227,7 +227,7 @@ function NewsArticleCard({ article, index }: { article: NewsArticle; index: numb
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-3 sm:gap-4 mt-3 flex-wrap">
             <button className="flex items-center gap-1.5 text-xs text-text-muted hover:text-civic-light transition-colors">
               <MessageCircle className="w-3.5 h-3.5" />
               {article.discussionCount} discussions
