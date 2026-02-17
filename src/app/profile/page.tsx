@@ -63,7 +63,7 @@ export default function ProfilePage() {
   const postsCount = stats?.postsCount ?? postCount;
 
   // Profile completion: show card only if NOT complete (from server)
-  const showFinishProfile = profileCompletion !== null && !profileCompletion.isComplete && !onboardingDone;
+  const showFinishProfile = !!profileCompletion && !profileCompletion.isComplete && !onboardingDone;
 
   return (
     <div className="flex min-h-screen bg-bg">
