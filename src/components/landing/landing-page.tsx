@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ChevronDown, Shield, Scale, Newspaper, Lock, Play } from 'lucide-react';
+import { ChevronDown, Shield, Scale, Newspaper, Lock } from 'lucide-react';
 
 // ─── Landing Navbar ──────────────────────────────────────────
 
@@ -194,13 +194,6 @@ export function LandingPage() {
               >
                 Get Started Free
               </Link>
-              <button
-                type="button"
-                className="w-full sm:w-auto text-base font-semibold text-white/90 bg-white/10 border border-white/20 px-8 py-3.5 rounded-xl hover:bg-white/15 transition-all flex items-center justify-center gap-2 min-h-[48px]"
-              >
-                <Play className="w-4 h-4" />
-                Watch 2min Demo
-              </button>
             </div>
           </div>
         </section>
