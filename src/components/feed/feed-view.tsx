@@ -74,8 +74,8 @@ export function FeedView() {
       setLastFetchTime(Date.now());
       feedVersionRef.current++;
       markFirstContent();
-    } catch (err) {
-      console.error('Feed fetch error:', err);
+    } catch {
+      // Feed fetch failed — keep existing feed visible
     } finally {
       setLoading(false);
     }
@@ -129,8 +129,8 @@ export function FeedView() {
       setHasNewPosts(false);
       setLastFetchTime(Date.now());
       feedVersionRef.current++;
-    } catch (err) {
-      console.error('Refresh error:', err);
+    } catch {
+      // Refresh failed — keep existing feed visible
     } finally {
       setIsRefreshing(false);
     }
@@ -153,13 +153,15 @@ export function FeedView() {
 
   // Called when a new post is created via ComposeModal
   const handlePostCreated = useCallback(() => {
-    setLastFetchTime(Date.now());
     setHasNewPosts(false);
     refreshMe();
+    // Refresh the feed so the server-ranked version of the new post
+    // appears and deduplication against userPosts works correctly.
+    fetchFeed();
     setTimeout(() => {
       feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
-  }, [refreshMe]);
+  }, [refreshMe, fetchFeed]);
 
   // Called when a post is deleted — remove from client + refetch server truth
   const handlePostDeleted = useCallback(async (postId: string) => {

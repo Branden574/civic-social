@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   // Auto-register the requesting user so they appear in searches
   if (user) {
-    registerUser({
+    await registerUser({
       id: user.id,
       displayName: user.displayName,
       username: user.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const { results, total, hasMore } = searchUsers({
+  const { results, total, hasMore } = await searchUsers({
     query: q,
     scope,
     viewerId: user?.id,

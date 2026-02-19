@@ -18,10 +18,11 @@ import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeTopics, sanitizeUrl, isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
 import { getUserById, registerUser } from '@/lib/user-registry';
+import { analyzeCivility } from '@/lib/civility';
 
 // ─── Author profile (matches post-store.tsx) ─────────────────
-function getAuthorProfile(authorId: string) {
-  const u = getUserById(authorId);
+async function getAuthorProfile(authorId: string) {
+  const u = await getUserById(authorId);
   if (u) {
     return {
       displayName: u.displayName,
@@ -40,8 +41,8 @@ function getAuthorProfile(authorId: string) {
 
 // ─── Serialize PersistedPost → client PostData shape ─────────
 
-function serializePost(p: PersistedPost) {
-  const author = getAuthorProfile(p.authorId);
+async function serializePost(p: PersistedPost) {
+  const author = await getAuthorProfile(p.authorId);
   const safeUrl = p.articleUrl ? sanitizeUrl(p.articleUrl) : null;
   return {
     id: p.id,
@@ -52,7 +53,7 @@ function serializePost(p: PersistedPost) {
     comment_policy: p.comment_policy,
     visibility: p.visibility,
     is_thread_locked: p.is_thread_locked,
-    comment_count: getCommentCount(p.id),
+    comment_count: await getCommentCount(p.id),
     author: {
       id: p.authorId,
       displayName: author.displayName,
@@ -100,17 +101,17 @@ export async function GET(request: NextRequest) {
 
     const user = getSessionUser(request);
     const isOwnProfile = user ? authorId === user.id : false;
-    const posts = getPostsByAuthor(authorId, isOwnProfile);
+    const posts = await getPostsByAuthor(authorId, isOwnProfile);
     return NextResponse.json({
-      posts: posts.map(serializePost),
+      posts: await Promise.all(posts.map(serializePost)),
       total: posts.length,
       serverTime: new Date().toISOString(),
     });
   }
 
-  const posts = getAllPublishedPosts();
+  const posts = await getAllPublishedPosts();
   return NextResponse.json({
-    posts: posts.map(serializePost),
+    posts: await Promise.all(posts.map(serializePost)),
     total: posts.length,
     serverTime: new Date().toISOString(),
   });
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
     const user = getSessionUser(request);
     if (!user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     const userId = user.id;
-    registerUser({
+    await registerUser({
       id: user.id,
       displayName: user.displayName,
       username: user.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
     if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
     const body = await request.json();
-    const { content, topics, articleUrl, civilityScore, comment_policy } = body;
+    const { content, topics, articleUrl, comment_policy } = body;
 
     // Validate and sanitize content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -153,6 +154,9 @@ export async function POST(request: NextRequest) {
       return badRequest('Content cannot be empty after sanitization.');
     }
 
+    // Compute civility server-side — never trust client-provided scores
+    const { score: civilityScore } = analyzeCivility(sanitizedContent);
+
     // Sanitize topics
     const sanitizedTopics = sanitizeTopics(topics);
 
@@ -167,12 +171,12 @@ export async function POST(request: NextRequest) {
     const safePolicy: CommentPolicy = validPolicies.includes(comment_policy) ? comment_policy : 'everyone';
 
     // Create the post
-    const post = createPost({
+    const post = await createPost({
       authorId: userId,
       content: sanitizedContent,
       topics: sanitizedTopics,
       articleUrl: safeArticleUrl || undefined,
-      civilityScore: typeof civilityScore === 'number' ? Math.max(0, Math.min(1, civilityScore)) : 0.8,
+      civilityScore,
       comment_policy: safePolicy,
     });
 
@@ -183,7 +187,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      post: serializePost(post),
+      post: await serializePost(post),
       serverTime: new Date().toISOString(),
     });
   } catch (err) {

@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   switch (action) {
     case 'follow': {
-      const registryUser = getUserById(currentUser);
+      const registryUser = await getUserById(currentUser);
       const actorDisplayName = registryUser?.displayName ?? user.displayName;
       const actorUsername = registryUser?.username ?? user.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
       follow(currentUser, targetUserId, actorDisplayName, actorUsername);

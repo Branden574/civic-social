@@ -62,10 +62,10 @@ export async function GET(
   const viewerId = user?.id || 'user-current';
 
   // Try persisted post first
-  const post = getPostById(postId);
+  const post = await getPostById(postId);
   if (post) {
     const author = getAuthorProfile(post.authorId);
-    const commentCount = getCommentCount(postId);
+    const commentCount = await getCommentCount(postId);
     const perm = canComment(viewerId, post, permissionHelpers);
 
     return NextResponse.json({
@@ -98,7 +98,7 @@ export async function GET(
   // Try mock post
   const mockCandidate = mockCandidates.find((c) => c.post.id === postId);
   if (mockCandidate) {
-    const commentCount = getCommentCount(postId);
+    const commentCount = await getCommentCount(postId);
     const mockLegacyReplies = mockReplies.filter((r) => r.postId === postId);
     const perm = canCommentMockPost(viewerId, {
       authorId: mockCandidate.author.id,
@@ -181,7 +181,7 @@ export async function DELETE(
     const user = getSessionUser(request);
     const userId = user?.id || 'user-current';
 
-    deletePersistedPost(postId);
+    await deletePersistedPost(postId);
     markPostDeleted(postId);
 
     secureLog.audit('post_deleted', userId, { postId });

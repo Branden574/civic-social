@@ -60,6 +60,75 @@ enum VerificationLevel {
   OFFICIAL_VERIFIED
 }
 
+// Searchable user record for discoverability (signup → search).
+// Persisted so all serverless instances see the same users.
+model SearchableUser {
+  id                String   @id // app user id, e.g. user-1739...
+  displayName       String
+  username          String
+  email             String   @unique
+  passwordHash      String?  // PBKDF2 hash for server-side auth
+  bio               String   @default("")
+  affiliation       String   @default("")
+  avatarUrl         String?
+  verificationLevel String   @default("EMAIL_VERIFIED")
+  isVerified        Boolean  @default(false)
+  credibilityScore  Int     @default(50)
+  followerCount     Int     @default(0)
+  followingCount    Int     @default(0)
+  postCount         Int     @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  displayNameNorm   String   // lowercase, for search
+  usernameNorm      String   // lowercase, for search
+
+  @@index([usernameNorm])
+  @@index([displayNameNorm])
+}
+
+// ─────────────────────────────────────────────
+// STORED POSTS & COMMENTS (app-layer persistence)
+// Linked to SearchableUser so it works with the
+// existing auth system without requiring full User records.
+// ─────────────────────────────────────────────
+
+model StoredPost {
+  id             String    @id
+  authorId       String
+  content        String
+  topics         String[]
+  articleUrl     String?
+  civilityScore  Float     @default(0.8)
+  createdAt      DateTime  @default(now())
+  status         String    @default("published")
+  deletedAt      DateTime?
+  visibility     String    @default("public")
+  commentPolicy  String    @default("everyone")
+  isThreadLocked Boolean   @default(false)
+
+  comments       StoredComment[]
+
+  @@index([authorId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model StoredComment {
+  id              String    @id
+  postId          String
+  authorId        String
+  parentCommentId String?
+  body            String
+  createdAt       DateTime  @default(now())
+  status          String    @default("published")
+  deletedAt       DateTime?
+
+  post            StoredPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([authorId])
+}
+
 // ─────────────────────────────────────────────
 // POLITICAL AFFILIATIONS
 // ─────────────────────────────────────────────

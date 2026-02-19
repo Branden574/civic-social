@@ -19,7 +19,7 @@ export async function GET(
   const identifier = decodeURIComponent(userId);
 
   // Try by ID first, then by username
-  const user = getUserById(identifier) ?? getUserByUsername(identifier);
+  const user = (await getUserById(identifier)) ?? (await getUserByUsername(identifier));
 
   if (!user) {
     return NextResponse.json(

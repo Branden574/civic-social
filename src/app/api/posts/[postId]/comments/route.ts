@@ -70,8 +70,10 @@ export async function GET(
   const limit = clampInt(searchParams.get('limit'), 1, 100, 50);
   const cursor = searchParams.get('cursor') || undefined;
 
-  const result = getCommentsByPost(postId, { limit, cursor });
-  const replyCounts = getReplyCounts(postId);
+  const [result, replyCounts] = await Promise.all([
+    getCommentsByPost(postId, { limit, cursor }),
+    getReplyCounts(postId),
+  ]);
 
   return NextResponse.json({
     comments: result.comments.map((c) => serializeComment(c, replyCounts.get(c.id) ?? 0)),
@@ -111,17 +113,16 @@ export async function POST(
     const sanitizedBody = sanitizeText(rawBody);
     if (sanitizedBody.length === 0) return badRequest('Comment body cannot be empty after sanitization.');
     if (sanitizedBody.length > 1000) return badRequest('Comment exceeds maximum length of 1000 characters.');
-    if (sanitizedBody.length < 1) return badRequest('Comment is too short.');
 
     // Validate parent comment if provided
     if (parentCommentId) {
       if (!isValidId(parentCommentId)) return badRequest('Invalid parent comment ID.');
-      const parent = getCommentById(parentCommentId);
+      const parent = await getCommentById(parentCommentId);
       if (!parent || parent.postId !== postId) return badRequest('Parent comment not found on this post.');
     }
 
     // Permission check — try persisted post first, then mock
-    const persistedPost = getPostById(postId);
+    const persistedPost = await getPostById(postId);
     let permResult;
 
     if (persistedPost) {
@@ -146,14 +147,15 @@ export async function POST(
     }
 
     // Create comment
-    const comment = createComment({
-      postId,
-      authorId: userId,
-      body: sanitizedBody,
-      parentCommentId: parentCommentId || undefined,
-    });
-
-    const commentCount = getCommentCount(postId);
+    const [comment, commentCount] = await Promise.all([
+      createComment({
+        postId,
+        authorId: userId,
+        body: sanitizedBody,
+        parentCommentId: parentCommentId || undefined,
+      }),
+      getCommentCount(postId),
+    ]);
 
     secureLog.info('POST comment', `comment=${comment.id} post=${postId} author=${userId}`);
 
@@ -184,12 +186,14 @@ export async function DELETE(
   const user = getSessionUser(request);
   const userId = user?.id || 'user-current';
 
-  const ok = deleteComment(commentId, userId);
+  const [ok, commentCount] = await Promise.all([
+    deleteComment(commentId, userId),
+    getCommentCount(postId),
+  ]);
+
   if (!ok) {
     return NextResponse.json({ error: 'Comment not found or not authorized.' }, { status: 404 });
   }
-
-  const commentCount = getCommentCount(postId);
 
   secureLog.audit('comment_deleted', userId, { commentId, postId });
 

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
   }
 
-  const user = registerUser({
+  const user = await registerUser({
     id,
     displayName,
     username: username || displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),

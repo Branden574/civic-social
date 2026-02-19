@@ -3,15 +3,12 @@
 // ═══════════════════════════════════════════════════════════════
 //
 // Central registry of all users (mock + real signups).
-// Provides normalized search, credibility scoring, and
-// verified-first ranking.
-//
-// In production: Replace with Prisma/DB queries + full-text index.
-// With in-memory store, users only appear in search on the instance
-// where they were registered (signup or refreshMe); use a DB for
-// full discoverability of all users across serverless instances.
+// When DATABASE_URL is set, uses Prisma (SearchableUser) so users
+// are discoverable across all serverless instances. Otherwise
+// falls back to in-memory store (instance-local only).
 // ═══════════════════════════════════════════════════════════════
 
+import { isDbAvailable, prisma } from './db';
 import { getFollowingIds } from './social-store';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -43,6 +40,46 @@ export interface UserSearchResult {
   user: Omit<RegisteredUser, '_displayNameNorm' | '_usernameNorm' | 'email'>;
   matchScore: number;
   rankScore: number;
+}
+
+type VerificationLevel = RegisteredUser['verificationLevel'];
+
+function rowToRegisteredUser(row: {
+  id: string;
+  displayName: string;
+  username: string;
+  email: string;
+  bio: string;
+  affiliation: string;
+  avatarUrl: string | null;
+  verificationLevel: string;
+  isVerified: boolean;
+  credibilityScore: number;
+  followerCount: number;
+  followingCount: number;
+  postCount: number;
+  createdAt: Date;
+  displayNameNorm: string;
+  usernameNorm: string;
+}): RegisteredUser {
+  return {
+    id: row.id,
+    displayName: row.displayName,
+    username: row.username,
+    email: row.email,
+    bio: row.bio,
+    affiliation: row.affiliation,
+    avatarUrl: row.avatarUrl,
+    verificationLevel: row.verificationLevel as VerificationLevel,
+    isVerified: row.isVerified,
+    credibilityScore: row.credibilityScore,
+    followerCount: row.followerCount,
+    followingCount: row.followingCount,
+    postCount: row.postCount,
+    createdAt: row.createdAt.toISOString(),
+    _displayNameNorm: row.displayNameNorm,
+    _usernameNorm: row.usernameNorm,
+  };
 }
 
 // ─── Store ───────────────────────────────────────────────────
@@ -213,34 +250,61 @@ function seedMockUsers(store: UserRegistryStore) {
 // CRUD
 // ═══════════════════════════════════════════════════════════════
 
-export function registerUser(input: {
+export async function registerUser(input: {
   id: string;
   displayName: string;
   username: string;
   email: string;
   bio?: string;
   affiliation?: string;
-}): RegisteredUser {
-  const store = getStore();
+}): Promise<RegisteredUser> {
+  const usernameVal = input.username || input.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
+  const displayNameNorm = input.displayName.toLowerCase().trim();
+  const usernameNorm = usernameVal.toLowerCase().trim();
 
+  if (isDbAvailable()) {
+    const row = await prisma.searchableUser.upsert({
+      where: { id: input.id },
+      create: {
+        id: input.id,
+        displayName: input.displayName,
+        username: usernameVal,
+        email: input.email,
+        bio: input.bio ?? '',
+        affiliation: input.affiliation ?? '',
+        displayNameNorm,
+        usernameNorm,
+      },
+      update: {
+        displayName: input.displayName,
+        username: usernameVal,
+        email: input.email,
+        ...(input.bio !== undefined && { bio: input.bio }),
+        ...(input.affiliation !== undefined && { affiliation: input.affiliation }),
+        displayNameNorm,
+        usernameNorm,
+      },
+    });
+    return rowToRegisteredUser(row);
+  }
+
+  const store = getStore();
   const existing = store.users.get(input.id);
   if (existing) {
-    // Update fields that may have changed (display name, username, bio, etc.)
-    // but preserve server-assigned fields (verification, credibility, counts)
     existing.displayName = input.displayName || existing.displayName;
-    existing.username = input.username || existing.username;
+    existing.username = usernameVal || existing.username;
     existing.email = input.email || existing.email;
     if (input.bio) existing.bio = input.bio;
     if (input.affiliation) existing.affiliation = input.affiliation;
-    existing._displayNameNorm = existing.displayName.toLowerCase().trim();
-    existing._usernameNorm = existing.username.toLowerCase().trim();
+    existing._displayNameNorm = displayNameNorm;
+    existing._usernameNorm = usernameNorm;
     return existing;
   }
 
   const user: RegisteredUser = {
     id: input.id,
     displayName: input.displayName,
-    username: input.username,
+    username: usernameVal,
     email: input.email,
     bio: input.bio || '',
     affiliation: input.affiliation || '',
@@ -252,19 +316,30 @@ export function registerUser(input: {
     followingCount: 0,
     postCount: 0,
     createdAt: new Date().toISOString(),
-    _displayNameNorm: input.displayName.toLowerCase().trim(),
-    _usernameNorm: input.username.toLowerCase().trim(),
+    _displayNameNorm: displayNameNorm,
+    _usernameNorm: usernameNorm,
   };
 
   store.users.set(user.id, user);
   return user;
 }
 
-export function getUserById(id: string): RegisteredUser | null {
+export async function getUserById(id: string): Promise<RegisteredUser | null> {
+  if (isDbAvailable()) {
+    const row = await prisma.searchableUser.findUnique({ where: { id } });
+    return row ? rowToRegisteredUser(row) : null;
+  }
   return getStore().users.get(id) ?? null;
 }
 
-export function getUserByUsername(username: string): RegisteredUser | null {
+export async function getUserByUsername(username: string): Promise<RegisteredUser | null> {
+  if (isDbAvailable()) {
+    const norm = username.toLowerCase().trim();
+    const row = await prisma.searchableUser.findFirst({
+      where: { usernameNorm: norm },
+    });
+    return row ? rowToRegisteredUser(row) : null;
+  }
   const store = getStore();
   const norm = username.toLowerCase().trim();
   for (const user of store.users.values()) {
@@ -273,7 +348,38 @@ export function getUserByUsername(username: string): RegisteredUser | null {
   return null;
 }
 
-export function updateUserProfile(id: string, updates: Partial<Pick<RegisteredUser, 'displayName' | 'username' | 'bio' | 'affiliation' | 'avatarUrl'>>): RegisteredUser | null {
+export async function updateUserProfile(
+  id: string,
+  updates: Partial<Pick<RegisteredUser, 'displayName' | 'username' | 'bio' | 'affiliation' | 'avatarUrl'>>
+): Promise<RegisteredUser | null> {
+  if (isDbAvailable()) {
+    const existing = await prisma.searchableUser.findUnique({ where: { id } });
+    if (!existing) return null;
+    const data: {
+      displayName?: string;
+      username?: string;
+      displayNameNorm?: string;
+      usernameNorm?: string;
+      bio?: string;
+      affiliation?: string;
+      avatarUrl?: string | null;
+    } = {};
+    if (updates.displayName !== undefined) {
+      data.displayName = updates.displayName;
+      data.displayNameNorm = updates.displayName.toLowerCase().trim();
+    }
+    if (updates.username !== undefined) {
+      data.username = updates.username;
+      data.usernameNorm = updates.username.toLowerCase().trim();
+    }
+    if (updates.bio !== undefined) data.bio = updates.bio;
+    if (updates.affiliation !== undefined) data.affiliation = updates.affiliation;
+    if (updates.avatarUrl !== undefined) data.avatarUrl = updates.avatarUrl;
+    if (Object.keys(data).length === 0) return rowToRegisteredUser(existing);
+    const row = await prisma.searchableUser.update({ where: { id }, data });
+    return rowToRegisteredUser(row);
+  }
+
   const user = getStore().users.get(id);
   if (!user) return null;
 
@@ -326,43 +432,52 @@ function computeRankScore(matchScore: number, user: RegisteredUser): number {
   return verifiedBoost + credBoost + matchScore + popularityBoost;
 }
 
-export function searchUsers(options: {
+export async function searchUsers(options: {
   query: string;
   scope?: 'global' | 'followers';
   viewerId?: string;
   limit?: number;
   cursor?: number;
-}): { results: UserSearchResult[]; total: number; hasMore: boolean } {
-  const store = getStore();
+}): Promise<{ results: UserSearchResult[]; total: number; hasMore: boolean }> {
   const { query, scope = 'global', viewerId, limit = 20, cursor = 0 } = options;
   const q = query.toLowerCase().trim();
 
-  // Get scope-restricted user IDs
-  let candidateIds: Set<string> | null = null;
-  if (scope === 'followers' && viewerId) {
-    const followingIds = getFollowingIds(viewerId);
-    candidateIds = new Set(followingIds);
+  let users: RegisteredUser[];
+
+  if (isDbAvailable()) {
+    const where = q
+      ? {
+          OR: [
+            { usernameNorm: { contains: q, mode: 'insensitive' as const } },
+            { displayNameNorm: { contains: q, mode: 'insensitive' as const } },
+            { bio: { contains: q, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+    const rows = await prisma.searchableUser.findMany({ where });
+    users = rows.map(rowToRegisteredUser);
+  } else {
+    users = Array.from(getStore().users.values());
   }
 
-  // Score all matching users
+  let candidateIds: Set<string> | null = null;
+  if (scope === 'followers' && viewerId) {
+    candidateIds = new Set(getFollowingIds(viewerId));
+  }
+
   const scored: UserSearchResult[] = [];
 
-  for (const user of store.users.values()) {
-    // Scope filter
+  for (const user of users) {
     if (candidateIds && !candidateIds.has(user.id)) continue;
-    // Don't show the viewer themselves in results (optional, can be removed)
-    // if (viewerId && user.id === viewerId) continue;
 
     const matchScore = computeMatchScore(q, user);
-    if (matchScore === 0 && q) continue; // no match
+    if (matchScore === 0 && q) continue;
 
     const rankScore = computeRankScore(matchScore, user);
-
     const { _displayNameNorm, _usernameNorm, email, ...safeUser } = user;
     scored.push({ user: safeUser, matchScore, rankScore });
   }
 
-  // Sort by rank score descending
   scored.sort((a, b) => b.rankScore - a.rankScore);
 
   const total = scored.length;
@@ -376,19 +491,15 @@ export function searchUsers(options: {
 // FOLLOWER LIST (with user details)
 // ═══════════════════════════════════════════════════════════════
 
-export function getFollowersWithDetails(userId: string): RegisteredUser[] {
-  const store = getStore();
-  // Find all follows where followingId = userId
-  // We need to import getStore from social-store, but to avoid circular deps,
-  // we'll accept followerIds as input
-  const results: RegisteredUser[] = [];
-  for (const user of store.users.values()) {
-    // This is a simplified version; in production, query the follows table
-    results.push(user);
+export async function getFollowersWithDetails(userId: string): Promise<RegisteredUser[]> {
+  if (isDbAvailable()) {
+    const rows = await prisma.searchableUser.findMany();
+    return rows.map(rowToRegisteredUser);
   }
-  return results;
+  return Array.from(getStore().users.values());
 }
 
-export function getAllUserCount(): number {
+export async function getAllUserCount(): Promise<number> {
+  if (isDbAvailable()) return prisma.searchableUser.count();
   return getStore().users.size;
 }

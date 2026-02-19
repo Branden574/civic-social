@@ -50,19 +50,21 @@ export async function GET(request: NextRequest) {
   const result = getNotifications(currentUser, { limit, offset, unreadOnly });
 
   // Enrich actor display names from user registry (fixes follow notifications showing ID or wrong name)
-  const enriched = result.notifications.map((n) => {
-    if (!n.actorUserId) return n;
-    const actor = getUserById(n.actorUserId);
-    if (!actor) return n;
-    return {
-      ...n,
-      metadata: {
-        ...n.metadata,
-        actorName: actor.displayName,
-        actorUsername: actor.username,
-      },
-    };
-  });
+  const enriched = await Promise.all(
+    result.notifications.map(async (n) => {
+      if (!n.actorUserId) return n;
+      const actor = await getUserById(n.actorUserId);
+      if (!actor) return n;
+      return {
+        ...n,
+        metadata: {
+          ...n.metadata,
+          actorName: actor.displayName,
+          actorUsername: actor.username,
+        },
+      };
+    }),
+  );
 
   return NextResponse.json({
     notifications: enriched,

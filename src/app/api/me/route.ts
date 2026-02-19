@@ -36,11 +36,11 @@ interface MeResponse {
   };
 }
 
-function buildResponse(
+async function buildResponse(
   sessionUser: { id: string; email: string; displayName: string; role: string },
   onboarding: OnboardingState,
   profileCompletion: ProfileCompletion,
-): MeResponse {
+): Promise<MeResponse> {
   return {
     user: {
       id: sessionUser.id,
@@ -53,7 +53,7 @@ function buildResponse(
     stats: {
       followersCount: getFollowerCount(sessionUser.id),
       followingCount: getFollowingCount(sessionUser.id),
-      postsCount: getPostCount(sessionUser.id),
+      postsCount: await getPostCount(sessionUser.id),
     },
   };
 }
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Auto-register in user registry for search discoverability
-  registerUser({
+  await registerUser({
     id: sessionUser.id,
     displayName: sessionUser.displayName,
     username: sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
@@ -92,11 +92,11 @@ export async function GET(request: NextRequest) {
       percent: 0,
       missingFields: ['display_name', 'username', 'country', 'party', 'topics'],
     };
-    return NextResponse.json(buildResponse(sessionUser, defaultOnboarding, defaultCompletion));
+    return NextResponse.json(await buildResponse(sessionUser, defaultOnboarding, defaultCompletion));
   }
 
   return NextResponse.json(
-    buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
+    await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
   );
 }
 

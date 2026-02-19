@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
   const simulated = getNewPostCountSince(sinceMs);
 
   // 2. Count user-created posts newer than timestamp
-  const userPosts = getAllPublishedPosts().filter(
+  const allUserPosts = await getAllPublishedPosts();
+  const userPosts = allUserPosts.filter(
     (p) => new Date(p.createdAt).getTime() > sinceMs,
   );
 

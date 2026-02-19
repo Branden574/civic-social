@@ -10,7 +10,7 @@ import { generateColdStartFeed, type ColdStartProfile } from '@/lib/algorithm/co
 import { mockCandidates, mockUsers, mockReplies } from '@/lib/data/mock-data';
 import type { FeedCandidate } from '@/lib/algorithm';
 import { getDeletedPostIds } from '@/lib/deleted-posts';
-import { getAllPublishedPosts, getCommentCount, type PersistedPost } from '@/lib/post-data-store';
+import { getAllPublishedPosts, getCommentCountsBatch, type PersistedPost } from '@/lib/post-data-store';
 import { getReleasedNewPosts } from '@/lib/simulated-new-posts';
 import { getClientIp, getSessionUser, tooManyRequests } from '@/lib/security/api-guard';
 import { readLimiter } from '@/lib/security/rate-limiter';
@@ -33,7 +33,7 @@ function applySafetyFilter(candidates: FeedCandidate[]): { safe: FeedCandidate[]
 
 // ─── Serialize for "latest" mode (no algorithm scores) ───────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function serializeChronologicalPost(c: FeedCandidate) {
+async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, number>) {
   return {
     id: c.post.id,
     content: c.post.content,
@@ -82,7 +82,7 @@ function serializeChronologicalPost(c: FeedCandidate) {
       explanationTags: ['chronological'],
     },
     comment_policy: 'everyone' as const,
-    comment_count: getCommentCount(c.post.id) + mockReplies.filter((r) => r.postId === c.post.id).length,
+    comment_count: (counts.get(c.post.id) ?? 0) + mockReplies.filter((r) => r.postId === c.post.id).length,
     replies: mockReplies
       .filter((r) => r.postId === c.post.id)
       .map((r) => ({
@@ -106,9 +106,9 @@ function serializeChronologicalPost(c: FeedCandidate) {
 }
 
 // ─── Serialize a user-created PersistedPost for feed response ─
-function serializeUserPost(p: PersistedPost) {
+async function serializeUserPost(p: PersistedPost, counts: Map<string, number>) {
   const safeUrl = p.articleUrl ? sanitizeUrl(p.articleUrl) : null;
-  const registryUser = getUserById(p.authorId);
+  const registryUser = await getUserById(p.authorId);
   const civicRep = registryUser ? Math.max(0, Math.min(1, registryUser.credibilityScore / 100)) : 0.5;
   const authorProfile = {
     id: p.authorId,
@@ -143,7 +143,7 @@ function serializeUserPost(p: PersistedPost) {
       explanationTags: ['your-post'],
     },
     comment_policy: p.comment_policy ?? 'everyone',
-    comment_count: getCommentCount(p.id),
+    comment_count: counts.get(p.id) ?? 0,
     replies: [],
   };
 }
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
 
   const sessionUser = getSessionUser(request);
   if (sessionUser) {
-    registerUser({
+    await registerUser({
       id: sessionUser.id,
       displayName: sessionUser.displayName,
       username: sessionUser.displayName.toLowerCase().replace(/\s+/g, '-'),
@@ -174,15 +174,20 @@ export async function GET(request: NextRequest) {
 
   // ── Fetch user-created posts from server store ─────────────
   const deletedIds = getDeletedPostIds();
-  const allPublishedUserCreatedPosts = getAllPublishedPosts()
-    .filter((p) => !deletedIds.has(p.id))
-    .map(serializeUserPost);
+  const allPublished = await getAllPublishedPosts();
+  const userPosts = allPublished.filter((p) => !deletedIds.has(p.id));
 
   // ── Merge mock candidates + simulated new posts ────────────
   const simulatedPosts = getReleasedNewPosts();
   const existingIds = new Set(mockCandidates.map((c) => c.post.id));
   const newSimulated = simulatedPosts.filter((s) => !existingIds.has(s.post.id));
   let candidates: FeedCandidate[] = [...newSimulated, ...mockCandidates];
+
+  // ── Batch-fetch all comment counts in a single DB query ────
+  const allPostIds = [...userPosts.map((p) => p.id), ...candidates.map((c) => c.post.id)];
+  const counts = await getCommentCountsBatch(allPostIds);
+
+  const allPublishedUserCreatedPosts = await Promise.all(userPosts.map((p) => serializeUserPost(p, counts)));
 
   // Filter by hashtag if provided
   if (hashtag) {
@@ -209,7 +214,7 @@ export async function GET(request: NextRequest) {
     );
 
     const trimmed = sorted.slice(0, limit);
-    const mockSerialized = trimmed.map(serializeChronologicalPost);
+    const mockSerialized = await Promise.all(trimmed.map((c) => serializeChronologicalPost(c, counts)));
     const relevantUserPosts = tab === 'following'
       ? allPublishedUserCreatedPosts.filter((p) => followingPlusSelf.includes(p.author.id))
       : allPublishedUserCreatedPosts;
@@ -246,7 +251,7 @@ export async function GET(request: NextRequest) {
     const relevantUserPosts = allPublishedUserCreatedPosts.filter((p) =>
       followingPlusSelf.includes(p.author.id),
     );
-    const followingPosts = [...relevantUserPosts, ...feed.posts.map(serializeRankedPost)];
+    const followingPosts = [...relevantUserPosts, ...await Promise.all(feed.posts.map((rp) => serializeRankedPost(rp, counts)))];
     return NextResponse.json({
       tab: 'following',
       sort: 'top',
@@ -284,7 +289,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       tab: 'for-you',
       sort: 'top',
-      posts: coldFeed.posts.map(serializeRankedPost),
+      posts: await Promise.all(coldFeed.posts.map((rp) => serializeRankedPost(rp, counts))),
       diversity: coldFeed.diversity,
       meta: {
         totalCandidates: coldFeed.totalCandidates,
@@ -301,7 +306,7 @@ export async function GET(request: NextRequest) {
 
   // For You tab: full algorithmic ranking
   const feed = generateFeed(candidates, user, undefined, limit);
-  const forYouPosts = [...allPublishedUserCreatedPosts, ...feed.posts.map(serializeRankedPost)];
+  const forYouPosts = [...allPublishedUserCreatedPosts, ...await Promise.all(feed.posts.map((rp) => serializeRankedPost(rp, counts)))];
 
   return NextResponse.json({
     tab: 'for-you',
@@ -317,7 +322,7 @@ export async function GET(request: NextRequest) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function serializeRankedPost(rp: any) {
+async function serializeRankedPost(rp: any, counts: Map<string, number>) {
   return {
     id: rp.candidate.post.id,
     content: rp.candidate.post.content,
@@ -366,7 +371,7 @@ function serializeRankedPost(rp: any) {
       explanationTags: rp.explanationTags,
     },
     comment_policy: 'everyone' as const,
-    comment_count: getCommentCount(rp.candidate.post.id) + mockReplies.filter((r) => r.postId === rp.candidate.post.id).length,
+    comment_count: (counts.get(rp.candidate.post.id) ?? 0) + mockReplies.filter((r) => r.postId === rp.candidate.post.id).length,
     replies: mockReplies
       .filter((r) => r.postId === rp.candidate.post.id)
       .map((r) => ({

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     stats: {
       followersCount: getFollowerCount(sessionUser.id),
       followingCount: getFollowingCount(sessionUser.id),
-      postsCount: getPostCount(sessionUser.id),
+      postsCount: await getPostCount(sessionUser.id),
     },
   });
 }

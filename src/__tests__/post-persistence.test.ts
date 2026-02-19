@@ -27,8 +27,8 @@ import {
 describe('Post Creation', () => {
   beforeEach(() => resetStore());
 
-  it('creates a post with all required fields', () => {
-    const post = createPost({
+  it('creates a post with all required fields', async () => {
+    const post = await createPost({
       authorId: 'user-current',
       content: 'Test post about healthcare policy.',
       topics: ['healthcare'],
@@ -45,8 +45,8 @@ describe('Post Creation', () => {
     expect(post.deletedAt).toBeNull();
   });
 
-  it('post survives simulated refresh (getPostById)', () => {
-    const post = createPost({
+  it('post survives simulated refresh (getPostById)', async () => {
+    const post = await createPost({
       authorId: 'user-current',
       content: 'This should persist.',
       topics: [],
@@ -54,58 +54,58 @@ describe('Post Creation', () => {
     });
 
     // Simulate "refresh" by fetching again
-    const fetched = getPostById(post.id);
+    const fetched = await getPostById(post.id);
     expect(fetched).not.toBeNull();
     expect(fetched?.content).toBe('This should persist.');
   });
 
-  it('post appears in author posts list', () => {
-    createPost({
+  it('post appears in author posts list', async () => {
+    await createPost({
       authorId: 'user-current',
       content: 'My first post.',
       topics: ['economy'],
       civilityScore: 0.85,
     });
-    createPost({
+    await createPost({
       authorId: 'user-current',
       content: 'My second post.',
       topics: ['climate'],
       civilityScore: 0.9,
     });
 
-    const posts = getPostsByAuthor('user-current');
+    const posts = await getPostsByAuthor('user-current');
     expect(posts.length).toBe(2);
     // Most recent first
     expect(posts[0].content).toBe('My second post.');
   });
 
-  it('post appears in all published posts (for feed)', () => {
-    createPost({
+  it('post appears in all published posts (for feed)', async () => {
+    await createPost({
       authorId: 'user-current',
       content: 'Feed post.',
       topics: [],
       civilityScore: 0.8,
     });
 
-    const all = getAllPublishedPosts();
+    const all = await getAllPublishedPosts();
     expect(all.length).toBe(1);
     expect(all[0].content).toBe('Feed post.');
   });
 
-  it('post count is correct', () => {
-    expect(getPostCount('user-current')).toBe(0);
-    createPost({ authorId: 'user-current', content: 'A', topics: [], civilityScore: 0.8 });
-    createPost({ authorId: 'user-current', content: 'B', topics: [], civilityScore: 0.8 });
-    expect(getPostCount('user-current')).toBe(2);
+  it('post count is correct', async () => {
+    expect(await getPostCount('user-current')).toBe(0);
+    await createPost({ authorId: 'user-current', content: 'A', topics: [], civilityScore: 0.8 });
+    await createPost({ authorId: 'user-current', content: 'B', topics: [], civilityScore: 0.8 });
+    expect(await getPostCount('user-current')).toBe(2);
   });
 
-  it('posts from different authors are isolated', () => {
-    createPost({ authorId: 'user-current', content: 'My post', topics: [], civilityScore: 0.8 });
-    createPost({ authorId: 'user-other', content: 'Other post', topics: [], civilityScore: 0.8 });
+  it('posts from different authors are isolated', async () => {
+    await createPost({ authorId: 'user-current', content: 'My post', topics: [], civilityScore: 0.8 });
+    await createPost({ authorId: 'user-other', content: 'Other post', topics: [], civilityScore: 0.8 });
 
-    expect(getPostsByAuthor('user-current').length).toBe(1);
-    expect(getPostsByAuthor('user-other').length).toBe(1);
-    expect(getAllPublishedPosts().length).toBe(2);
+    expect((await getPostsByAuthor('user-current')).length).toBe(1);
+    expect((await getPostsByAuthor('user-other')).length).toBe(1);
+    expect((await getAllPublishedPosts()).length).toBe(2);
   });
 });
 
@@ -116,38 +116,38 @@ describe('Post Creation', () => {
 describe('Post Deletion', () => {
   beforeEach(() => resetStore());
 
-  it('deletePost removes from all queries', () => {
-    const post = createPost({
+  it('deletePost removes from all queries', async () => {
+    const post = await createPost({
       authorId: 'user-current',
       content: 'Will be deleted.',
       topics: [],
       civilityScore: 0.8,
     });
 
-    expect(getPostById(post.id)).not.toBeNull();
-    expect(getAllPublishedPosts().length).toBe(1);
+    expect(await getPostById(post.id)).not.toBeNull();
+    expect((await getAllPublishedPosts()).length).toBe(1);
 
-    deletePost(post.id);
+    await deletePost(post.id);
 
-    expect(getPostById(post.id)).toBeNull();
-    expect(getAllPublishedPosts().length).toBe(0);
-    expect(getPostsByAuthor('user-current').length).toBe(0);
-    expect(getPostCount('user-current')).toBe(0);
+    expect(await getPostById(post.id)).toBeNull();
+    expect((await getAllPublishedPosts()).length).toBe(0);
+    expect((await getPostsByAuthor('user-current')).length).toBe(0);
+    expect(await getPostCount('user-current')).toBe(0);
   });
 
-  it('deleting a non-existent post returns false', () => {
-    expect(deletePost('non-existent-id')).toBe(false);
+  it('deleting a non-existent post returns false', async () => {
+    expect(await deletePost('non-existent-id')).toBe(false);
   });
 
-  it('deleted post content is wiped', () => {
-    const post = createPost({
+  it('deleted post content is wiped', async () => {
+    const post = await createPost({
       authorId: 'user-current',
       content: 'Sensitive content.',
       topics: [],
       civilityScore: 0.8,
     });
 
-    deletePost(post.id);
+    await deletePost(post.id);
 
     // Even if we bypass the normal getter, content should be wiped
     // (the post still exists in the array but with deletedAt set)
@@ -162,9 +162,9 @@ describe('Post Deletion', () => {
 describe('Feed Integration', () => {
   beforeEach(() => resetStore());
 
-  it('created post is returned in getAllPublishedPosts after "refresh"', () => {
+  it('created post is returned in getAllPublishedPosts after "refresh"', async () => {
     // Step 1: Create post (simulates compose modal)
-    createPost({
+    await createPost({
       authorId: 'user-current',
       content: 'I think we need better healthcare policy.',
       topics: ['healthcare'],
@@ -172,14 +172,14 @@ describe('Feed Integration', () => {
     });
 
     // Step 2: "Refresh" — getAllPublishedPosts is what the feed API uses
-    const posts = getAllPublishedPosts();
+    const posts = await getAllPublishedPosts();
     expect(posts.length).toBe(1);
     expect(posts[0].content).toContain('healthcare policy');
   });
 
-  it('created post is returned in getPostsByAuthor after "refresh"', () => {
+  it('created post is returned in getPostsByAuthor after "refresh"', async () => {
     // Step 1: Create
-    createPost({
+    await createPost({
       authorId: 'user-current',
       content: 'Profile post.',
       topics: [],
@@ -187,17 +187,17 @@ describe('Feed Integration', () => {
     });
 
     // Step 2: "Refresh" — profile page fetches by author
-    const posts = getPostsByAuthor('user-current');
+    const posts = await getPostsByAuthor('user-current');
     expect(posts.length).toBe(1);
     expect(posts[0].content).toBe('Profile post.');
   });
 
-  it('multiple posts maintain correct order after refresh', () => {
-    createPost({ authorId: 'user-current', content: 'First', topics: [], civilityScore: 0.8 });
-    createPost({ authorId: 'user-current', content: 'Second', topics: [], civilityScore: 0.8 });
-    createPost({ authorId: 'user-current', content: 'Third', topics: [], civilityScore: 0.8 });
+  it('multiple posts maintain correct order after refresh', async () => {
+    await createPost({ authorId: 'user-current', content: 'First', topics: [], civilityScore: 0.8 });
+    await createPost({ authorId: 'user-current', content: 'Second', topics: [], civilityScore: 0.8 });
+    await createPost({ authorId: 'user-current', content: 'Third', topics: [], civilityScore: 0.8 });
 
-    const posts = getPostsByAuthor('user-current');
+    const posts = await getPostsByAuthor('user-current');
     expect(posts.length).toBe(3);
     // Most recent first (unshift in createPost)
     expect(posts[0].content).toBe('Third');
@@ -213,8 +213,8 @@ describe('Feed Integration', () => {
 describe('Article URL', () => {
   beforeEach(() => resetStore());
 
-  it('stores articleUrl when provided', () => {
-    const post = createPost({
+  it('stores articleUrl when provided', async () => {
+    const post = await createPost({
       authorId: 'user-current',
       content: 'Check this article.',
       topics: ['news'],
@@ -225,8 +225,8 @@ describe('Article URL', () => {
     expect(post.articleUrl).toBe('https://example.com/article');
   });
 
-  it('articleUrl is undefined when not provided', () => {
-    const post = createPost({
+  it('articleUrl is undefined when not provided', async () => {
+    const post = await createPost({
       authorId: 'user-current',
       content: 'No article.',
       topics: [],

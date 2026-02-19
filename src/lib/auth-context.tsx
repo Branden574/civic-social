@@ -398,46 +398,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Invalid credentials.' };
     }
 
-    // Login = existing user → onboarding is already done
-    const mockUser: AuthUser = {
-      id: `user-${Date.now()}`,
-      email,
-      displayName: email === 'admin@civicsocial.com' ? 'Platform Creator' : sanitizeDisplayName(email.split('@')[0]),
-      username: email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, ''),
-      role: email === 'admin@civicsocial.com' ? 'creator' : email.includes('admin') ? 'admin' : email.includes('mod') ? 'moderator' : 'user',
-      createdAt: new Date(),
-      isNewUser: false,
-      sessionStartedAt: new Date().toISOString(),
-      onboarding: {
-        country: '',
-        affiliation: '',
-        topics: [],
-        bio: '',
-        completedAt: new Date().toISOString(),
-      },
-    };
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    setUser(mockUser);
-    clearLoginAttempts();
+      const data = await res.json();
 
-    if (rememberMe) {
-      persistUser(mockUser);
-    } else {
-      try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(mockUser));
-      } catch { /* noop */ }
-      setSessionCookie(mockUser);
+      if (!res.ok) {
+        recordFailedAttempt();
+        return { success: false, error: data.error || 'Invalid credentials.' };
+      }
+
+      const authUser: AuthUser = {
+        id: data.user.id,
+        email: data.user.email,
+        displayName: data.user.displayName,
+        username: data.user.username,
+        role: data.user.role ?? 'user',
+        createdAt: new Date(data.user.createdAt),
+        isNewUser: false,
+        sessionStartedAt: new Date().toISOString(),
+        onboarding: {
+          country: '',
+          affiliation: '',
+          topics: [],
+          bio: '',
+          completedAt: new Date().toISOString(),
+        },
+      };
+
+      setUser(authUser);
+      clearLoginAttempts();
+
+      if (rememberMe) {
+        persistUser(authUser);
+      } else {
+        try {
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
+        } catch { /* noop */ }
+        setSessionCookie(authUser);
+      }
+
+      const serverData = await fetchBootstrap(authUser);
+      if (serverData) {
+        setBootstrap(serverData);
+      } else {
+        setBootstrap(clientFallbackBootstrap(authUser));
+      }
+
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Network error. Please check your connection.' };
     }
-
-    // Fetch server bootstrap for the new session
-    const serverData = await fetchBootstrap(mockUser);
-    if (serverData) {
-      setBootstrap(serverData);
-    } else {
-      setBootstrap(clientFallbackBootstrap(mockUser));
-    }
-
-    return { success: true };
   }, []);
 
   const signup = useCallback(async (email: string, password: string, displayName: string): Promise<{ success: boolean; error?: string }> => {
@@ -455,55 +470,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Display name must be at least 2 characters.' };
     }
 
-    // Signup = new user → onboarding NOT done yet
-    const newUser: AuthUser = {
-      id: `user-${Date.now()}`,
-      email,
-      displayName: safeName,
-      username: safeName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
-      role: 'user',
-      createdAt: new Date(),
-      isNewUser: true,
-      sessionStartedAt: new Date().toISOString(),
-      onboarding: {
-        country: '',
-        affiliation: '',
-        topics: [],
-        bio: '',
-      },
-    };
-
-    setUser(newUser);
-    persistUser(newUser);
-
-    // Register user on the server so they are immediately searchable
     try {
-      await fetch('/api/auth/register', {
+      // Server generates a stable ID and hashes the password
+      const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: newUser.id,
-          displayName: newUser.displayName,
-          username: newUser.username,
-          email: newUser.email,
-        }),
+        body: JSON.stringify({ email, password, displayName: safeName }),
       });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Failed to create account.' };
+      }
+
+      const newUser: AuthUser = {
+        id: data.user.id,
+        email: data.user.email,
+        displayName: data.user.displayName,
+        username: data.user.username,
+        role: 'user',
+        createdAt: new Date(data.user.createdAt),
+        isNewUser: true,
+        sessionStartedAt: new Date().toISOString(),
+        onboarding: {
+          country: '',
+          affiliation: '',
+          topics: [],
+          bio: '',
+        },
+      };
+
+      setUser(newUser);
+      persistUser(newUser);
+
+      setBootstrap({
+        onboarding: { isDone: false, stepCompleted: '', completedAt: null },
+        profileCompletion: {
+          isComplete: false,
+          percent: 0,
+          missingFields: ['display_name', 'username', 'country', 'party', 'topics'],
+        },
+        stats: { followersCount: 0, followingCount: 0, postsCount: 0 },
+      });
+
+      return { success: true };
     } catch {
-      // Non-blocking — server registration will happen on next API call
+      return { success: false, error: 'Network error. Please check your connection.' };
     }
-
-    // Set initial bootstrap — brand new user, nothing completed
-    setBootstrap({
-      onboarding: { isDone: false, stepCompleted: '', completedAt: null },
-      profileCompletion: {
-        isComplete: false,
-        percent: 0,
-        missingFields: ['display_name', 'username', 'country', 'party', 'topics'],
-      },
-      stats: { followersCount: 0, followingCount: 0, postsCount: 0 },
-    });
-
-    return { success: true };
   }, []);
 
   const logout = useCallback(() => {
