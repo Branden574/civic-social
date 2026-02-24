@@ -11,21 +11,25 @@ const FEATURES = [
     icon: Shield,
     title: 'Credibility Scoring',
     desc: 'Every user earns a credibility score based on sourced, civil engagement — not likes or virality.',
+    href: '/credibility',
   },
   {
     icon: Scale,
     title: 'Live Legislation Tracker',
     desc: 'Follow real bills in Congress from introduction to vote, with plain-language summaries and community analysis.',
+    href: '/how-it-works',
   },
   {
     icon: Newspaper,
     title: 'Trusted News Threads',
     desc: 'Discuss breaking news with source-quality scoring and fact-check overlays — no clickbait amplification.',
+    href: '/how-it-works',
   },
   {
     icon: Lock,
     title: 'Safety & Privacy First',
     desc: 'No ad tracking, no rage algorithms, no data sales. Moderated for civility with transparent rules.',
+    href: '/safety',
   },
 ];
 
@@ -165,15 +169,16 @@ export function LandingPage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {FEATURES.map((f) => (
-              <div
+              <Link
                 key={f.title}
-                className="rounded-2xl p-6 border border-white/10"
+                href={f.href}
+                className="rounded-2xl p-6 border border-white/10 hover:bg-white/[0.07] transition-colors"
                 style={{ background: 'rgba(255,255,255,0.04)' }}
               >
                 <f.icon className="w-8 h-8 text-[#7b39fc] mb-4" />
                 <h4 className="text-base font-semibold text-white mb-2">{f.title}</h4>
                 <p className="text-sm text-white/60 leading-relaxed">{f.desc}</p>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -187,9 +192,9 @@ export function LandingPage() {
             </div>
             <p>No rage amplification · No echo chambers · No ad tracking</p>
             <div className="flex gap-4">
-              <a href="#" className="hover:text-white/60">Privacy</a>
-              <a href="#" className="hover:text-white/60">Terms</a>
-              <a href="#" className="hover:text-white/60">Contact</a>
+              <Link href="/safety" className="hover:text-white/60 transition-colors">Privacy</Link>
+              <Link href="/how-it-works" className="hover:text-white/60 transition-colors">How it Works</Link>
+              <Link href="/contact" className="hover:text-white/60 transition-colors">Contact</Link>
             </div>
           </div>
         </footer>

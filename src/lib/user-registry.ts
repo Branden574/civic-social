@@ -263,8 +263,9 @@ export async function registerUser(input: {
   const usernameNorm = usernameVal.toLowerCase().trim();
 
   if (isDbAvailable()) {
+    // Upsert by email (unique) so that session ID mismatches don't cause P2002.
     const row = await prisma.searchableUser.upsert({
-      where: { id: input.id },
+      where: { email: input.email },
       create: {
         id: input.id,
         displayName: input.displayName,
@@ -278,7 +279,6 @@ export async function registerUser(input: {
       update: {
         displayName: input.displayName,
         username: usernameVal,
-        email: input.email,
         ...(input.bio !== undefined && { bio: input.bio }),
         ...(input.affiliation !== undefined && { affiliation: input.affiliation }),
         displayNameNorm,
