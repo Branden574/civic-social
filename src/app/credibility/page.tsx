@@ -17,9 +17,11 @@ import {
   ArrowLeft,
   TrendingUp,
   XCircle,
+  ChevronRight,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { AuthGate } from '@/components/auth/auth-gate';
+import { useAuth } from '@/lib/auth-context';
+import { LandingNav } from '@/components/landing/landing-nav';
 
 // ─── Data ───────────────────────────────────────────────────
 
@@ -155,13 +157,158 @@ const TIPS: Tip[] = [
   },
 ];
 
-// ─── Component ──────────────────────────────────────────────
+// ─── Public view (logged-out) ────────────────────────────────
 
-export default function CredibilityPage() {
+function PublicCredibilityPage() {
   const [expandedFactor, setExpandedFactor] = useState<string | null>(null);
 
   return (
-    <AuthGate>
+    <div className="relative min-h-screen bg-black overflow-hidden">
+      <style dangerouslySetInnerHTML={{ __html: `@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');` }} />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a14] via-black to-[#0d0818] z-0" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#7b39fc]/5 rounded-full blur-[120px] z-0" />
+
+      <div className="relative z-10">
+        <LandingNav />
+
+        <div className="max-w-3xl mx-auto px-6 pt-16 pb-24 space-y-12">
+          {/* Hero */}
+          <section className="text-center">
+            <div className="inline-flex items-center gap-2 bg-[#7b39fc]/10 border border-[#7b39fc]/20 rounded-full px-4 py-1.5 mb-6">
+              <Shield className="w-3.5 h-3.5 text-[#7b39fc]" />
+              <span className="text-xs font-semibold text-[#7b39fc]" style={{ fontFamily: 'Manrope, sans-serif' }}>Transparent scoring · No black boxes</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              How Credibility Works
+            </h1>
+            <p className="text-white/60 max-w-[540px] mx-auto text-sm leading-relaxed" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              Your Credibility Score measures how trustworthy and constructive your contributions are.
+              It ranges from 0 to 100, is calculated from six factors, and has nothing to do with your political views.
+            </p>
+          </section>
+
+          {/* Factors */}
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              <TrendingUp className="w-4 h-4 text-[#7b39fc]" />
+              How it is calculated
+            </h2>
+            <div className="space-y-3">
+              {FACTORS.map((factor) => {
+                const isExpanded = expandedFactor === factor.label;
+                return (
+                  <div
+                    key={factor.label}
+                    className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden"
+                  >
+                    <button
+                      onClick={() => setExpandedFactor(isExpanded ? null : factor.label)}
+                      className="w-full px-5 py-4 flex items-center gap-4 hover:bg-white/5 transition-colors"
+                    >
+                      <factor.icon className={clsx('w-5 h-5 shrink-0', factor.color)} />
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-sm font-semibold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                            {factor.label}
+                          </span>
+                          <span className="text-[10px] font-bold text-white/40 bg-white/5 px-1.5 py-0.5 rounded-full">
+                            {factor.weight}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className={clsx('h-full rounded-full', factor.barColor)}
+                              style={{ width: `${Math.round(factor.exampleScore * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-mono text-white/40 w-10 text-right">
+                            {Math.round(factor.exampleScore * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                    {isExpanded && (
+                      <div className="px-5 pb-4 pt-0">
+                        <p className="text-sm text-white/55 leading-relaxed pl-9" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                          {factor.description}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* What it is NOT */}
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              <XCircle className="w-4 h-4 text-red-400" />
+              What credibility is NOT
+            </h2>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
+              {[
+                { label: 'Not a partisan score', detail: 'Your political views carry zero weight. Left, right, and center users all achieve high scores equally by engaging honestly and citing well.' },
+                { label: 'Not a popularity metric', detail: 'Follower count and likes do not raise your credibility. A low-follower expert citing primary sources outranks viral low-quality content.' },
+                { label: 'Not a punishment system', detail: 'The score rewards good behavior — it does not punish dissent. How you disagree is what matters, not whether you disagree.' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>{item.label}</p>
+                    <p className="text-xs text-white/50 leading-relaxed mt-0.5" style={{ fontFamily: 'Manrope, sans-serif' }}>{item.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* CTA */}
+          <section className="text-center">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-10">
+              <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Start building your credibility
+              </h2>
+              <p className="text-white/55 text-sm mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Sign up and begin earning your score through honest, civil discourse.
+              </p>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 bg-[#7b39fc] text-white font-semibold px-7 py-3 rounded-xl hover:bg-[#6a2de0] transition-all shadow-xl shadow-[#7b39fc]/30"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              >
+                Get Started Free
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </section>
+        </div>
+
+        <footer className="border-t border-white/10 py-8 px-6">
+          <div className="max-w-[1163px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              <span>Civic Social v0.2.0</span>
+            </div>
+            <p>No rage amplification · No echo chambers · No ad tracking</p>
+            <div className="flex gap-4">
+              <Link href="/how-it-works" className="hover:text-white/60 transition-colors">How it Works</Link>
+              <Link href="/safety" className="hover:text-white/60 transition-colors">Safety</Link>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ─── Authenticated view ──────────────────────────────────────
+
+function AuthenticatedCredibilityPage() {
+  const [expandedFactor, setExpandedFactor] = useState<string | null>(null);
+
+  return (
     <div className="flex min-h-screen bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0">
@@ -400,6 +547,13 @@ export default function CredibilityPage() {
       </main>
       <MobileNav />
     </div>
-    </AuthGate>
   );
+}
+
+// ─── Entry point ─────────────────────────────────────────────
+
+export default function CredibilityPage() {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <PublicCredibilityPage />;
+  return <AuthenticatedCredibilityPage />;
 }
