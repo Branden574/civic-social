@@ -37,10 +37,26 @@ const FEATURES = [
 
 export function LandingPage() {
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden" style={{ background: '#050508' }}>
       {/* Landing-specific fonts */}
-      <style dangerouslySetInnerHTML={{ __html: `@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Manrope:wght@400;500;600;700&display=swap');` }} />
-      {/* ── Background video ── */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Manrope:wght@400;500;600;700&display=swap');
+        @keyframes pulse-slow { 0%,100%{opacity:.18} 50%{opacity:.32} }
+        @keyframes pulse-slow2 { 0%,100%{opacity:.12} 50%{opacity:.22} }
+        .bg-orb-1 { animation: pulse-slow 8s ease-in-out infinite; }
+        .bg-orb-2 { animation: pulse-slow2 11s ease-in-out infinite 2s; }
+        .bg-orb-3 { animation: pulse-slow 14s ease-in-out infinite 5s; }
+      ` }} />
+
+      {/* ── CSS gradient background (always visible, video layers on top) ── */}
+      <div className="bg-orb-1 absolute top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full z-0"
+        style={{ background: 'radial-gradient(circle, rgba(123,57,252,1) 0%, transparent 70%)' }} />
+      <div className="bg-orb-2 absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full z-0"
+        style={{ background: 'radial-gradient(circle, rgba(79,70,229,1) 0%, transparent 70%)' }} />
+      <div className="bg-orb-3 absolute top-[40%] left-[50%] w-[500px] h-[500px] rounded-full z-0"
+        style={{ background: 'radial-gradient(circle, rgba(139,92,246,1) 0%, transparent 70%)' }} />
+
+      {/* ── Background video (layers over CSS gradient when it loads) ── */}
       <video
         autoPlay
         loop
@@ -48,7 +64,7 @@ export function LandingPage() {
         playsInline
         preload="metadata"
         poster="/landing-poster.jpg"
-        className="absolute inset-0 w-[120%] h-[120%] object-cover object-bottom -translate-x-[8.3%] z-0 opacity-40"
+        className="absolute inset-0 w-[120%] h-[120%] object-cover object-bottom -translate-x-[8.3%] z-[1] opacity-30"
       >
         <source
           src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260215_121759_424f8e9c-d8bd-4974-9567-52709dfb6842.mp4"
@@ -56,14 +72,14 @@ export function LandingPage() {
         />
       </video>
 
-      {/* ── Blurred background pill ── */}
+      {/* ── Dark center vignette ── */}
       <div
-        className="absolute top-[215px] left-1/2 -translate-x-1/2 w-[801px] h-[384px] rounded-full bg-black z-[1]"
-        style={{ filter: 'blur(77.5px)' }}
+        className="absolute top-[180px] left-1/2 -translate-x-1/2 w-[900px] h-[420px] rounded-full z-[2]"
+        style={{ background: 'rgba(5,5,8,1)', filter: 'blur(90px)' }}
       />
 
-      {/* ── Content (above video + blur) ── */}
-      <div className="relative z-[2]">
+      {/* ── Content (above all background layers) ── */}
+      <div className="relative z-[3]">
         <LandingNav />
 
         {/* ── Hero section ── */}
