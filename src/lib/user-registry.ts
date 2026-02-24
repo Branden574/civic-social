@@ -448,8 +448,10 @@ export async function searchUsers(options: {
     const where = q
       ? {
           OR: [
-            { usernameNorm: { contains: q, mode: 'insensitive' as const } },
+            { displayName: { contains: q, mode: 'insensitive' as const } },
+            { username: { contains: q, mode: 'insensitive' as const } },
             { displayNameNorm: { contains: q, mode: 'insensitive' as const } },
+            { usernameNorm: { contains: q, mode: 'insensitive' as const } },
             { bio: { contains: q, mode: 'insensitive' as const } },
           ],
         }
