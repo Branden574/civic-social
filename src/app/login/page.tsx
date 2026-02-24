@@ -26,7 +26,7 @@ export default function LoginPage() {
     const result = await login(email, password, rememberMe);
 
     if (result.success) {
-      router.push('/');
+      window.location.href = '/';
     } else {
       setError(result.error || 'Sign-in failed. Please try again.');
       setIsLoading(false);

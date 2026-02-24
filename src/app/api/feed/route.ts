@@ -15,7 +15,7 @@ import { getReleasedNewPosts } from '@/lib/simulated-new-posts';
 import { getClientIp, getSessionUser, tooManyRequests } from '@/lib/security/api-guard';
 import { readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeUrl, clampInt } from '@/lib/security/sanitize';
-import { getFollowingIds } from '@/lib/social-store';
+import { dbGetFollowingIds } from '@/lib/social-store';
 import { getUserById, registerUser } from '@/lib/user-registry';
 
 // ─── Safety filter (shared by both modes) ────────────────────
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const followingFromStore = getFollowingIds(viewerId);
+  const followingFromStore = await dbGetFollowingIds(viewerId);
   const followingPlusSelf = [...new Set([...followingFromStore, viewerId])];
 
   // ════════════════════════════════════════════════════════════

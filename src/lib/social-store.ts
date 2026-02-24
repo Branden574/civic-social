@@ -404,3 +404,98 @@ export function markSeen(recipientUserId: string): void {
     }
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// DB-BACKED FOLLOW OPERATIONS
+// These use the SearchableUserFollow table for real users.
+// Fall back to in-memory when DB is unavailable.
+// ═══════════════════════════════════════════════════════════════
+
+import { isDbAvailable, prisma } from './db';
+
+export async function dbFollow(followerId: string, followingId: string): Promise<void> {
+  // Update in-memory cache
+  const store = getStore();
+  if (!store.follows.some((f) => f.followerId === followerId && f.followingId === followingId)) {
+    store.follows.push({ followerId, followingId, createdAt: new Date().toISOString() });
+  }
+  if (!isDbAvailable()) return;
+  try {
+    await prisma.$executeRaw`
+      INSERT INTO "SearchableUserFollow" ("followerId", "followingId")
+      VALUES (${followerId}, ${followingId})
+      ON CONFLICT ("followerId", "followingId") DO NOTHING
+    `;
+  } catch { /* in-memory updated above */ }
+}
+
+export async function dbUnfollow(followerId: string, followingId: string): Promise<void> {
+  // Update in-memory cache
+  const store = getStore();
+  store.follows = store.follows.filter(
+    (f) => !(f.followerId === followerId && f.followingId === followingId),
+  );
+  unsubscribeFromPosts(followerId, followingId);
+  if (!isDbAvailable()) return;
+  try {
+    await prisma.$executeRaw`
+      DELETE FROM "SearchableUserFollow"
+      WHERE "followerId" = ${followerId} AND "followingId" = ${followingId}
+    `;
+  } catch { /* silently fail */ }
+}
+
+export async function dbIsFollowing(followerId: string, followingId: string): Promise<boolean> {
+  if (!isDbAvailable()) return isFollowing(followerId, followingId);
+  try {
+    const rows = await prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) AS count FROM "SearchableUserFollow"
+      WHERE "followerId" = ${followerId} AND "followingId" = ${followingId}
+    `;
+    return Number(rows[0]?.count ?? 0) > 0;
+  } catch {
+    return isFollowing(followerId, followingId);
+  }
+}
+
+export async function dbGetFollowerCount(userId: string): Promise<number> {
+  if (!isDbAvailable()) return getFollowerCount(userId);
+  try {
+    const rows = await prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) AS count FROM "SearchableUserFollow"
+      WHERE "followingId" = ${userId}
+    `;
+    return Number(rows[0]?.count ?? 0);
+  } catch {
+    return getFollowerCount(userId);
+  }
+}
+
+export async function dbGetFollowingCount(userId: string): Promise<number> {
+  if (!isDbAvailable()) return getFollowingCount(userId);
+  try {
+    const rows = await prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) AS count FROM "SearchableUserFollow"
+      WHERE "followerId" = ${userId}
+    `;
+    return Number(rows[0]?.count ?? 0);
+  } catch {
+    return getFollowingCount(userId);
+  }
+}
+
+export async function dbGetFollowingIds(userId: string): Promise<string[]> {
+  if (!isDbAvailable()) return getFollowingIds(userId);
+  try {
+    const rows = await prisma.$queryRaw<{ followingId: string }[]>`
+      SELECT "followingId" FROM "SearchableUserFollow"
+      WHERE "followerId" = ${userId}
+    `;
+    // Merge with in-memory mock follows for demo users
+    const dbIds = rows.map((r) => r.followingId);
+    const memIds = getFollowingIds(userId);
+    return [...new Set([...dbIds, ...memIds])];
+  } catch {
+    return getFollowingIds(userId);
+  }
+}

@@ -538,7 +538,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!email || !isValidEmail(email)) {
       return { success: false, error: 'Please enter a valid email address.' };
     }
-    return { success: true };
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { success: false, error: data.error || 'Something went wrong. Please try again.' };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Network error. Please check your connection.' };
+    }
   }, []);
 
   const updateOnboarding = useCallback((profile: Partial<OnboardingProfile>) => {

@@ -160,7 +160,7 @@ export function middleware(request: NextRequest) {
 
   // ── 1b. Auth-gate: redirect unauthenticated users from private routes ──
   const PUBLIC_ROUTES = new Set([
-    '/', '/login', '/register', '/forgot-password', '/terms', '/privacy',
+    '/', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy',
   ]);
   const isPublicRoute = PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/_next/');
   if (!isPublicRoute) {

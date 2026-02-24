@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  isFollowing,
-  follow,
-  unfollow,
   isSubscribedToPosts,
   subscribeToPosts,
   unsubscribeFromPosts,
   getSubscriptionLevel,
-  getFollowerCount,
-  getFollowingCount,
+  dbFollow,
+  dbUnfollow,
+  dbIsFollowing,
+  dbGetFollowerCount,
+  dbGetFollowingCount,
 } from '@/lib/social-store';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { socialLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { isValidId } from '@/lib/security/sanitize';
-import { getUserById } from '@/lib/user-registry';
 
 // ─── GET /api/follow?target=user-xxx ─────────────────────────
 
@@ -37,8 +36,8 @@ export async function GET(request: NextRequest) {
       isFollowing: false,
       isNotifyEnabled: false,
       notifyLevel: null,
-      followerCount: getFollowerCount(targetUserId),
-      followingCount: getFollowingCount(targetUserId),
+      followerCount: await dbGetFollowerCount(targetUserId),
+      followingCount: await dbGetFollowingCount(targetUserId),
       viewerFollowingCount: 0,
       authenticated: false,
       serverTime: new Date().toISOString(),
@@ -48,12 +47,12 @@ export async function GET(request: NextRequest) {
   const currentUser = user.id;
 
   return NextResponse.json({
-    isFollowing: isFollowing(currentUser, targetUserId),
+    isFollowing: await dbIsFollowing(currentUser, targetUserId),
     isNotifyEnabled: isSubscribedToPosts(currentUser, targetUserId),
     notifyLevel: getSubscriptionLevel(currentUser, targetUserId),
-    followerCount: getFollowerCount(targetUserId),
-    followingCount: getFollowingCount(targetUserId),
-    viewerFollowingCount: getFollowingCount(currentUser),
+    followerCount: await dbGetFollowerCount(targetUserId),
+    followingCount: await dbGetFollowingCount(targetUserId),
+    viewerFollowingCount: await dbGetFollowingCount(currentUser),
     authenticated: true,
     serverTime: new Date().toISOString(),
   });
@@ -98,29 +97,26 @@ export async function POST(request: NextRequest) {
 
   switch (action) {
     case 'follow': {
-      const registryUser = await getUserById(currentUser);
-      const actorDisplayName = registryUser?.displayName ?? user.displayName;
-      const actorUsername = registryUser?.username ?? user.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
-      follow(currentUser, targetUserId, actorDisplayName, actorUsername);
+      await dbFollow(currentUser, targetUserId);
       return NextResponse.json({
         success: true,
         isFollowing: true,
         isNotifyEnabled: isSubscribedToPosts(currentUser, targetUserId),
-        followerCount: getFollowerCount(targetUserId),
-        followingCount: getFollowingCount(targetUserId),
-        viewerFollowingCount: getFollowingCount(currentUser),
+        followerCount: await dbGetFollowerCount(targetUserId),
+        followingCount: await dbGetFollowingCount(targetUserId),
+        viewerFollowingCount: await dbGetFollowingCount(currentUser),
       });
     }
 
     case 'unfollow':
-      unfollow(currentUser, targetUserId);
+      await dbUnfollow(currentUser, targetUserId);
       return NextResponse.json({
         success: true,
         isFollowing: false,
         isNotifyEnabled: false,
-        followerCount: getFollowerCount(targetUserId),
-        followingCount: getFollowingCount(targetUserId),
-        viewerFollowingCount: getFollowingCount(currentUser),
+        followerCount: await dbGetFollowerCount(targetUserId),
+        followingCount: await dbGetFollowingCount(targetUserId),
+        viewerFollowingCount: await dbGetFollowingCount(currentUser),
       });
 
     case 'subscribe': {
@@ -128,11 +124,11 @@ export async function POST(request: NextRequest) {
       subscribeToPosts(currentUser, targetUserId, level);
       return NextResponse.json({
         success: true,
-        isFollowing: isFollowing(currentUser, targetUserId),
+        isFollowing: await dbIsFollowing(currentUser, targetUserId),
         isNotifyEnabled: true,
         notifyLevel: level,
-        followerCount: getFollowerCount(targetUserId),
-        viewerFollowingCount: getFollowingCount(currentUser),
+        followerCount: await dbGetFollowerCount(targetUserId),
+        viewerFollowingCount: await dbGetFollowingCount(currentUser),
       });
     }
 
@@ -140,10 +136,10 @@ export async function POST(request: NextRequest) {
       unsubscribeFromPosts(currentUser, targetUserId);
       return NextResponse.json({
         success: true,
-        isFollowing: isFollowing(currentUser, targetUserId),
+        isFollowing: await dbIsFollowing(currentUser, targetUserId),
         isNotifyEnabled: false,
-        followerCount: getFollowerCount(targetUserId),
-        viewerFollowingCount: getFollowingCount(currentUser),
+        followerCount: await dbGetFollowerCount(targetUserId),
+        viewerFollowingCount: await dbGetFollowingCount(currentUser),
       });
 
     default:

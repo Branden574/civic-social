@@ -8,8 +8,13 @@ import { LandingPage } from '@/components/landing/landing-page';
 import { useAuth } from '@/lib/auth-context';
 
 export default function HomePage() {
-  const { isAuthenticated, refreshMe } = useAuth();
+  const { isAuthenticated, isLoading, refreshMe } = useAuth();
   const [composeOpen, setComposeOpen] = useState(false);
+
+  // Wait for auth state to hydrate before deciding which view to show
+  if (isLoading) {
+    return null;
+  }
 
   // Logged-out users see the premium landing page
   if (!isAuthenticated) {
