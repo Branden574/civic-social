@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Civic Social — Where Conversations Meet Context</title>
+  <meta name="description"
+    content="Post freely. Stay informed. Track real legislation in real time—without the noise." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <span class="logo-mark">◈</span>
+        <span class="logo-text">Civic Social</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#trust">Trust</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+      </ul>
+      <div class="nav-auth">
+        <a href="#signin" class="btn btn-outline nav-cta">Sign In</a>
+        <a href="#waitlist" class="btn btn-primary nav-cta">Create Account</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  <div class="nav-mobile-menu" id="mobileMenu">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#trust">Trust</a>
+    <a href="#pricing">Pricing</a>
+    <div class="mobile-auth-row">
+      <a href="#signin" class="btn btn-outline" style="flex:1;text-align:center;justify-content:center;">Sign In</a>
+      <a href="#waitlist" class="btn btn-primary" style="flex:1;text-align:center;justify-content:center;">Create
+        Account</a>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <canvas id="particleCanvas"></canvas>
+    <div class="hero-bg-pattern"></div>
+    <div class="hero-gradient"></div>
+
+    <div class="container hero-inner">
+      <div class="hero-copy reveal">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          Now in early access
+        </div>
+        <h1 class="hero-title">Civic Social — Where Conversations Meet Context.</h1>
+        <p class="hero-sub">Post freely. Stay informed. Track real legislation in real time—without the noise.</p>
+        <div class="hero-actions">
+          <a href="#waitlist" class="btn btn-primary btn-lg">Join the Waitlist</a>
+          <a href="#preview" class="btn btn-outline btn-lg">Explore the Demo</a>
+        </div>
+        <p class="hero-note">Free to join &bull; No credit card required</p>
+      </div>
+
+      <div class="hero-visual">
+        <div class="card-stack">
+          <!-- Feed Card -->
+          <div class="hcard hcard-feed float-1">
+            <div class="hcard-header">
+              <div class="avatar av-blue"></div>
+              <div>
+                <div class="hcard-name">Sarah Chen <span class="verified-badge" title="Verified">✦</span></div>
+                <div class="hcard-meta">Policy Analyst · 2m ago</div>
+              </div>
+            </div>
+            <p class="hcard-text">The infrastructure bill just passed committee — here's what it actually means for
+              broadband access in rural counties...</p>
+            <div class="hcard-actions">
+              <span>◯ 214</span><span>↗ 88</span><span>♡ 1.2k</span>
+            </div>
+          </div>
+
+          <!-- Context Panel -->
+          <div class="hcard hcard-context float-2">
+            <div class="hcard-label"><span class="label-dot teal"></span> Context Panel</div>
+            <div class="hcard-context-item">
+              <div class="ctx-icon">📄</div>
+              <div>
+                <div class="ctx-title">S.1234 Infrastructure Act</div>
+                <div class="ctx-sub">Passed Senate 67–32 · Nov 2025</div>
+              </div>
+            </div>
+            <div class="hcard-context-item">
+              <div class="ctx-icon">🔗</div>
+              <div>
+                <div class="ctx-title">3 Primary Sources</div>
+                <div class="ctx-sub">CBO · Congress.gov · Reuters</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Bill Card -->
+          <div class="hcard hcard-bill float-3">
+            <div class="hcard-label"><span class="label-dot gold"></span> Live Bill Update</div>
+            <div class="bill-name">H.R. 5892 — Clean Energy Transition</div>
+            <div class="bill-status-bar">
+              <div class="bill-step done">Introduced</div>
+              <div class="bill-step done">Committee</div>
+              <div class="bill-step active">Floor Vote</div>
+              <div class="bill-step">Enacted</div>
+            </div>
+            <div class="bill-alert">🔔 Vote expected this week</div>
+          </div>
+
+          <!-- Trending Card -->
+          <div class="hcard hcard-trending float-1" style="animation-delay:0.5s">
+            <div class="hcard-label"><span class="label-dot blue"></span> Trending</div>
+            <ol class="trend-list">
+              <li><span>#ClimatePolicy</span><span class="trend-count">42.1k posts</span></li>
+              <li><span>#HealthcareReform</span><span class="trend-count">31.8k posts</span></li>
+              <li><span>#HousingAct</span><span class="trend-count">19.4k posts</span></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll-hint">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF STRIP -->
+  <section class="proof-strip">
+    <div class="container proof-inner">
+      <div class="proof-item">
+        <span class="proof-icon">◎</span>
+        <span>Built for civil discourse</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-item">
+        <span class="proof-icon">◈</span>
+        <span>Context-first design</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-item">
+        <span class="proof-icon">⊙</span>
+        <span>Real-time policy tracking</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-item">
+        <span class="proof-icon">◐</span>
+        <span>Community moderation tools</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features section" id="features">
+    <div class="container">
+      <div class="section-label reveal">Core Features</div>
+      <h2 class="section-title reveal">Built different.<br />Because the stakes are different.</h2>
+      <p class="section-sub reveal">Every feature is designed to surface signal, reduce noise, and keep discourse
+        grounded in fact.</p>
+      <div class="features-grid">
+
+        <div class="feat-card reveal">
+          <div class="feat-icon">◈</div>
+          <h3>Context Panels</h3>
+          <p>Context that follows the conversation. Every post can surface sources, summaries, and linked legislation
+            automatically.</p>
+        </div>
+
+        <div class="feat-card reveal">
+          <div class="feat-icon">⊙</div>
+          <h3>Live Legislation Tracker</h3>
+          <p>Legislation updates, not headlines. Track bill status, amendments, votes, and committee actions in real
+            time.</p>
+        </div>
+
+        <div class="feat-card reveal">
+          <div class="feat-icon">◎</div>
+          <h3>Transparent Feeds</h3>
+          <p>Feeds you can understand. Choose chronological or ranked — and see exactly why a post appears in your feed.
+          </p>
+        </div>
+
+        <div class="feat-card reveal">
+          <div class="feat-icon">◐</div>
+          <h3>Civility Controls</h3>
+          <p>Tools that keep discourse human. Conversation health scores, auto-de-escalation nudges, and cooling-off
+            features.</p>
+        </div>
+
+        <div class="feat-card reveal">
+          <div class="feat-icon feat-gold">✦</div>
+          <h3>Verified Profiles</h3>
+          <p>A trust layer that means something. Human verification tied to professional credentials, not just payment.
+          </p>
+        </div>
+
+        <div class="feat-card reveal">
+          <div class="feat-icon">◧</div>
+          <h3>Community Notes</h3>
+          <p>Citation-based, community-driven corrections. Neutral, source-first, and visible to all — not buried.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how section" id="how-it-works">
+    <div class="container">
+      <div class="section-label reveal">How It Works</div>
+      <h2 class="section-title reveal">Three steps.<br />Infinite clarity.</h2>
+      <div class="steps-row">
+        <div class="step reveal">
+          <div class="step-num">01</div>
+          <div class="step-connector"></div>
+          <h3>Pick topics you care about</h3>
+          <p>Select policy areas, committees, and communities. Your feed builds itself around what matters to you — not
+            what drives engagement.</p>
+        </div>
+        <div class="step reveal" style="animation-delay:.1s">
+          <div class="step-num">02</div>
+          <div class="step-connector"></div>
+          <h3>Follow people &amp; communities</h3>
+          <p>Follow verified experts, journalists, legislators, and citizens. Community circles let you filter signal
+            from noise.</p>
+        </div>
+        <div class="step reveal" style="animation-delay:.2s">
+          <div class="step-num">03</div>
+          <h3>Track posts &amp; policy updates</h3>
+          <p>One feed. Posts, bill alerts, context panels, and community notes — unified and chronologically honest.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCT PREVIEW -->
+  <section class="preview section" id="preview">
+    <div class="container">
+      <div class="section-label reveal">Product Preview</div>
+      <h2 class="section-title reveal">See it in action.</h2>
+      <p class="section-sub reveal">A unified experience for posts, context, and live legislation — all in one view.</p>
+    </div>
+    <div class="preview-chrome reveal">
+      <div class="chrome-bar">
+        <span class="chrome-dot r"></span>
+        <span class="chrome-dot y"></span>
+        <span class="chrome-dot g"></span>
+        <span class="chrome-url">civicsocial.app/home</span>
+      </div>
+      <div class="preview-app">
+        <!-- Left: Feed -->
+        <div class="app-feed">
+          <div class="app-sidebar">
+            <div class="sb-logo">◈ Civic Social</div>
+            <nav class="sb-nav">
+              <a class="sb-item active">⌂ Home</a>
+              <a class="sb-item">⊙ Legislation</a>
+              <a class="sb-item">◎ Communities</a>
+              <a class="sb-item feat-gold-text">✦ Civic Pro</a>
+            </nav>
+          </div>
+          <div class="app-posts">
+            <div class="app-post">
+              <div class="app-av av-blue"></div>
+              <div class="app-post-body">
+                <div class="app-post-header"><strong>Dr. Maria Lopez</strong> <span class="verified-badge">✦</span>
+                  <span class="app-meta">· 4m</span></div>
+                <p class="app-post-text">S.4210 just cleared committee. This changes healthcare reimbursement for rural
+                  providers significantly.</p>
+                <div class="ctx-pill">◈ Context available</div>
+              </div>
+            </div>
+            <div class="app-post">
+              <div class="app-av av-teal"></div>
+              <div class="app-post-body">
+                <div class="app-post-header"><strong>James Okoye</strong> <span class="app-meta">· 11m</span></div>
+                <p class="app-post-text">Reading through the new FTC guidance. A lot of nuance being lost in the
+                  headline coverage.</p>
+                <div class="ctx-pill muted">◎ 2 community notes</div>
+              </div>
+            </div>
+            <div class="app-post">
+              <div class="app-av av-purple"></div>
+              <div class="app-post-body">
+                <div class="app-post-header"><strong>PolicyWatch</strong> <span class="verified-badge">✦</span> <span
+                    class="app-meta">· 22m</span></div>
+                <p class="app-post-text">⚡ LIVE: H.R. 5892 floor vote begins. Watch the tally update in real time in
+                  Legislation.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right: Context + Bill -->
+        <div class="app-right">
+          <div class="app-ctx-panel">
+            <div class="ctx-panel-title">◈ Context: S.4210</div>
+            <div class="ctx-panel-item"><span class="ctx-tag">Status</span> <span class="ctx-val pass">Passed Committee
+                9–4</span></div>
+            <div class="ctx-panel-item"><span class="ctx-tag">Source</span> <span class="ctx-val">Congress.gov</span>
+            </div>
+            <div class="ctx-panel-item"><span class="ctx-tag">CBO Score</span> <span class="ctx-val">$2.1B over 10
+                yrs</span></div>
+            <div class="ctx-panel-item"><span class="ctx-tag">Summary</span> <span class="ctx-val">Expands Medicare
+                reimbursement rates for rural critical access hospitals by 15%</span></div>
+          </div>
+          <div class="app-bill-tracker">
+            <div class="ctx-panel-title"><span class="label-dot gold"></span> Live: H.R. 5892</div>
+            <div class="live-bar">
+              <div class="live-seg done">Intro</div>
+              <div class="live-seg done">Committee</div>
+              <div class="live-seg pulse">Floor</div>
+              <div class="live-seg">Enacted</div>
+            </div>
+            <div class="live-tally">
+              <span class="tally-y">✓ 198 Yea</span>
+              <span class="tally-n">✗ 102 Nay</span>
+            </div>
+            <div class="live-note">🔴 Live vote in progress</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <section class="trust section" id="trust">
+    <div class="container">
+      <div class="section-label reveal">Trust &amp; Safety</div>
+      <h2 class="section-title reveal">Neutral by design.<br />Safe by default.</h2>
+      <p class="section-sub reveal">We built the principles before we built the product. That's not a tagline — it's the
+        architecture.</p>
+      <div class="trust-grid">
+        <div class="trust-card reveal">
+          <div class="trust-icon">◎</div>
+          <h3>Neutral by Design</h3>
+          <p>No algorithmic amplification of outrage. No partisan weighting. Feed ranking is documented and auditable.
+          </p>
+        </div>
+        <div class="trust-card reveal">
+          <div class="trust-icon">◈</div>
+          <h3>Transparent Ranking</h3>
+          <p>Every ranking signal is published. You choose what drives your feed — not a black box optimizing for
+            time-on-site.</p>
+        </div>
+        <div class="trust-card reveal">
+          <div class="trust-icon">◐</div>
+          <h3>Anti-Harassment</h3>
+          <p>Proactive protections, not reactive bans. Conversation health monitoring and tiered reporting tools.</p>
+        </div>
+        <div class="trust-card reveal">
+          <div class="trust-icon">⊙</div>
+          <h3>Source-First Info</h3>
+          <p>Primary sources surface before opinions. Context panels link to the original document, not a summary of a
+            summary.</p>
+        </div>
+      </div>
+      <div class="trust-link reveal">
+        <a href="#" class="read-principles">Read our Principles &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing section" id="pricing">
+    <div class="container">
+      <div class="section-label reveal">Plans</div>
+      <h2 class="section-title reveal">Start free.<br />Go deeper with Pro.</h2>
+      <div class="pricing-grid">
+        <div class="pricing-card reveal">
+          <div class="plan-badge free-badge">Free</div>
+          <h3 class="plan-name">Civic</h3>
+          <p class="plan-price">Always free</p>
+          <ul class="plan-features">
+            <li>✓ Full posting &amp; reading</li>
+            <li>✓ Context panels (basic)</li>
+            <li>✓ Follow people &amp; communities</li>
+            <li>✓ Live feed &amp; trending</li>
+            <li>✓ Community notes</li>
+          </ul>
+          <a href="#waitlist" class="btn btn-outline">Join Free</a>
+        </div>
+        <div class="pricing-card pricing-pro reveal">
+          <div class="plan-badge pro-badge">✦ Pro</div>
+          <h3 class="plan-name">Civic Pro</h3>
+          <p class="plan-price">Coming soon</p>
+          <ul class="plan-features">
+            <li>✦ Everything in Free</li>
+            <li>✦ Bill alerts &amp; push notifications</li>
+            <li>✦ Deeper AI-powered summaries</li>
+            <li>✦ Advanced feed filters</li>
+            <li>✦ Creator &amp; analyst tools</li>
+            <li>✦ Verified profile badge</li>
+          </ul>
+          <a href="#waitlist" class="btn btn-gold">Get Early Pro Access</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta section" id="waitlist">
+    <div class="container">
+      <h2 class="final-title reveal">Build better conversations.</h2>
+      <p class="final-sub reveal">Join thousands waiting for a civic platform that takes the public seriously.</p>
+      <form class="waitlist-form reveal" id="waitlistForm">
+        <input type="email" class="email-input" placeholder="your@email.com" id="emailInput" required />
+        <button type="submit" class="btn btn-primary btn-lg">Join the Waitlist</button>
+      </form>
+      <p class="final-note reveal" id="formSuccess" style="display:none;color:#4fd1c5;margin-top:1rem;">✓ You're on the
+        list. We'll be in touch.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo-mark">◈</span>
+        <span class="logo-text">Civic Social</span>
+      </div>
+      <nav class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Principles</a>
+        <a href="#">Contact</a>
+      </nav>
+      <p class="footer-copy">&copy; 2026 Civic Social. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
