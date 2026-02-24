@@ -14,7 +14,7 @@ import {
   type OnboardingState,
   type ProfileCompletion,
 } from '@/lib/user-state-store';
-import { getFollowerCount, getFollowingCount } from '@/lib/social-store';
+import { dbGetFollowerCount, dbGetFollowingCount } from '@/lib/social-store';
 import { getPostCount } from '@/lib/post-data-store';
 import { registerUser } from '@/lib/user-registry';
 
@@ -51,8 +51,8 @@ async function buildResponse(
     onboarding,
     profileCompletion,
     stats: {
-      followersCount: getFollowerCount(sessionUser.id),
-      followingCount: getFollowingCount(sessionUser.id),
+      followersCount: await dbGetFollowerCount(sessionUser.id),
+      followingCount: await dbGetFollowingCount(sessionUser.id),
       postsCount: await getPostCount(sessionUser.id),
     },
   };
@@ -174,6 +174,6 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(
-    buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
+    await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
   );
 }
