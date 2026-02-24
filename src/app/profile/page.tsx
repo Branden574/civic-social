@@ -32,9 +32,21 @@ const PULL_MAX = 120;
 
 type ProfileTab = 'posts' | 'overview' | 'debates' | 'activity' | 'credibility';
 
+interface ConnectionUser {
+  id: string;
+  displayName: string;
+  username: string;
+  avatarUrl: string | null;
+  verificationLevel: string;
+  credibilityScore: number;
+}
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [profileCardDismissed, setProfileCardDismissed] = useState(false);
+  const [connectionsPanel, setConnectionsPanel] = useState<'followers' | 'following' | null>(null);
+  const [connectionsList, setConnectionsList] = useState<ConnectionUser[]>([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(false);
   const { getPostsForProfile, postCount, hydrated, refresh: refreshPosts } = usePostStore();
   const { user, isAuthenticated, onboardingDone, profileCompletion, stats, refreshMe } = useAuth();
   const router = useRouter();
@@ -129,6 +141,22 @@ export default function ProfilePage() {
     setProfileCardDismissed(true);
     try { localStorage.setItem('profile_card_dismissed', 'true'); } catch { /* ignore */ }
   };
+
+  const openConnections = useCallback(async (type: 'followers' | 'following') => {
+    if (connectionsPanel === type) { setConnectionsPanel(null); return; }
+    setConnectionsPanel(type);
+    setConnectionsList([]);
+    setConnectionsLoading(true);
+    try {
+      const res = await fetch(`/api/me/connections?type=${type}`);
+      if (res.ok) {
+        const data = await res.json();
+        setConnectionsList(data.users ?? []);
+      }
+    } catch { /* silently fail */ } finally {
+      setConnectionsLoading(false);
+    }
+  }, [connectionsPanel]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -250,20 +278,74 @@ export default function ProfilePage() {
             </div>
 
             {/* Stats — real values from server, 0 when new */}
-            <div className="flex gap-6 mb-4 text-sm">
+            <div className="flex gap-6 mb-2 text-sm">
               <div>
                 <span className="font-bold text-text-primary">{postsCount}</span>{' '}
                 <span className="text-text-muted">Posts</span>
               </div>
-              <div>
+              <button
+                onClick={() => openConnections('following')}
+                className={clsx(
+                  'text-left transition-colors',
+                  connectionsPanel === 'following' ? 'text-civic-light' : 'hover:text-text-primary',
+                )}
+              >
                 <span className="font-bold text-text-primary">{followingCount}</span>{' '}
                 <span className="text-text-muted">Following</span>
-              </div>
-              <div>
+              </button>
+              <button
+                onClick={() => openConnections('followers')}
+                className={clsx(
+                  'text-left transition-colors',
+                  connectionsPanel === 'followers' ? 'text-civic-light' : 'hover:text-text-primary',
+                )}
+              >
                 <span className="font-bold text-text-primary">{followersCount}</span>{' '}
                 <span className="text-text-muted">Followers</span>
-              </div>
+              </button>
             </div>
+
+            {/* Followers / Following inline panel */}
+            {connectionsPanel && (
+              <div className="mb-4 bg-surface-elevated border border-border-subtle rounded-xl overflow-hidden animate-fade-in">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle">
+                  <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                    {connectionsPanel === 'followers' ? 'Followers' : 'Following'}
+                  </span>
+                  <button onClick={() => setConnectionsPanel(null)} className="p-1 rounded text-text-muted hover:text-text-primary transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {connectionsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-5 h-5 text-civic animate-spin" />
+                  </div>
+                ) : connectionsList.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-text-muted">
+                    {connectionsPanel === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border-subtle max-h-72 overflow-y-auto">
+                    {connectionsList.map((u) => (
+                      <Link
+                        key={u.id}
+                        href={`/profile/${u.username}`}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors"
+                        onClick={() => setConnectionsPanel(null)}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-civic/15 flex items-center justify-center text-xs font-bold text-civic-light shrink-0">
+                          {u.displayName.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-text-primary truncate">{u.displayName}</p>
+                          <p className="text-xs text-text-muted truncate">@{u.username}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Complete your profile card — shows only when profile is incomplete */}

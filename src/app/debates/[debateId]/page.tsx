@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { LiveChat } from '@/components/debates/live-chat';
@@ -58,7 +59,7 @@ interface Debate {
   createdAt: string;
 }
 
-const CURRENT_USER_ID = 'user-current';
+// currentUserId is resolved from auth at runtime — see useAuth() below
 
 // ─── Invite list (available users to invite) ─────────────────────
 const AVAILABLE_USERS = [
@@ -127,6 +128,8 @@ export default function DebateDetailPage() {
   const params = useParams();
   const router = useRouter();
   const debateId = params.debateId as string;
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? '';
 
   const [debate, setDebate] = useState<Debate | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,8 +139,8 @@ export default function DebateDetailPage() {
   const [showMobilePanel, setShowMobilePanel] = useState<'chat' | 'voice' | null>(null);
 
   const { elapsed, remaining, totalMs } = useLiveTimer(debate);
-  const isCreator = debate?.creatorId === CURRENT_USER_ID;
-  const isDebater = debate?.participants.some((p) => p.userId === CURRENT_USER_ID) ?? false;
+  const isCreator = !!currentUserId && debate?.creatorId === currentUserId;
+  const isDebater = !!currentUserId && (debate?.participants.some((p) => p.userId === currentUserId) ?? false);
   const progressPct = totalMs > 0 ? Math.min(100, (elapsed / totalMs) * 100) : 0;
   const hasSpectatedRef = useRef(false);
 
@@ -159,7 +162,7 @@ export default function DebateDetailPage() {
   useEffect(() => {
     if (!debate || hasSpectatedRef.current) return;
     // Only spectate if not already a debater (avoids double-counting)
-    const alreadyParticipant = debate.participants.some((p) => p.userId === CURRENT_USER_ID);
+    const alreadyParticipant = debate.participants.some((p) => p.userId === currentUserId);
     if (!alreadyParticipant) {
       hasSpectatedRef.current = true;
       fetch(`/api/debates/${encodeURIComponent(debateId)}`, {
@@ -429,7 +432,7 @@ export default function DebateDetailPage() {
                   <p className="text-xs font-semibold text-text-primary mb-2">Invite to Debate</p>
                   <div className="space-y-1.5">
                     {AVAILABLE_USERS.filter((u) =>
-                      u.id !== CURRENT_USER_ID &&
+                      u.id !== currentUserId &&
                       !debate.participants.some((p) => p.userId === u.id) &&
                       !debate.kickedUserIds.includes(u.id)
                     ).map((user) => {
@@ -454,7 +457,7 @@ export default function DebateDetailPage() {
                       );
                     })}
                     {AVAILABLE_USERS.filter((u) =>
-                      u.id !== CURRENT_USER_ID &&
+                      u.id !== currentUserId &&
                       !debate.participants.some((p) => p.userId === u.id) &&
                       !debate.kickedUserIds.includes(u.id)
                     ).length === 0 && (
@@ -503,7 +506,7 @@ export default function DebateDetailPage() {
                           )}
                         </div>
                       </div>
-                      {isCreator && p.userId !== CURRENT_USER_ID && (
+                      {isCreator && p.userId !== currentUserId && (
                         <button
                           onClick={() => doAction('kick', { targetUserId: p.userId })}
                           className="p-1 rounded text-text-muted hover:text-danger-light hover:bg-danger/10 transition-colors"
@@ -548,7 +551,7 @@ export default function DebateDetailPage() {
                           )}
                         </div>
                       </div>
-                      {isCreator && p.userId !== CURRENT_USER_ID && (
+                      {isCreator && p.userId !== currentUserId && (
                         <button
                           onClick={() => doAction('kick', { targetUserId: p.userId })}
                           className="p-1 rounded text-text-muted hover:text-danger-light hover:bg-danger/10 transition-colors"
@@ -636,7 +639,7 @@ export default function DebateDetailPage() {
                 debateId={debate.id}
                 debateStatus={debate.status}
                 isCreator={isCreator}
-                currentUserId={CURRENT_USER_ID}
+                currentUserId={currentUserId}
                 spectatorCount={debate.spectatorCount}
                 debaterCount={debate.participants.length}
               />
@@ -651,7 +654,7 @@ export default function DebateDetailPage() {
                 debateStatus={debate.status}
                 isCreator={isCreator}
                 isDebater={isDebater}
-                currentUserId={CURRENT_USER_ID}
+                currentUserId={currentUserId}
               />
             </div>
           )}
@@ -665,7 +668,7 @@ export default function DebateDetailPage() {
             debateId={debate.id}
             debateStatus={debate.status}
             isCreator={isCreator}
-            currentUserId={CURRENT_USER_ID}
+            currentUserId={currentUserId}
             spectatorCount={debate.spectatorCount}
             debaterCount={debate.participants.length}
           />
@@ -674,7 +677,7 @@ export default function DebateDetailPage() {
             debateStatus={debate.status}
             isCreator={isCreator}
             isDebater={isDebater}
-            currentUserId={CURRENT_USER_ID}
+            currentUserId={currentUserId}
           />
         </div>
 
