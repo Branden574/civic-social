@@ -87,17 +87,16 @@ function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
 
 // ─── Security headers ────────────────────────────────────────
 
-const isProd = process.env.NODE_ENV === 'production';
-
 const SECURITY_HEADERS: Record<string, string> = {
-  // Content Security Policy — unsafe-eval only in dev (Next.js HMR needs it)
+  // Content Security Policy — unsafe-eval needed by Next.js webpack chunks
+  // TODO: migrate to nonce-based CSP to remove unsafe-inline/eval
   'Content-Security-Policy': [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'", // Tailwind injects styles
     "img-src 'self' data: https:",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://api.congress.gov",
+    "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+    "connect-src 'self' https://api.congress.gov https://vitals.vercel-insights.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
