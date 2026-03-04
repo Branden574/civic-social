@@ -52,7 +52,7 @@ export default function ProfilePage() {
   const [connectionsLoading, setConnectionsLoading] = useState(false);
   const [connectionsSearch, setConnectionsSearch] = useState('');
   const { getPostsForProfile, postCount, hydrated, refresh: refreshPosts } = usePostStore();
-  const { user, isAuthenticated, onboardingDone, profileCompletion, stats, refreshMe } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, onboardingDone, profileCompletion, stats, refreshMe } = useAuth();
   const router = useRouter();
 
   const [pullY, setPullY] = useState(0);
@@ -186,12 +186,12 @@ export default function ProfilePage() {
     : connectionsList;
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return null;
   }
 
