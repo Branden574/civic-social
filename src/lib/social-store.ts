@@ -413,7 +413,7 @@ export function markSeen(recipientUserId: string): void {
 
 // ═══════════════════════════════════════════════════════════════
 // DB-BACKED FOLLOW OPERATIONS
-// These use the SearchableUserFollow table for real users.
+// These use the Follow table (Prisma model) for real users.
 // Fall back to in-memory when DB is unavailable.
 // ═══════════════════════════════════════════════════════════════
 
@@ -428,8 +428,8 @@ export async function dbFollow(followerId: string, followingId: string): Promise
   if (!isDbAvailable()) return;
   try {
     await prisma.$executeRaw`
-      INSERT INTO "SearchableUserFollow" ("followerId", "followingId")
-      VALUES (${followerId}, ${followingId})
+      INSERT INTO "Follow" ("id", "followerId", "followingId", "createdAt")
+      VALUES (gen_random_uuid(), ${followerId}, ${followingId}, NOW())
       ON CONFLICT ("followerId", "followingId") DO NOTHING
     `;
   } catch { /* in-memory updated above */ }
@@ -445,7 +445,7 @@ export async function dbUnfollow(followerId: string, followingId: string): Promi
   if (!isDbAvailable()) return;
   try {
     await prisma.$executeRaw`
-      DELETE FROM "SearchableUserFollow"
+      DELETE FROM "Follow"
       WHERE "followerId" = ${followerId} AND "followingId" = ${followingId}
     `;
   } catch { /* silently fail */ }
@@ -455,7 +455,7 @@ export async function dbIsFollowing(followerId: string, followingId: string): Pr
   if (!isDbAvailable()) return isFollowing(followerId, followingId);
   try {
     const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) AS count FROM "SearchableUserFollow"
+      SELECT COUNT(*) AS count FROM "Follow"
       WHERE "followerId" = ${followerId} AND "followingId" = ${followingId}
     `;
     return Number(rows[0]?.count ?? 0) > 0;
@@ -468,7 +468,7 @@ export async function dbGetFollowerCount(userId: string): Promise<number> {
   if (!isDbAvailable()) return getFollowerCount(userId);
   try {
     const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) AS count FROM "SearchableUserFollow"
+      SELECT COUNT(*) AS count FROM "Follow"
       WHERE "followingId" = ${userId}
     `;
     return Number(rows[0]?.count ?? 0);
@@ -481,7 +481,7 @@ export async function dbGetFollowingCount(userId: string): Promise<number> {
   if (!isDbAvailable()) return getFollowingCount(userId);
   try {
     const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) AS count FROM "SearchableUserFollow"
+      SELECT COUNT(*) AS count FROM "Follow"
       WHERE "followerId" = ${userId}
     `;
     return Number(rows[0]?.count ?? 0);
@@ -494,7 +494,7 @@ export async function dbGetFollowingIds(userId: string): Promise<string[]> {
   if (!isDbAvailable()) return getFollowingIds(userId);
   try {
     const rows = await prisma.$queryRaw<{ followingId: string }[]>`
-      SELECT "followingId" FROM "SearchableUserFollow"
+      SELECT "followingId" FROM "Follow"
       WHERE "followerId" = ${userId}
     `;
     // Merge with in-memory mock follows for demo users

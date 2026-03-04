@@ -18,6 +18,8 @@ import {
   Loader2,
   X,
   RefreshCw,
+  Search,
+  UserMinus,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { usePostStore, type UserPost } from '@/lib/post-store';
@@ -47,6 +49,7 @@ export default function ProfilePage() {
   const [connectionsPanel, setConnectionsPanel] = useState<'followers' | 'following' | null>(null);
   const [connectionsList, setConnectionsList] = useState<ConnectionUser[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
+  const [connectionsSearch, setConnectionsSearch] = useState('');
   const { getPostsForProfile, postCount, hydrated, refresh: refreshPosts } = usePostStore();
   const { user, isAuthenticated, onboardingDone, profileCompletion, stats, refreshMe } = useAuth();
   const router = useRouter();
@@ -146,6 +149,7 @@ export default function ProfilePage() {
     if (connectionsPanel === type) { setConnectionsPanel(null); return; }
     setConnectionsPanel(type);
     setConnectionsList([]);
+    setConnectionsSearch('');
     setConnectionsLoading(true);
     try {
       const res = await fetch(`/api/me/connections?type=${type}`);
@@ -157,6 +161,28 @@ export default function ProfilePage() {
       setConnectionsLoading(false);
     }
   }, [connectionsPanel]);
+
+  const handleUnfollow = useCallback(async (targetId: string) => {
+    try {
+      const res = await fetch('/api/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unfollow', target_user_id: targetId }),
+      });
+      if (res.ok) {
+        setConnectionsList((prev) => prev.filter((u) => u.id !== targetId));
+        refreshMe();
+      }
+    } catch { /* silently fail */ }
+  }, [refreshMe]);
+
+  const filteredConnections = connectionsSearch.trim()
+    ? connectionsList.filter(
+        (u) =>
+          u.displayName.toLowerCase().includes(connectionsSearch.toLowerCase()) ||
+          u.username.toLowerCase().includes(connectionsSearch.toLowerCase()),
+      )
+    : connectionsList;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -305,45 +331,118 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            {/* Followers / Following inline panel */}
+            {/* Followers / Following modal overlay */}
             {connectionsPanel && (
-              <div className="mb-4 bg-surface-elevated border border-border-subtle rounded-xl overflow-hidden animate-fade-in">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle">
-                  <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
-                    {connectionsPanel === 'followers' ? 'Followers' : 'Following'}
-                  </span>
-                  <button onClick={() => setConnectionsPanel(null)} className="p-1 rounded text-text-muted hover:text-text-primary transition-colors">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {connectionsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-5 h-5 text-civic animate-spin" />
-                  </div>
-                ) : connectionsList.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-text-muted">
-                    {connectionsPanel === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border-subtle max-h-72 overflow-y-auto">
-                    {connectionsList.map((u) => (
-                      <Link
-                        key={u.id}
-                        href={`/profile/${u.username}`}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors"
+              <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setConnectionsPanel(null)}>
+                <div
+                  className="w-full max-w-md bg-surface-elevated border border-border-subtle rounded-2xl shadow-2xl overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header with tabs */}
+                  <div className="border-b border-border-subtle">
+                    <div className="flex items-center justify-between px-4 pt-3 pb-0">
+                      <h2 className="text-base font-bold text-text-primary">{displayName}</h2>
+                      <button
                         onClick={() => setConnectionsPanel(null)}
+                        className="p-1.5 -mr-1 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
                       >
-                        <div className="w-8 h-8 rounded-full bg-civic/15 flex items-center justify-center text-xs font-bold text-civic-light shrink-0">
-                          {u.displayName.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-text-primary truncate">{u.displayName}</p>
-                          <p className="text-xs text-text-muted truncate">@{u.username}</p>
-                        </div>
-                      </Link>
-                    ))}
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="flex mt-1">
+                      <button
+                        onClick={() => { if (connectionsPanel !== 'followers') openConnections('followers'); }}
+                        className={clsx(
+                          'flex-1 py-3 text-sm font-semibold text-center border-b-2 transition-colors',
+                          connectionsPanel === 'followers'
+                            ? 'border-civic-light text-text-primary'
+                            : 'border-transparent text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                        )}
+                      >
+                        Followers
+                        <span className="ml-1.5 text-xs text-text-muted">{followersCount}</span>
+                      </button>
+                      <button
+                        onClick={() => { if (connectionsPanel !== 'following') openConnections('following'); }}
+                        className={clsx(
+                          'flex-1 py-3 text-sm font-semibold text-center border-b-2 transition-colors',
+                          connectionsPanel === 'following'
+                            ? 'border-civic-light text-text-primary'
+                            : 'border-transparent text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                        )}
+                      >
+                        Following
+                        <span className="ml-1.5 text-xs text-text-muted">{followingCount}</span>
+                      </button>
+                    </div>
                   </div>
-                )}
+
+                  {/* Search bar */}
+                  <div className="px-4 py-3 border-b border-border-subtle">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                      <input
+                        type="text"
+                        placeholder="Search"
+                        value={connectionsSearch}
+                        onChange={(e) => setConnectionsSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 text-sm bg-surface rounded-full border border-border-subtle text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic-light/50 focus:ring-1 focus:ring-civic-light/30 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* User list */}
+                  {connectionsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-6 h-6 text-civic animate-spin" />
+                    </div>
+                  ) : filteredConnections.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="text-sm text-text-muted">
+                        {connectionsSearch.trim()
+                          ? 'No results found.'
+                          : connectionsPanel === 'followers'
+                            ? 'No followers yet.'
+                            : 'Not following anyone yet.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border-subtle max-h-[60vh] overflow-y-auto">
+                      {filteredConnections.map((u) => (
+                        <div
+                          key={u.id}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors"
+                        >
+                          <Link
+                            href={`/profile/${u.username}`}
+                            onClick={() => setConnectionsPanel(null)}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                          >
+                            {u.avatarUrl ? (
+                              <img src={u.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-civic/15 flex items-center justify-center text-sm font-bold text-civic-light shrink-0">
+                                {u.displayName.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-text-primary truncate">{u.displayName}</p>
+                              <p className="text-xs text-text-muted truncate">@{u.username}</p>
+                            </div>
+                          </Link>
+                          {connectionsPanel === 'following' && (
+                            <button
+                              onClick={() => handleUnfollow(u.id)}
+                              className="px-4 py-1.5 text-xs font-semibold rounded-full border border-border-subtle text-text-primary hover:border-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+                            >
+                              Following
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

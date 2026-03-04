@@ -36,21 +36,25 @@ export async function GET(request: NextRequest) {
     if (type === 'followers') {
       // People who follow me: followingId = me → get their profile (followerId)
       rows = await prisma.$queryRaw`
-        SELECT su.id, su."displayName", su.username, su."avatarUrl", su."verificationLevel", su."credibilityScore"
-        FROM "SearchableUser" su
-        JOIN "SearchableUserFollow" suf ON su.id = suf."followerId"
-        WHERE suf."followingId" = ${user.id}
-        ORDER BY suf."createdAt" DESC
+        SELECT u.id, u."displayName", u.username, u.avatar AS "avatarUrl",
+               u."verificationLevel"::text AS "verificationLevel",
+               ROUND(u."civicReputation" * 100)::int AS "credibilityScore"
+        FROM "User" u
+        JOIN "Follow" f ON u.id = f."followerId"
+        WHERE f."followingId" = ${user.id}
+        ORDER BY f."createdAt" DESC
         LIMIT 200
       `;
     } else {
       // People I follow: followerId = me → get their profile (followingId)
       rows = await prisma.$queryRaw`
-        SELECT su.id, su."displayName", su.username, su."avatarUrl", su."verificationLevel", su."credibilityScore"
-        FROM "SearchableUser" su
-        JOIN "SearchableUserFollow" suf ON su.id = suf."followingId"
-        WHERE suf."followerId" = ${user.id}
-        ORDER BY suf."createdAt" DESC
+        SELECT u.id, u."displayName", u.username, u.avatar AS "avatarUrl",
+               u."verificationLevel"::text AS "verificationLevel",
+               ROUND(u."civicReputation" * 100)::int AS "credibilityScore"
+        FROM "User" u
+        JOIN "Follow" f ON u.id = f."followingId"
+        WHERE f."followerId" = ${user.id}
+        ORDER BY f."createdAt" DESC
         LIMIT 200
       `;
     }
