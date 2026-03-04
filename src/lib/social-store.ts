@@ -427,12 +427,15 @@ export async function dbFollow(followerId: string, followingId: string): Promise
   }
   if (!isDbAvailable()) return;
   try {
-    await prisma.$executeRaw`
-      INSERT INTO "Follow" ("id", "followerId", "followingId", "createdAt")
-      VALUES (gen_random_uuid(), ${followerId}, ${followingId}, NOW())
-      ON CONFLICT ("followerId", "followingId") DO NOTHING
-    `;
-  } catch { /* in-memory updated above */ }
+    // Use Prisma client to insert (handles cuid() ID generation)
+    await prisma.follow.upsert({
+      where: { followerId_followingId: { followerId, followingId } },
+      create: { followerId, followingId },
+      update: {},
+    });
+  } catch (err) {
+    console.error('[dbFollow]', err);
+  }
 }
 
 export async function dbUnfollow(followerId: string, followingId: string): Promise<void> {
@@ -444,22 +447,23 @@ export async function dbUnfollow(followerId: string, followingId: string): Promi
   unsubscribeFromPosts(followerId, followingId);
   if (!isDbAvailable()) return;
   try {
-    await prisma.$executeRaw`
-      DELETE FROM "Follow"
-      WHERE "followerId" = ${followerId} AND "followingId" = ${followingId}
-    `;
-  } catch { /* silently fail */ }
+    await prisma.follow.deleteMany({
+      where: { followerId, followingId },
+    });
+  } catch (err) {
+    console.error('[dbUnfollow]', err);
+  }
 }
 
 export async function dbIsFollowing(followerId: string, followingId: string): Promise<boolean> {
   if (!isDbAvailable()) return isFollowing(followerId, followingId);
   try {
-    const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) AS count FROM "Follow"
-      WHERE "followerId" = ${followerId} AND "followingId" = ${followingId}
-    `;
-    return Number(rows[0]?.count ?? 0) > 0;
-  } catch {
+    const count = await prisma.follow.count({
+      where: { followerId, followingId },
+    });
+    return count > 0;
+  } catch (err) {
+    console.error('[dbIsFollowing]', err);
     return isFollowing(followerId, followingId);
   }
 }
@@ -467,12 +471,11 @@ export async function dbIsFollowing(followerId: string, followingId: string): Pr
 export async function dbGetFollowerCount(userId: string): Promise<number> {
   if (!isDbAvailable()) return getFollowerCount(userId);
   try {
-    const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) AS count FROM "Follow"
-      WHERE "followingId" = ${userId}
-    `;
-    return Number(rows[0]?.count ?? 0);
-  } catch {
+    return await prisma.follow.count({
+      where: { followingId: userId },
+    });
+  } catch (err) {
+    console.error('[dbGetFollowerCount]', err);
     return getFollowerCount(userId);
   }
 }
@@ -480,12 +483,11 @@ export async function dbGetFollowerCount(userId: string): Promise<number> {
 export async function dbGetFollowingCount(userId: string): Promise<number> {
   if (!isDbAvailable()) return getFollowingCount(userId);
   try {
-    const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) AS count FROM "Follow"
-      WHERE "followerId" = ${userId}
-    `;
-    return Number(rows[0]?.count ?? 0);
-  } catch {
+    return await prisma.follow.count({
+      where: { followerId: userId },
+    });
+  } catch (err) {
+    console.error('[dbGetFollowingCount]', err);
     return getFollowingCount(userId);
   }
 }
@@ -493,15 +495,16 @@ export async function dbGetFollowingCount(userId: string): Promise<number> {
 export async function dbGetFollowingIds(userId: string): Promise<string[]> {
   if (!isDbAvailable()) return getFollowingIds(userId);
   try {
-    const rows = await prisma.$queryRaw<{ followingId: string }[]>`
-      SELECT "followingId" FROM "Follow"
-      WHERE "followerId" = ${userId}
-    `;
+    const rows = await prisma.follow.findMany({
+      where: { followerId: userId },
+      select: { followingId: true },
+    });
     // Merge with in-memory mock follows for demo users
     const dbIds = rows.map((r) => r.followingId);
     const memIds = getFollowingIds(userId);
     return [...new Set([...dbIds, ...memIds])];
-  } catch {
+  } catch (err) {
+    console.error('[dbGetFollowingIds]', err);
     return getFollowingIds(userId);
   }
 }
