@@ -13,7 +13,7 @@ import { postLimiter } from '@/lib/security/rate-limiter';
 import { validatePassword } from '@/lib/security/password';
 import { hashPassword } from '@/lib/security/hash';
 import { isDbAvailable, prisma } from '@/lib/db';
-import { registerUser, getUserById } from '@/lib/user-registry';
+import { registerUser, getUserById, ensureUserRecord } from '@/lib/user-registry';
 import { secureLog } from '@/lib/security/logger';
 import { signSession, sessionCookieOptions } from '@/lib/security/session';
 import { sendVerificationEmail } from '@/lib/email';
@@ -75,8 +75,9 @@ export async function POST(request: NextRequest) {
   const id = `user-${randomUUID().replace(/-/g, '').slice(0, 16)}`;
 
   try {
-    // Store in registry (DB or in-memory)
+    // Store in registry (SearchableUser for search + User for relations)
     await registerUser({ id, displayName, username, email });
+    await ensureUserRecord({ id, email, username, displayName });
 
     // Persist the password hash — only possible with DB
     if (isDbAvailable()) {

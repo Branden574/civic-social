@@ -16,7 +16,7 @@ import {
 } from '@/lib/user-state-store';
 import { dbGetFollowerCount, dbGetFollowingCount } from '@/lib/social-store';
 import { getPostCount } from '@/lib/post-data-store';
-import { registerUser } from '@/lib/user-registry';
+import { registerUser, ensureUserRecord } from '@/lib/user-registry';
 import { isDbAvailable, prisma } from '@/lib/db';
 
 // ─── Response shape ──────────────────────────────────────────
@@ -82,12 +82,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  // Auto-register in user registry for search discoverability
+  const derivedUsername = sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
+
+  // Auto-register in both user tables
   await registerUser({
     id: sessionUser.id,
     displayName: sessionUser.displayName,
-    username: sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
+    username: derivedUsername,
     email: sessionUser.email,
+  });
+  await ensureUserRecord({
+    id: sessionUser.id,
+    email: sessionUser.email,
+    username: derivedUsername,
+    displayName: sessionUser.displayName,
   });
 
   const state = getUserState(sessionUser.id);

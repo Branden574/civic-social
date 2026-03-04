@@ -515,3 +515,50 @@ export async function getAllUserCount(): Promise<number> {
   if (isDbAvailable()) return prisma.searchableUser.count();
   return getStore().users.size;
 }
+
+/**
+ * Ensure a record exists in the User table (needed for Follow foreign keys).
+ * Upserts by id — safe to call repeatedly.
+ */
+export async function ensureUserRecord(input: {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string;
+}): Promise<void> {
+  if (!isDbAvailable()) return;
+  try {
+    await prisma.user.upsert({
+      where: { id: input.id },
+      create: {
+        id: input.id,
+        email: input.email,
+        username: input.username,
+        displayName: input.displayName,
+      },
+      update: {
+        displayName: input.displayName,
+        username: input.username,
+      },
+    });
+  } catch (err) {
+    // Could fail on unique constraint for email/username if another user
+    // already has that value. Try by email as fallback.
+    try {
+      await prisma.user.upsert({
+        where: { email: input.email },
+        create: {
+          id: input.id,
+          email: input.email,
+          username: input.username,
+          displayName: input.displayName,
+        },
+        update: {
+          displayName: input.displayName,
+        },
+      });
+    } catch (err2) {
+      console.error('[ensureUserRecord]', err2);
+    }
+  }
+}

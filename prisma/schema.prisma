@@ -21,7 +21,7 @@ model User {
   displayName     String
   avatar          String?
   bio             String?
-  country         String
+  country         String            @default("")
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 

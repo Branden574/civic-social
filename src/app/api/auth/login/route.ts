@@ -13,6 +13,7 @@ import { verifyPassword } from '@/lib/security/hash';
 import { isDbAvailable, prisma } from '@/lib/db';
 import { secureLog } from '@/lib/security/logger';
 import { signSession, sessionCookieOptions } from '@/lib/security/session';
+import { ensureUserRecord } from '@/lib/user-registry';
 
 // Generic error to avoid leaking whether the email exists
 const INVALID_CREDENTIALS = 'Invalid email or password.';
@@ -57,6 +58,14 @@ export async function POST(request: NextRequest) {
     }
 
     secureLog.info('POST /api/auth/login', `success id=${row.id} email=${email}`);
+
+    // Ensure User table has a record (needed for Follow foreign keys)
+    await ensureUserRecord({
+      id: row.id,
+      email: row.email,
+      username: row.username,
+      displayName: row.displayName,
+    });
 
     const userData = {
       id: row.id,
