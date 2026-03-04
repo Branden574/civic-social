@@ -11,17 +11,10 @@ export async function GET(request: NextRequest) {
   }
 
   const dbUrl = process.env.DATABASE_URL || '';
-  let dbHost: string | null = null;
-  try {
-    if (dbUrl) dbHost = new URL(dbUrl).host;
-  } catch {
-    dbHost = null;
-  }
 
   return NextResponse.json({
     env: process.env.NODE_ENV || 'unknown',
     dbConfigured: Boolean(dbUrl),
-    dbHost,
     serverTime: new Date().toISOString(),
   });
 }

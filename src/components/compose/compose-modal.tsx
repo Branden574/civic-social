@@ -98,30 +98,34 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
     setSubmitError(null);
 
     const allTopics = [...selectedTopics, ...customHashtags];
+    const safeArticleUrl = articleUrl || undefined;
 
-    // ─── Optimistic UI: insert post immediately ──────────
-    const newPost = addPost({
-      content: content.trim(),
-      topics: allTopics,
-      articleUrl: articleUrl || undefined,
-      civilityScore: civility.score,
-    });
+    let newPost: ReturnType<typeof addPost> | null = null;
 
-    // ─── Server persistence ─────────────────────────────
     try {
+      // ─── Optimistic UI: insert post immediately ──────────
+      newPost = addPost({
+        content: content.trim(),
+        topics: allTopics,
+        articleUrl: safeArticleUrl,
+        civilityScore: civility.score,
+      });
+
+      // ─── Server persistence ─────────────────────────────
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: content.trim(),
           topics: allTopics,
-          articleUrl: articleUrl || undefined,
-          civilityScore: civility.score,
+          articleUrl: safeArticleUrl,
           comment_policy: commentPolicy,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        // If 401, the session expired — show a specific message
+        if (res.status === 401) throw new Error('Session expired. Please log in again.');
         throw new Error(err.error || `Server error: ${res.status}`);
       }
       const data = await res.json();
@@ -137,14 +141,15 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
       setShowCivilityCheck(false);
       setCommentPolicy('everyone');
       onClose();
-    } catch {
-      // Server failed — remove optimistic post so UI never pretends it posted
-      removePost(newPost.id);
-      setSubmitError('Post failed to publish. Please try again.');
+    } catch (err) {
+      // Server failed — remove optimistic post so UI never shows a ghost post
+      if (newPost) removePost(newPost.id);
+      const msg = err instanceof Error ? err.message : 'Post failed to publish. Please try again.';
+      setSubmitError(msg);
     } finally {
       setPosting(false);
     }
-  }, [content, selectedTopics, customHashtags, articleUrl, civility.score, addPost, confirmPost, removePost, onClose, onPostCreated]);
+  }, [content, selectedTopics, customHashtags, articleUrl, civility.score, commentPolicy, addPost, confirmPost, removePost, onClose, onPostCreated]);
 
   const allTags = [...selectedTopics, ...customHashtags];
   const charCount = content.length;

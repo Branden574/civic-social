@@ -662,6 +662,7 @@ export interface MockNewsArticle {
   id: string;
   title: string;
   summary: string;
+  url: string;
   source: string;
   sourceDomain: string;
   publishedAt: Date;
@@ -677,6 +678,7 @@ export const mockNewsArticles: MockNewsArticle[] = [
     id: 'news-1',
     title: 'Bipartisan Infrastructure Bill Passes Senate with 69-30 Vote',
     summary: 'The Senate passed a $1.2 trillion infrastructure package with bipartisan support, allocating funds for roads, bridges, broadband, and clean energy. The bill now moves to the House where its fate is less certain.',
+    url: 'https://apnews.com/article/infrastructure-bill-senate-vote',
     source: 'Associated Press',
     sourceDomain: 'apnews.com',
     publishedAt: hoursAgo(4),
@@ -689,6 +691,7 @@ export const mockNewsArticles: MockNewsArticle[] = [
     id: 'news-2',
     title: 'Supreme Court to Hear Major Case on Executive Power Limits',
     summary: 'The Supreme Court agreed to hear a case that could redefine the scope of presidential authority over federal agencies, with implications for regulatory policy across multiple sectors.',
+    url: 'https://www.reuters.com/legal/supreme-court-executive-power',
     source: 'Reuters',
     sourceDomain: 'reuters.com',
     publishedAt: hoursAgo(6),
@@ -701,6 +704,7 @@ export const mockNewsArticles: MockNewsArticle[] = [
     id: 'news-3',
     title: 'New Study: Climate Migration Could Displace 200 Million by 2050',
     summary: 'A comprehensive World Bank study projects that climate change could force up to 216 million people to migrate within their own countries by 2050, with Sub-Saharan Africa and South Asia most affected.',
+    url: 'https://www.bbc.com/news/science-environment-climate-migration',
     source: 'World Bank / BBC',
     sourceDomain: 'bbc.com',
     publishedAt: hoursAgo(8),
@@ -713,6 +717,7 @@ export const mockNewsArticles: MockNewsArticle[] = [
     id: 'news-4',
     title: 'State-Level Universal Basic Income Pilot Shows Mixed Results',
     summary: 'A two-year UBI pilot in a mid-sized U.S. city found that recipients reported improved mental health and food security, but employment rates remained unchanged — contradicting both supporters\' and critics\' predictions.',
+    url: 'https://www.npr.org/sections/money/universal-basic-income-pilot',
     source: 'NPR',
     sourceDomain: 'npr.org',
     publishedAt: hoursAgo(10),
@@ -725,6 +730,7 @@ export const mockNewsArticles: MockNewsArticle[] = [
     id: 'news-5',
     title: 'Voter Turnout Hits Record High in Municipal Elections',
     summary: 'Municipal elections across 15 major cities saw record voter turnout, driven by new civic engagement apps and same-day voter registration. Analysts credit increased awareness of local government\'s impact on daily life.',
+    url: 'https://www.washingtonpost.com/politics/voter-turnout-municipal-elections',
     source: 'The Washington Post',
     sourceDomain: 'washingtonpost.com',
     publishedAt: hoursAgo(14),

@@ -156,13 +156,15 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
       articleUrl: input.articleUrl,
       author: currentAuthor,
       thread: null,
-      sources: input.articleUrl
-        ? [{
-            url: input.articleUrl,
-            domain: new URL(input.articleUrl).hostname.replace('www.', ''),
-            trustScore: 0.7,
-          }]
-        : [],
+      sources: (() => {
+        if (!input.articleUrl) return [];
+        try {
+          const domain = new URL(input.articleUrl).hostname.replace('www.', '');
+          return [{ url: input.articleUrl, domain, trustScore: 0.7 }];
+        } catch {
+          return [];
+        }
+      })(),
       reactions: { agree: 0, disagree: 0, insightful: 0, nuance: 0 },
       algorithm: {
         qualityScore: 0.5 + input.civilityScore * 0.3,

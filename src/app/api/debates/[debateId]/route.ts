@@ -45,11 +45,16 @@ export async function PATCH(
   if (!isValidId(debateId)) return badRequest('Invalid debate ID.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
-  const userName = user?.displayName || 'Branden Vincent-Walker';
-
+  // Spectate doesn't require auth; all other actions do
   const body = await request.json();
   const { action } = body;
+
+  if (action !== 'spectate' && !user) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+  }
+
+  const userId = user?.id ?? '';
+  const userName = user?.displayName ?? 'Anonymous';
 
   switch (action) {
     case 'start': {

@@ -261,6 +261,12 @@ export function getFollowingIds(userId: string): string[] {
     .map((f) => f.followingId);
 }
 
+export function getFollowerIds(userId: string): string[] {
+  return getStore().follows
+    .filter((f) => f.followingId === userId)
+    .map((f) => f.followerId);
+}
+
 // ═══════════════════════════════════════════════════════════════
 // NOTIFICATION SUBSCRIPTIONS (BELL)
 // ═══════════════════════════════════════════════════════════════

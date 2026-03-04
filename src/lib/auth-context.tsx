@@ -97,30 +97,17 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 // ─── Secure storage helpers ──────────────────────────────────
+// NOTE: The session cookie (civic-session) is HttpOnly and managed
+// server-side by /api/auth/login, /api/auth/signup, and /api/auth/logout.
+// Client-side JS cannot read or set it — preventing XSS theft and
+// role-forgery. localStorage is used only for client UI state hydration
+// (display name, onboarding, etc.) and does NOT control server trust.
 
 const STORAGE_KEY = 'civic-auth-user';
-const SESSION_COOKIE = 'civic-session';
-
-function setSessionCookie(user: AuthUser) {
-  const sessionData = JSON.stringify({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    displayName: user.displayName,
-  });
-  const maxAge = 60 * 60 * 24;
-  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `${SESSION_COOKIE}=${encodeURIComponent(sessionData)}; path=/; max-age=${maxAge}; SameSite=Strict${secure}`;
-}
-
-function clearSessionCookie() {
-  document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0; SameSite=Strict`;
-}
 
 function persistUser(user: AuthUser) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    setSessionCookie(user);
   } catch {
     // noop — SSR / private browsing
   }
@@ -140,7 +127,6 @@ function readPersistedUser(): AuthUser | null {
 function clearPersistedUser() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    clearSessionCookie();
   } catch {
     // noop
   }
@@ -322,7 +308,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (hydratedUser) {
         if (!cancelled) setUser(hydratedUser);
-        setSessionCookie(hydratedUser);
 
         // Step 2: Fetch server bootstrap for authoritative state
         bootstrapInFlight.current = true;
@@ -433,13 +418,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(authUser);
       clearLoginAttempts();
 
+      // Server already set the HttpOnly session cookie during login.
+      // Client-side: persist UI state based on rememberMe preference.
       if (rememberMe) {
         persistUser(authUser);
       } else {
         try {
           sessionStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
         } catch { /* noop */ }
-        setSessionCookie(authUser);
       }
 
       const serverData = await fetchBootstrap(authUser);
@@ -526,9 +512,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearPersistedUser();
     clearLoginAttempts();
     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
-    // Clear any profile card dismissal state
     try { localStorage.removeItem('profile_card_dismissed'); } catch { /* noop */ }
-    // Navigate to landing page
+    // Ask server to clear the HttpOnly session cookie (client JS cannot do this)
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     if (typeof window !== 'undefined') {
       window.location.href = '/';
     }

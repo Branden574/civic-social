@@ -83,7 +83,13 @@ export async function POST(
   const rl = chatLimiter.check(userId);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  const body = await request.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('Invalid JSON.');
+  }
   const { content, replyToId } = body;
 
   const debate = getDebateById(debateId);
@@ -164,7 +170,13 @@ export async function PATCH(
 
   const user = getSessionUser(request);
   const userId = user?.id || 'user-current';
-  const body = await request.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('Invalid JSON.');
+  }
   const { action } = body;
 
   const debate = getDebateById(debateId);

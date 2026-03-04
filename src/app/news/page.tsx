@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
-import { mockNewsArticles } from '@/lib/data/mock-data';
 import {
   ExternalLink,
   MessageCircle,
@@ -17,6 +16,8 @@ import {
   Shield,
   Bookmark,
   BookmarkCheck,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
@@ -29,7 +30,7 @@ const factCheckStyles: Record<string, { icon: typeof CheckCircle2; label: string
   PARTIALLY_TRUE: { icon: AlertTriangle, label: 'Partially True', color: 'text-warning bg-warning/10' },
 };
 
-// Mock multiple perspectives for articles
+// Multiple perspectives by topic
 const PERSPECTIVES: Record<string, { ideology: string; source: string; angle: string; color: string }[]> = {
   default: [
     { ideology: 'Left-leaning', source: 'The Guardian', angle: 'Emphasizes social impact and equity concerns', color: 'bg-ideology-left' },
@@ -56,7 +57,59 @@ function getPerspectives(topics: string[]) {
   return PERSPECTIVES.default;
 }
 
+// ─── Types ───────────────────────────────────────────────────
+
+interface NewsArticle {
+  id: string;
+  title: string;
+  summary: string;
+  url: string;
+  source: string;
+  sourceDomain: string;
+  publishedAt: string;
+  imageUrl?: string;
+  topics: string[];
+  factCheckStatus: string;
+  sourceTrustScore: number;
+  discussionCount: number;
+}
+
+// ─── Page ────────────────────────────────────────────────────
+
 export default function NewsPage() {
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchNews = useCallback(async (refresh = false) => {
+    try {
+      const res = await fetch(`/api/news?limit=50${refresh ? '&refresh=true' : ''}&_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setArticles(data.articles);
+      }
+    } catch { /* ignore */ } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // On first load, try to fetch fresh news from RSS feeds
+    fetchNews(true);
+  }, [fetchNews]);
+
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => fetchNews(true), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchNews]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchNews(true);
+  };
+
   return (
     <AuthGate>
     <div className="flex min-h-screen bg-bg">
@@ -77,22 +130,58 @@ export default function NewsPage() {
                   </p>
                 </div>
               </div>
-              <Link
-                href="/source-transparency"
-                className="flex items-center gap-1.5 text-xs text-text-muted hover:text-civic-light transition-colors"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Source Criteria</span>
-              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-muted hover:text-civic-light border border-border-subtle rounded-lg hover:border-civic/30 transition-colors disabled:opacity-50"
+                  title="Refresh from news sources"
+                >
+                  <RefreshCw className={clsx('w-3.5 h-3.5', refreshing && 'animate-spin')} />
+                  <span className="hidden sm:inline">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+                </button>
+                <Link
+                  href="/source-transparency"
+                  className="flex items-center gap-1.5 text-xs text-text-muted hover:text-civic-light transition-colors"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Source Criteria</span>
+                </Link>
+              </div>
+            </div>
+            {/* Source badges */}
+            <div className="flex items-center gap-2 mt-3 text-[10px] text-text-muted overflow-x-auto">
+              <span className="shrink-0 font-semibold uppercase tracking-wider">Sources:</span>
+              {['AP', 'Reuters', 'NPR', 'PBS', 'BBC'].map((s) => (
+                <span key={s} className="shrink-0 px-2 py-0.5 rounded-full bg-surface-elevated border border-border-subtle font-medium">{s}</span>
+              ))}
             </div>
           </header>
 
-          {/* News Feed */}
-          <div className="divide-y divide-border-subtle">
-            {mockNewsArticles.map((article, i) => (
-              <NewsArticleCard key={article.id} article={article} index={i} />
-            ))}
-          </div>
+          {/* Loading state */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-6 h-6 text-civic animate-spin" />
+                <p className="text-xs text-text-muted">Loading news from credible sources...</p>
+              </div>
+            </div>
+          ) : articles.length === 0 ? (
+            <div className="px-4 sm:px-6 py-20 text-center">
+              <Newspaper className="w-10 h-10 text-text-muted mx-auto mb-3" />
+              <p className="text-sm text-text-secondary mb-2">No news articles available.</p>
+              <button onClick={handleRefresh} className="text-sm text-civic-light hover:underline">
+                Try refreshing
+              </button>
+            </div>
+          ) : (
+            /* News Feed */
+            <div className="divide-y divide-border-subtle">
+              {articles.map((article, i) => (
+                <NewsArticleCard key={article.id} article={article} index={i} />
+              ))}
+            </div>
+          )}
 
           <div className="h-20 lg:h-8" />
         </div>
@@ -103,22 +192,12 @@ export default function NewsPage() {
   );
 }
 
-interface NewsArticle {
-  id: string;
-  source: string;
-  title: string;
-  summary: string;
-  publishedAt: Date;
-  factCheckStatus: string;
-  topics: string[];
-  discussionCount: number;
-  sourceTrustScore: number;
-}
+// ─── Article Card ────────────────────────────────────────────
 
 function NewsArticleCard({ article, index }: { article: NewsArticle; index: number }) {
   const [showPerspectives, setShowPerspectives] = useState(false);
   const [saved, setSaved] = useState(false);
-  const factCheck = factCheckStyles[article.factCheckStatus];
+  const factCheck = factCheckStyles[article.factCheckStatus] || factCheckStyles.UNCHECKED;
   const perspectives = getPerspectives(article.topics);
 
   return (
@@ -138,7 +217,7 @@ function NewsArticleCard({ article, index }: { article: NewsArticle; index: numb
             </span>
             <span className="text-text-muted text-xs">·</span>
             <span className="text-xs text-text-muted">
-              {formatDistanceToNow(article.publishedAt, { addSuffix: true })}
+              {formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })}
             </span>
             <span className="text-text-muted text-xs">·</span>
             <span
@@ -158,10 +237,17 @@ function NewsArticleCard({ article, index }: { article: NewsArticle; index: numb
             </span>
           </div>
 
-          {/* Title */}
-          <h2 className="text-base font-semibold text-text-primary leading-snug mb-2 hover:text-civic-light transition-colors cursor-pointer">
-            {article.title}
-          </h2>
+          {/* Title — links to external article */}
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <h2 className="text-base font-semibold text-text-primary leading-snug mb-2 hover:text-civic-light transition-colors">
+              {article.title}
+            </h2>
+          </a>
 
           {/* AI Summary */}
           <div className="bg-surface-elevated rounded-lg p-3 mb-3 border border-border-subtle">
@@ -236,7 +322,9 @@ function NewsArticleCard({ article, index }: { article: NewsArticle; index: numb
               {article.discussionCount} discussions
             </button>
             <a
-              href="#"
+              href={article.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-civic-light transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />

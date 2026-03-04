@@ -11,7 +11,7 @@ import {
   markOnboardingComplete,
   computeProfileCompletion,
 } from '@/lib/user-state-store';
-import { getFollowerCount, getFollowingCount } from '@/lib/social-store';
+import { dbGetFollowerCount, dbGetFollowingCount } from '@/lib/social-store';
 import { getPostCount } from '@/lib/post-data-store';
 
 export async function POST(request: NextRequest) {
@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
     onboarding: state.onboarding,
     profileCompletion: computeProfileCompletion(state),
     stats: {
-      followersCount: getFollowerCount(sessionUser.id),
-      followingCount: getFollowingCount(sessionUser.id),
+      followersCount: await dbGetFollowerCount(sessionUser.id),
+      followingCount: await dbGetFollowingCount(sessionUser.id),
       postsCount: await getPostCount(sessionUser.id),
     },
   });

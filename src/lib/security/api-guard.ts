@@ -11,10 +11,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import type { RateLimitResult } from './rate-limiter-types';
+import { verifySession, SESSION_COOKIE_NAME } from './session';
 
 // ─── User extraction ─────────────────────────────────────────
-// In production, this reads a signed session cookie / JWT.
-// For now, we read from a session cookie set by the auth context.
+// Reads an HMAC-signed HttpOnly session cookie set by the auth
+// API routes (login / signup). Client-side JS cannot read or
+// forge this cookie — the HMAC signature prevents tampering.
 
 interface SessionUser {
   id: string;
@@ -23,31 +25,23 @@ interface SessionUser {
   displayName: string;
 }
 
-const SESSION_COOKIE = 'civic-session';
-
 /**
  * Extract the authenticated user from the request.
- * Returns null if not authenticated.
- *
- * PRODUCTION TODO: Replace with signed JWT / session cookie validation.
- * Current implementation reads a demo session cookie.
+ * Returns null if unauthenticated or if the session token is invalid/tampered.
  */
 export function getSessionUser(request: NextRequest): SessionUser | null {
-  const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!sessionCookie) return null;
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (!token) return null;
 
-  try {
-    const parsed = JSON.parse(sessionCookie);
-    if (!parsed.id || !parsed.email || !parsed.role) return null;
-    return {
-      id: parsed.id,
-      email: parsed.email,
-      role: parsed.role,
-      displayName: parsed.displayName || 'User',
-    };
-  } catch {
-    return null;
-  }
+  const payload = verifySession(token);
+  if (!payload) return null;
+
+  return {
+    id: payload.id,
+    email: payload.email,
+    role: payload.role,
+    displayName: payload.displayName || 'User',
+  };
 }
 
 /**

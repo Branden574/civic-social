@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // POST /api/auth/login — Verify credentials and start session
 // ═══════════════════════════════════════════════════════════════
-// Looks up the user by email (DB-first, in-memory fallback),
-// verifies the PBKDF2 password hash, and returns the user object
-// so the client can set its session cookie.
+// Looks up the user by email, verifies the PBKDF2 password hash,
+// and sets an HMAC-signed HttpOnly session cookie so the client
+// cannot forge or tamper with session data.
 // ═══════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,6 +12,7 @@ import { postLimiter } from '@/lib/security/rate-limiter';
 import { verifyPassword } from '@/lib/security/hash';
 import { isDbAvailable, prisma } from '@/lib/db';
 import { secureLog } from '@/lib/security/logger';
+import { signSession, sessionCookieOptions } from '@/lib/security/session';
 
 // Generic error to avoid leaking whether the email exists
 const INVALID_CREDENTIALS = 'Invalid email or password.';
@@ -57,17 +58,34 @@ export async function POST(request: NextRequest) {
 
     secureLog.info('POST /api/auth/login', `success id=${row.id} email=${email}`);
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: row.id,
-        email: row.email,
-        displayName: row.displayName,
-        username: row.username,
-        role: 'user',
-        createdAt: row.createdAt.toISOString(),
-      },
+    const userData = {
+      id: row.id,
+      email: row.email,
+      displayName: row.displayName,
+      username: row.username,
+      role: 'user' as const,
+      createdAt: row.createdAt.toISOString(),
+    };
+
+    // Sign the session token server-side and set as HttpOnly cookie
+    const token = signSession({
+      id: row.id,
+      email: row.email,
+      role: 'user',
+      displayName: row.displayName,
+      iat: Date.now(),
     });
+
+    const response = NextResponse.json({ success: true, user: userData });
+    const opts = sessionCookieOptions();
+    response.cookies.set(opts.name, token, {
+      httpOnly: opts.httpOnly,
+      secure: opts.secure,
+      sameSite: opts.sameSite,
+      maxAge: opts.maxAge,
+      path: opts.path,
+    });
+    return response;
   }
 
   // No DB: cannot verify passwords — inform the client

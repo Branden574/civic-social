@@ -9,7 +9,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { isDbAvailable, prisma } from './db';
-import { getFollowingIds } from './social-store';
+import { getFollowingIds, getFollowerIds } from './social-store';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -494,11 +494,21 @@ export async function searchUsers(options: {
 // ═══════════════════════════════════════════════════════════════
 
 export async function getFollowersWithDetails(userId: string): Promise<RegisteredUser[]> {
+  // Returns full profiles of users who follow `userId`.
+  const followerIds = getFollowerIds(userId);
+
   if (isDbAvailable()) {
-    const rows = await prisma.searchableUser.findMany();
+    if (followerIds.length === 0) return [];
+    const rows = await prisma.searchableUser.findMany({
+      where: { id: { in: followerIds } },
+    });
     return rows.map(rowToRegisteredUser);
   }
-  return Array.from(getStore().users.values());
+
+  const store = getStore();
+  return followerIds
+    .map((id) => store.users.get(id))
+    .filter((u): u is RegisteredUser => u !== undefined);
 }
 
 export async function getAllUserCount(): Promise<number> {

@@ -30,8 +30,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = getSessionUser(request);
-    const userId = user?.id || 'user-current';
-    const userName = user?.displayName || 'Branden Vincent-Walker';
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+    const userId = user.id;
+    const userName = user.displayName;
 
     // Rate limit debate creation
     const rl = debateLimiter.check(userId);

@@ -61,16 +61,7 @@ interface Debate {
 
 // currentUserId is resolved from auth at runtime — see useAuth() below
 
-// ─── Invite list (available users to invite) ─────────────────────
-const AVAILABLE_USERS = [
-  { id: 'user-sarah', name: 'Sarah Chen' },
-  { id: 'user-elena', name: 'Dr. Elena Rodriguez' },
-  { id: 'user-michael', name: 'Prof. Michael Adler' },
-  { id: 'user-amara', name: 'Amara Okafor' },
-  { id: 'user-marcus', name: 'Marcus Johnson' },
-  { id: 'user-rachel', name: 'Rachel Thompson' },
-  { id: 'user-david', name: 'David Kim' },
-];
+interface InviteableUser { id: string; displayName: string }
 
 // ─── Live timer hook ─────────────────────────────────────────────
 
@@ -135,6 +126,9 @@ export default function DebateDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showInvitePanel, setShowInvitePanel] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [inviteableUsers, setInviteableUsers] = useState<InviteableUser[]>([]);
+  const [inviteLoading, setInviteLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showMobilePanel, setShowMobilePanel] = useState<'chat' | 'voice' | null>(null);
 
@@ -155,6 +149,24 @@ export default function DebateDetailPage() {
   }, [debateId]);
 
   useEffect(() => { fetchDebate(); }, [fetchDebate]);
+
+  // ── Fetch users for invite panel ──────────────────────────────
+  useEffect(() => {
+    if (!showInvitePanel) return;
+    setInviteLoading(true);
+    const controller = new AbortController();
+    const q = inviteSearch.trim();
+    fetch(`/api/search/users?q=${encodeURIComponent(q)}&limit=20`, { signal: controller.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.users) {
+          setInviteableUsers(data.users.map((u: { id: string; displayName: string }) => ({ id: u.id, displayName: u.displayName })));
+        }
+      })
+      .catch(() => { /* ignore abort */ })
+      .finally(() => setInviteLoading(false));
+    return () => controller.abort();
+  }, [showInvitePanel, inviteSearch]);
 
   // ── Auto-spectate: increment spectator count once per visit ──
   // If the user is not a debate participant, count them as a spectator.
@@ -430,19 +442,29 @@ export default function DebateDetailPage() {
               {showInvitePanel && (
                 <div className="mt-3 p-3 bg-surface-elevated rounded-xl border border-border-subtle animate-fade-in">
                   <p className="text-xs font-semibold text-text-primary mb-2">Invite to Debate</p>
-                  <div className="space-y-1.5">
-                    {AVAILABLE_USERS.filter((u) =>
+                  <input
+                    type="text"
+                    value={inviteSearch}
+                    onChange={(e) => setInviteSearch(e.target.value)}
+                    placeholder="Search users..."
+                    className="w-full bg-surface rounded-lg border border-border-subtle p-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 mb-2"
+                  />
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {inviteLoading && (
+                      <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 text-text-muted animate-spin" /></div>
+                    )}
+                    {!inviteLoading && inviteableUsers.filter((u) =>
                       u.id !== currentUserId &&
                       !debate.participants.some((p) => p.userId === u.id) &&
                       !debate.kickedUserIds.includes(u.id)
-                    ).map((user) => {
-                      const isInvited = debate.invitedUserIds.includes(user.id);
-                      const isLoadingInvite = actionLoading === 'invite-' + user.id;
+                    ).map((u) => {
+                      const isInvited = debate.invitedUserIds.includes(u.id);
+                      const isLoadingInvite = actionLoading === 'invite-' + u.id;
                       return (
-                        <div key={user.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-surface-hover">
-                          <span className="text-sm text-text-primary">{user.name}</span>
+                        <div key={u.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-surface-hover">
+                          <span className="text-sm text-text-primary">{u.displayName}</span>
                           <button
-                            onClick={() => handleInvite(user.id)}
+                            onClick={() => handleInvite(u.id)}
                             disabled={isInvited || isLoadingInvite}
                             className={clsx(
                               'text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors',
@@ -456,12 +478,14 @@ export default function DebateDetailPage() {
                         </div>
                       );
                     })}
-                    {AVAILABLE_USERS.filter((u) =>
+                    {!inviteLoading && inviteableUsers.filter((u) =>
                       u.id !== currentUserId &&
                       !debate.participants.some((p) => p.userId === u.id) &&
                       !debate.kickedUserIds.includes(u.id)
                     ).length === 0 && (
-                      <p className="text-xs text-text-muted py-2 text-center">All users are already participating or kicked.</p>
+                      <p className="text-xs text-text-muted py-2 text-center">
+                        {inviteSearch ? 'No users found.' : 'No users available to invite.'}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -589,11 +613,11 @@ export default function DebateDetailPage() {
                 <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Removed Users</p>
                 <div className="flex flex-wrap gap-1.5">
                   {debate.kickedUserIds.map((uid) => {
-                    const user = AVAILABLE_USERS.find((u) => u.id === uid);
+                    const knownUser = inviteableUsers.find((u) => u.id === uid);
                     return (
                       <span key={uid} className="text-[11px] text-danger-light bg-danger/10 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <X className="w-2.5 h-2.5" />
-                        {user?.name || uid}
+                        {knownUser?.displayName || uid}
                       </span>
                     );
                   })}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { CreateDebateModal } from '@/components/debates/create-debate-modal';
 import {
@@ -104,6 +105,7 @@ const statusStyles: Record<string, { label: string; color: string; dot: string }
 // ─── Page ────────────────────────────────────────────────────────
 
 export default function DebatesPage() {
+  const router = useRouter();
   const [debates, setDebates] = useState<Debate[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -127,7 +129,14 @@ export default function DebatesPage() {
     return () => clearInterval(interval);
   }, [fetchDebates]);
 
-  const handleCreated = () => { fetchDebates(); };
+  const handleCreated = (debate: unknown) => {
+    fetchDebates();
+    // Navigate to the new debate so the user can invite people and start it
+    const d = debate as Debate | undefined;
+    if (d?.id) {
+      router.push(`/debates/${d.id}`);
+    }
+  };
 
   // Categorize
   const popular = [...debates]

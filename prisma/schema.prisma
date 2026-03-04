@@ -130,6 +130,39 @@ model StoredComment {
 }
 
 // ─────────────────────────────────────────────
+// PASSWORD RESET TOKENS
+// ─────────────────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// EMAIL VERIFICATION TOKENS
+// ─────────────────────────────────────────────
+
+model EmailVerificationToken {
+  id        String    @id
+  userId    String
+  email     String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
 // POLITICAL AFFILIATIONS
 // ─────────────────────────────────────────────
 
@@ -398,4 +431,21 @@ model ModerationAction {
 
   postId String
   post   Post @relation(fields: [postId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// CONTACT FORM SUBMISSIONS
+// ─────────────────────────────────────────────
+
+model ContactSubmission {
+  id        String   @id
+  name      String
+  email     String
+  subject   String
+  message   String
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([createdAt])
 }

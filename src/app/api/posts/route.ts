@@ -62,9 +62,14 @@ async function serializePost(p: PersistedPost) {
       civicReputation: author.civicReputation,
     },
     thread: null,
-    sources: safeUrl
-      ? [{ url: safeUrl, domain: new URL(safeUrl).hostname.replace('www.', ''), trustScore: 0.7 }]
-      : [],
+    sources: (() => {
+      if (!safeUrl) return [];
+      try {
+        return [{ url: safeUrl, domain: new URL(safeUrl).hostname.replace('www.', ''), trustScore: 0.7 }];
+      } catch {
+        return [];
+      }
+    })(),
     reactions: { agree: 0, disagree: 0, insightful: 0, nuance: 0 },
     algorithm: {
       qualityScore: 0.5 + p.civilityScore * 0.3,

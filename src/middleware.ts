@@ -70,8 +70,9 @@ function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
   if (process.env.NODE_ENV !== 'production') return true; // Dev: allow all
   if (ALLOWED_ORIGINS.has(origin)) return true;
 
-  // Allow Vercel deployment URLs (preview + production)
-  if (origin.endsWith('.vercel.app')) return true;
+  // Allow the app's own Vercel deployment URL (set VERCEL_URL env var)
+  const vercelUrl = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
+  if (vercelUrl && origin === `https://${vercelUrl}`) return true;
 
   // Allow same-origin: the request's own host matches the origin
   try {
@@ -86,11 +87,13 @@ function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
 
 // ─── Security headers ────────────────────────────────────────
 
+const isProd = process.env.NODE_ENV === 'production';
+
 const SECURITY_HEADERS: Record<string, string> = {
-  // Content Security Policy
+  // Content Security Policy — unsafe-eval only in dev (Next.js HMR needs it)
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires unsafe-inline/eval in dev; tighten with nonces in prod
+    `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
     "style-src 'self' 'unsafe-inline'", // Tailwind injects styles
     "img-src 'self' data: https:",
     "font-src 'self' https://fonts.gstatic.com",
@@ -168,6 +171,18 @@ export function middleware(request: NextRequest) {
     if (!sessionCookie) {
       const loginUrl = new URL('/', request.url);
       return NextResponse.redirect(loginUrl);
+    }
+
+    // Admin routes require admin/creator role (check claim from signed cookie)
+    if (pathname.startsWith('/admin')) {
+      try {
+        const payload = JSON.parse(atob(sessionCookie.split('.')[0]));
+        if (payload.role !== 'admin' && payload.role !== 'creator') {
+          return NextResponse.redirect(new URL('/feed', request.url));
+        }
+      } catch {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
     }
   }
 
