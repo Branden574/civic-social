@@ -24,17 +24,22 @@ const permissionHelpers = {
   isBanned: () => false,  // No ban system yet
 };
 
-// Author profiles for serialization
-const AUTHOR_PROFILES: Record<string, { displayName: string; affiliations: string[]; verificationLevel: string }> = {
-  'user-current': { displayName: 'You', affiliations: ['center-left'], verificationLevel: 'EXPERT_VERIFIED' },
-};
+import { getUserById } from '@/lib/user-registry';
 
-function getAuthorMeta(authorId: string) {
-  return AUTHOR_PROFILES[authorId] ?? { displayName: 'User', affiliations: [], verificationLevel: 'CITIZEN_VERIFIED' };
+async function getAuthorMeta(authorId: string) {
+  const u = await getUserById(authorId);
+  if (u) {
+    return {
+      displayName: u.displayName,
+      affiliations: [u.affiliation || 'center'],
+      verificationLevel: u.verificationLevel,
+    };
+  }
+  return { displayName: 'User', affiliations: [], verificationLevel: 'CITIZEN_VERIFIED' };
 }
 
-function serializeComment(c: { id: string; postId: string; authorId: string; parentCommentId: string | null; body: string; createdAt: string; status: string }, replyCount = 0) {
-  const author = getAuthorMeta(c.authorId);
+async function serializeComment(c: { id: string; postId: string; authorId: string; parentCommentId: string | null; body: string; createdAt: string; status: string }, replyCount = 0) {
+  const author = await getAuthorMeta(c.authorId);
   return {
     id: c.id,
     postId: c.postId,
@@ -76,7 +81,7 @@ export async function GET(
   ]);
 
   return NextResponse.json({
-    comments: result.comments.map((c) => serializeComment(c, replyCounts.get(c.id) ?? 0)),
+    comments: await Promise.all(result.comments.map((c) => serializeComment(c, replyCounts.get(c.id) ?? 0))),
     total: result.total,
     hasMore: result.hasMore,
     serverTime: new Date().toISOString(),
@@ -161,7 +166,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      comment: serializeComment(comment),
+      comment: await serializeComment(comment),
       commentCount,
       serverTime: new Date().toISOString(),
     });

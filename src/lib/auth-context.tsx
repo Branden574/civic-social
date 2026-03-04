@@ -278,12 +278,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [bootstrap, setBootstrap] = useState<BootstrapData | null>(null);
   const bootstrapInFlight = useRef(false);
 
-  // Hydrate from storage on mount, then fetch server bootstrap
+  // Hydrate from storage on mount, then fetch server bootstrap.
+  // If no local storage data, try /api/me to recover session from HttpOnly cookie.
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate() {
-      // Step 1: Read localStorage for instant user state
+      // Step 1: Read localStorage / sessionStorage for instant user state
       let hydratedUser: AuthUser | null = null;
 
       const stored = readPersistedUser();
@@ -322,6 +323,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setBootstrap(clientFallbackBootstrap(hydratedUser));
           }
         }
+      } else {
+        // Step 2b: No local data — try recovering session from HttpOnly cookie
+        try {
+          const res = await fetch('/api/me');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user && !cancelled) {
+              const recoveredUser: AuthUser = {
+                id: data.user.id,
+                email: data.user.email,
+                displayName: data.user.displayName,
+                username: data.user.username || data.user.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
+                role: data.user.role ?? 'user',
+                createdAt: new Date(),
+                sessionStartedAt: new Date().toISOString(),
+                onboarding: {
+                  country: '',
+                  affiliation: '',
+                  topics: [],
+                  bio: '',
+                  completedAt: data.onboarding?.isDone ? new Date().toISOString() : undefined,
+                },
+              };
+              setUser(recoveredUser);
+              persistUser(recoveredUser);
+              setBootstrap({
+                onboarding: data.onboarding,
+                profileCompletion: data.profileCompletion,
+                stats: data.stats,
+              });
+            }
+          }
+        } catch { /* Server unreachable — stay logged out */ }
       }
 
       if (!cancelled) setIsLoading(false);

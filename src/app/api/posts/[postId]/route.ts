@@ -20,22 +20,19 @@ const permissionHelpers = {
   isBanned: () => false,
 };
 
-const AUTHOR_PROFILES: Record<string, {
-  displayName: string;
-  affiliations: string[];
-  verificationLevel: string;
-  civicReputation: number;
-}> = {
-  'user-current': {
-    displayName: 'Branden Vincent-Walker',
-    affiliations: ['center-left'],
-    verificationLevel: 'EXPERT_VERIFIED',
-    civicReputation: 0.92,
-  },
-};
+import { getUserById } from '@/lib/user-registry';
 
-function getAuthorProfile(authorId: string) {
-  return AUTHOR_PROFILES[authorId] ?? {
+async function getAuthorProfile(authorId: string) {
+  const u = await getUserById(authorId);
+  if (u) {
+    return {
+      displayName: u.displayName,
+      affiliations: [u.affiliation || 'center'],
+      verificationLevel: u.verificationLevel,
+      civicReputation: Math.max(0, Math.min(1, u.credibilityScore / 100)),
+    };
+  }
+  return {
     displayName: 'Unknown User',
     affiliations: [],
     verificationLevel: 'CITIZEN_VERIFIED',
@@ -64,7 +61,7 @@ export async function GET(
   // Try persisted post first
   const post = await getPostById(postId);
   if (post) {
-    const author = getAuthorProfile(post.authorId);
+    const author = await getAuthorProfile(post.authorId);
     const commentCount = await getCommentCount(postId);
     const perm = canComment(viewerId, post, permissionHelpers);
 

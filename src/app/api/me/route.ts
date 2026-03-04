@@ -17,6 +17,7 @@ import {
 import { dbGetFollowerCount, dbGetFollowingCount } from '@/lib/social-store';
 import { getPostCount } from '@/lib/post-data-store';
 import { registerUser } from '@/lib/user-registry';
+import { isDbAvailable, prisma } from '@/lib/db';
 
 // ─── Response shape ──────────────────────────────────────────
 
@@ -25,6 +26,7 @@ interface MeResponse {
     id: string;
     email: string;
     displayName: string;
+    username: string;
     role: string;
   };
   onboarding: OnboardingState;
@@ -41,11 +43,21 @@ async function buildResponse(
   onboarding: OnboardingState,
   profileCompletion: ProfileCompletion,
 ): Promise<MeResponse> {
+  // Look up username from DB
+  let username = sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
+  if (isDbAvailable()) {
+    try {
+      const dbUser = await prisma.user.findUnique({ where: { id: sessionUser.id }, select: { username: true } });
+      if (dbUser?.username) username = dbUser.username;
+    } catch { /* fallback to derived username */ }
+  }
+
   return {
     user: {
       id: sessionUser.id,
       email: sessionUser.email,
       displayName: sessionUser.displayName,
+      username,
       role: sessionUser.role,
     },
     onboarding,
