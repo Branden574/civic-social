@@ -36,6 +36,7 @@ import { CredibilityMeter, type CredibilityData } from './credibility-meter';
 import { ContextPanel } from './context-panel';
 import { DeleteConfirmModal } from '@/components/ui/delete-confirm-modal';
 import { useAuth } from '@/lib/auth-context';
+import { MentionText } from '@/components/ui/mention-text';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -479,7 +480,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             href={`/post/${encodeURIComponent(post.id)}`}
             className="block text-[14.5px] leading-relaxed text-text-primary whitespace-pre-line hover:text-text-primary/90 transition-colors cursor-pointer"
           >
-            {displayContent}
+            <MentionText text={displayContent} />
           </Link>
           {isLong && (
             <button

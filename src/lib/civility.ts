@@ -25,7 +25,7 @@ export function analyzeCivility(text: string): CivilityResult {
 
   // ── 1. All-caps detection ──────────────────────────────
   const capsRatio = (text.replace(/[^A-Z]/g, '').length) / Math.max(text.replace(/[^a-zA-Z]/g, '').length, 1);
-  if (capsRatio > 0.5 && text.length > 20) {
+  if (capsRatio > 0.5 && wordCount >= 3) {
     score -= 0.2;
     issues.push('Excessive capitalization can read as shouting');
   }
@@ -37,7 +37,11 @@ export function analyzeCivility(text: string): CivilityResult {
     { pattern: /!!!+/g, msg: 'Multiple exclamation marks can seem aggressive', penalty: 0.10 },
     { pattern: /\b(always|never) (wrong|right|lie|lies)\b/i, msg: 'Absolute statements reduce nuance', penalty: 0.10 },
     { pattern: /\b(trash|garbage|worthless|disgusting)\b/i, msg: 'Strongly derogatory language reduces constructive dialogue', penalty: 0.15 },
-    { pattern: /\b(hate|despise|loathe) (them|you|liberals|conservatives|democrats|republicans)\b/i, msg: 'Expressing hatred toward groups shuts down dialogue', penalty: 0.20 },
+    { pattern: /\bi\s+hate\b/i, msg: 'Expressing hatred is not constructive — focus on specific policy disagreements', penalty: 0.25 },
+    { pattern: /\b(hate|despise|loathe)\s+\w+/i, msg: 'Expressing hatred toward people or groups shuts down dialogue', penalty: 0.20 },
+    { pattern: /\b(f\*ck|fuck|fk|stfu|gtfo|bs|bullshit|damn|hell)\b/i, msg: 'Profanity reduces the quality of civic discourse', penalty: 0.15 },
+    { pattern: /\b(kill|die|death to|destroy)\b.*\b(them|him|her|it)\b/i, msg: 'Violent language is not permitted', penalty: 0.35 },
+    { pattern: /\b(worst|terrible|horrible|awful)\s+(president|person|human|leader|politician)\b/i, msg: 'Personal attacks on character are less constructive than policy critique', penalty: 0.12 },
   ];
 
   for (const { pattern, msg, penalty } of hostilePatterns) {
@@ -94,7 +98,18 @@ export function analyzeCivility(text: string): CivilityResult {
     }
   }
 
-  // ── 6. Readability check ───────────────────────────────
+  // ── 6. Low-effort inflammatory content ─────────────────
+  // Short posts with negative sentiment and no substance get penalized
+  if (wordCount <= 8) {
+    const hasNegative = /\b(hate|suck|worst|terrible|horrible|awful|stupid|dumb|trash|garbage|evil|corrupt)\b/i.test(lower);
+    const hasConstructive = /\b(because|however|although|policy|issue|think|believe|suggest|source)\b/i.test(lower);
+    if (hasNegative && !hasConstructive) {
+      score -= 0.15;
+      issues.push('Short inflammatory posts lack substance — add reasoning or evidence');
+    }
+  }
+
+  // ── 8. Readability check ───────────────────────────────
   if (wordCount > 30) {
     const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
     const avgSentenceLength = wordCount / Math.max(sentences.length, 1);
@@ -104,14 +119,14 @@ export function analyzeCivility(text: string): CivilityResult {
     }
   }
 
-  // ── 7. Excessive hashtag stuffing ──────────────────────
+  // ── 9. Excessive hashtag stuffing ──────────────────────
   const hashtagCount = (text.match(/#\w+/g) || []).length;
   if (hashtagCount > 5) {
     score -= 0.08;
     issues.push('Excessive hashtags can look like spam — focus on your message');
   }
 
-  // ── 8. Constructive discourse bonuses ──────────────────
+  // ── 10. Constructive discourse bonuses ─────────────────
   const constructivePatterns = [
     { pattern: /\b(I think|in my view|from my perspective|in my experience)\b/i, bonus: 0.04 },
     { pattern: /\b(however|on the other hand|that said|although)\b/i, bonus: 0.04 },
@@ -129,7 +144,7 @@ export function analyzeCivility(text: string): CivilityResult {
     if (pattern.test(text)) score += bonus;
   }
 
-  // ── 9. Argument structure bonus ────────────────────────
+  // ── 11. Argument structure bonus ───────────────────────
   const hasEvidence = /\b(because|since|given that|data shows|evidence)\b/i.test(text);
   const hasReasoning = /\b(therefore|this means|which leads to|as a result|consequently)\b/i.test(text);
   const hasConclusion = /\b(I (believe|argue|conclude)|this suggests|we should)\b/i.test(text);

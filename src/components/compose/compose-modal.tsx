@@ -20,6 +20,7 @@ import clsx from 'clsx';
 import { usePostStore } from '@/lib/post-store';
 import { useAuth } from '@/lib/auth-context';
 import { analyzeCivility } from '@/lib/civility';
+import { AtSign } from 'lucide-react';
 
 interface ComposeModalProps {
   isOpen: boolean;
@@ -50,6 +51,10 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
   const [commentPolicy, setCommentPolicy] = useState<'everyone' | 'followers_only' | 'off'>('everyone');
   const [showReplyMenu, setShowReplyMenu] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionResults, setMentionResults] = useState<{ id: string; displayName: string; username: string; avatarUrl?: string }[]>([]);
+  const [mentionIdx, setMentionIdx] = useState(0);
+  const [mentionLoading, setMentionLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
@@ -73,6 +78,106 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
     }, 500);
     return () => clearTimeout(timer);
   }, [content]);
+
+  // Detect @mention trigger as user types
+  const handleContentChange = useCallback((value: string) => {
+    setContent(value);
+
+    // Check if cursor is right after @something
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const cursorPos = textarea.selectionStart;
+    const textBefore = value.slice(0, cursorPos);
+
+    // Find the last @ before cursor that's not preceded by a word char
+    const mentionMatch = textBefore.match(/(?:^|[\s,.()!?])@([a-zA-Z0-9._-]{0,30})$/);
+    if (mentionMatch) {
+      const query = mentionMatch[1];
+      if (query.length >= 1) {
+        setMentionQuery(query);
+        setMentionIdx(0);
+      } else {
+        setMentionQuery('');
+        setMentionResults([]);
+      }
+    } else {
+      setMentionQuery(null);
+      setMentionResults([]);
+    }
+  }, []);
+
+  // Search users when mention query changes
+  useEffect(() => {
+    if (mentionQuery === null || mentionQuery.length < 1) {
+      setMentionResults([]);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setMentionLoading(true);
+      try {
+        const res = await fetch(`/api/search/users?q=${encodeURIComponent(mentionQuery)}&limit=5`, {
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setMentionResults(data.users || []);
+        }
+      } catch {
+        // aborted or failed
+      } finally {
+        setMentionLoading(false);
+      }
+    }, 200);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [mentionQuery]);
+
+  // Insert a mention from autocomplete
+  const insertMention = useCallback((username: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const cursorPos = textarea.selectionStart;
+    const textBefore = content.slice(0, cursorPos);
+    const textAfter = content.slice(cursorPos);
+
+    // Find the @ that started this mention
+    const mentionMatch = textBefore.match(/(?:^|[\s,.()!?])@([a-zA-Z0-9._-]{0,30})$/);
+    if (!mentionMatch) return;
+
+    const atPos = textBefore.lastIndexOf('@' + mentionMatch[1]);
+    const newText = textBefore.slice(0, atPos) + '@' + username + ' ' + textAfter;
+    setContent(newText);
+    setMentionQuery(null);
+    setMentionResults([]);
+
+    // Restore cursor position after React re-renders
+    requestAnimationFrame(() => {
+      const newCursor = atPos + username.length + 2; // +2 for @ and space
+      textarea.setSelectionRange(newCursor, newCursor);
+      textarea.focus();
+    });
+  }, [content]);
+
+  // Handle keyboard navigation in mention dropdown
+  const handleTextareaKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionResults.length > 0 && mentionQuery !== null) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIdx(prev => Math.min(prev + 1, mentionResults.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIdx(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(mentionResults[mentionIdx].username);
+      } else if (e.key === 'Escape') {
+        setMentionQuery(null);
+        setMentionResults([]);
+      }
+    }
+  }, [mentionResults, mentionQuery, mentionIdx, insertMention]);
 
   const toggleTopic = useCallback((topic: string) => {
     setSelectedTopics((prev) =>
@@ -246,15 +351,46 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
           </div>
 
           {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Share your perspective... What policy matters to you? Link an article. Start a discussion."
-            className="w-full mt-3 bg-transparent text-text-primary text-[15px] leading-relaxed placeholder:text-text-muted resize-none focus:outline-none min-h-[120px]"
-            maxLength={maxChars}
-            autoFocus
-          />
+          <div className="relative">
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => handleContentChange(e.target.value)}
+              onKeyDown={handleTextareaKeyDown}
+              placeholder="Share your perspective... What policy matters to you? Link an article. @mention someone."
+              className="w-full mt-3 bg-transparent text-text-primary text-[15px] leading-relaxed placeholder:text-text-muted resize-none focus:outline-none min-h-[120px]"
+              maxLength={maxChars}
+              autoFocus
+            />
+
+            {/* @mention autocomplete dropdown */}
+            {mentionQuery !== null && mentionResults.length > 0 && (
+              <div className="absolute left-0 right-0 mt-1 bg-bg-alt border border-border-subtle rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in">
+                {mentionResults.map((u, i) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); insertMention(u.username); }}
+                    className={clsx(
+                      'w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors',
+                      i === mentionIdx ? 'bg-civic/10' : 'hover:bg-surface-hover',
+                    )}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold shrink-0 border border-border-subtle">
+                      {u.displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-text-primary truncate">{u.displayName}</p>
+                      <p className="text-xs text-text-muted truncate">@{u.username}</p>
+                    </div>
+                  </button>
+                ))}
+                {mentionLoading && (
+                  <div className="px-3 py-2 text-xs text-text-muted">Searching...</div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Article URL input */}
           {showUrlInput && (
@@ -453,6 +589,28 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
               title="Add hashtags"
             >
               <Hash className="w-4.5 h-4.5" />
+            </button>
+            <button
+              onClick={() => {
+                // Insert @ at cursor position
+                const textarea = textareaRef.current;
+                if (!textarea) return;
+                const pos = textarea.selectionStart;
+                const before = content.slice(0, pos);
+                const after = content.slice(pos);
+                const needsSpace = before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+                const newContent = before + (needsSpace ? ' @' : '@') + after;
+                handleContentChange(newContent);
+                requestAnimationFrame(() => {
+                  const newPos = pos + (needsSpace ? 2 : 1);
+                  textarea.setSelectionRange(newPos, newPos);
+                  textarea.focus();
+                });
+              }}
+              className="p-2 rounded-lg transition-colors text-text-muted hover:text-text-secondary hover:bg-surface-hover"
+              title="Mention someone"
+            >
+              <AtSign className="w-4.5 h-4.5" />
             </button>
           </div>
           <div className="flex items-center gap-3">
