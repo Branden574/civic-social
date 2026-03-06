@@ -89,19 +89,20 @@ function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
 // ─── Security headers ────────────────────────────────────────
 
 const SECURITY_HEADERS: Record<string, string> = {
-  // Content Security Policy — unsafe-eval needed by Next.js webpack chunks
-  // TODO: migrate to nonce-based CSP to remove unsafe-inline/eval
+  // Content Security Policy — relaxed for Next.js App Router compatibility
+  // Next.js requires unsafe-inline + unsafe-eval for hydration and RSC
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'", // Tailwind injects styles
-    "img-src 'self' data: https:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https:",
     "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
-    "connect-src 'self' https://api.congress.gov https://vitals.vercel-insights.com",
+    "connect-src 'self' https://api.congress.gov https://vitals.vercel-insights.com https://*.vercel.app",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "object-src 'none'",
+    "worker-src 'self' blob:",
   ].join('; '),
 
   // HTTPS enforcement
