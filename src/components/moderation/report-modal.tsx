@@ -110,15 +110,36 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
   const category = REPORT_CATEGORIES.find((c) => c.id === selectedCategory);
   const severity = category ? SEVERITY_STYLES[category.severity] : null;
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleSubmit = useCallback(async () => {
     if (!selectedCategory || submitting) return;
 
     setSubmitting(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    setSubmitting(false);
-    setSubmitted(true);
-  }, [selectedCategory, submitting]);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId,
+          category: selectedCategory,
+          details: details || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to submit report');
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to submit report');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [selectedCategory, submitting, postId, details]);
 
   const handleClose = useCallback(() => {
     // Reset state on close
@@ -126,6 +147,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
     setDetails('');
     setSubmitting(false);
     setSubmitted(false);
+    setSubmitError(null);
     onClose();
   }, [onClose]);
 
@@ -273,6 +295,14 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
                   </span>
                 </div>
               </div>
+
+              {/* Error message */}
+              {submitError && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg border mb-4 bg-danger/5 border-danger/20 animate-fade-in">
+                  <AlertTriangle className="w-4 h-4 text-danger-light shrink-0" />
+                  <p className="text-xs text-danger-light">{submitError}</p>
+                </div>
+              )}
 
               {/* Credibility note */}
               <div className="flex items-start gap-2 p-3 bg-surface rounded-lg border border-border-subtle mb-4">

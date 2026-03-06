@@ -24,7 +24,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen bg-bg">
       <Sidebar onCompose={() => setComposeOpen(true)} />
-      <main className="flex-1 min-w-0 border-r border-border-subtle">
+      <main id="main" className="flex-1 min-w-0 border-r border-border-subtle">
         <FeedView />
       </main>
       {/* Right panel — trending / suggested (desktop only) */}

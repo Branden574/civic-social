@@ -569,7 +569,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
 
         {/* Footer toolbar */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-border-subtle">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setShowUrlInput(!showUrlInput)}
               className={clsx(

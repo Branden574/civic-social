@@ -30,6 +30,22 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Civic Social',
   },
+  openGraph: {
+    type: 'website',
+    title: 'Civic Social — The Civic Discourse Platform',
+    description: 'Post freely. Stay informed. Track real legislation in real time — without the noise.',
+    siteName: 'Civic Social',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Civic Social — The Civic Discourse Platform',
+    description: 'Post freely. Stay informed. Track real legislation in real time — without the noise.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export const viewport: Viewport = {
@@ -57,6 +73,12 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased bg-bg text-text-primary`}
       >
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm focus:font-medium"
+        >
+          Skip to main content
+        </a>
         <ThemeProvider>
           <AuthProvider>
             <NotificationProvider>

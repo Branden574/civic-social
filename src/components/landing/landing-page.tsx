@@ -115,7 +115,7 @@ export function LandingPage() {
       <LandingNav />
 
       {/* ── HERO ───────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex items-center overflow-hidden" style={{ paddingTop: 100 }}>
+      <section className="relative min-h-screen flex items-center overflow-hidden pt-20 sm:pt-[100px]">
         <ParticleCanvas />
 
         {/* bg pattern */}
@@ -124,7 +124,7 @@ export function LandingPage() {
         {/* gradient */}
         <div className="absolute inset-0" style={{ zIndex: 0, animation: 'gradientDrift 12s ease-in-out infinite alternate', background: 'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(59,130,246,.12) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 20%, rgba(45,212,191,.08) 0%, transparent 55%), radial-gradient(ellipse 100% 100% at 50% 100%, #09090f 40%, transparent 100%)' }} />
 
-        <div className="relative w-full max-w-[1240px] mx-auto px-8 py-16 grid lg:grid-cols-2 gap-16 items-center" style={{ zIndex: 2 }}>
+        <div className="relative w-full max-w-[1240px] mx-auto px-4 sm:px-8 py-10 sm:py-16 grid lg:grid-cols-2 gap-10 sm:gap-16 items-center" style={{ zIndex: 2 }}>
 
           {/* Copy */}
           <div className="cs-reveal" style={{ animationDelay: '.1s' }}>
@@ -137,7 +137,7 @@ export function LandingPage() {
               Civic Social — Where Conversations Meet Context.
             </h1>
 
-            <p style={{ fontSize: 'clamp(1rem,1.6vw,1.2rem)', color: 'rgba(248,250,252,.55)', maxWidth: 480, marginBottom: '2.5rem', lineHeight: 1.7 }}>
+            <p className="max-w-[480px]" style={{ fontSize: 'clamp(1rem,1.6vw,1.2rem)', color: 'rgba(248,250,252,.55)', marginBottom: '2.5rem', lineHeight: 1.7 }}>
               Post freely. Stay informed. Track real legislation in real time—without the noise.
             </p>
 
@@ -222,7 +222,7 @@ export function LandingPage() {
 
       {/* ── PROOF STRIP ─────────────────────────────────────── */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.07)', borderBottom: '1px solid rgba(255,255,255,.07)', background: 'rgba(255,255,255,.015)', padding: '1.5rem 0' }}>
-        <div className="flex flex-wrap justify-center items-center gap-0 max-w-6xl mx-auto px-8">
+        <div className="flex flex-wrap justify-center items-center gap-0 max-w-6xl mx-auto px-4 sm:px-8">
           {[['◎', 'Built for civil discourse'], ['◈', 'Context-first design'], ['⊙', 'Real-time policy tracking'], ['◐', 'Community moderation tools']].map(([icon, txt], i, arr) => (
             <div key={txt} className="flex items-center">
               <div className="flex items-center gap-2 px-6 py-2" style={{ fontSize: '.85rem', fontWeight: 500, color: 'rgba(248,250,252,.55)', whiteSpace: 'nowrap' }}>
@@ -235,7 +235,7 @@ export function LandingPage() {
       </div>
 
       {/* ── FEATURES ────────────────────────────────────────── */}
-      <section className="py-24 px-8 max-w-6xl mx-auto">
+      <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
         <div style={{ color: '#3b82f6', fontSize: '.75rem', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Core Features</div>
         <h2 style={{ fontSize: 'clamp(2rem,3.5vw,3rem)', fontWeight: 900, letterSpacing: '-.04em', lineHeight: 1.1, marginBottom: '1.25rem' }}>Built different.<br />Because the stakes are different.</h2>
         <p style={{ color: 'rgba(248,250,252,.5)', maxWidth: 560, fontSize: '1.05rem', lineHeight: 1.7, marginBottom: '3.5rem' }}>Every feature is designed to surface signal, reduce noise, and keep discourse grounded in fact.</p>
@@ -258,7 +258,7 @@ export function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ────────────────────────────────────── */}
-      <section className="py-24 px-8 max-w-6xl mx-auto" style={{ background: 'linear-gradient(180deg,transparent,rgba(59,130,246,.03) 50%,transparent)' }} id="how-it-works">
+      <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" style={{ background: 'linear-gradient(180deg,transparent,rgba(59,130,246,.03) 50%,transparent)' }} id="how-it-works">
         <div style={{ color: '#3b82f6', fontSize: '.75rem', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>How It Works</div>
         <h2 style={{ fontSize: 'clamp(2rem,3.5vw,3rem)', fontWeight: 900, letterSpacing: '-.04em', lineHeight: 1.1, marginBottom: '3.5rem' }}>Three steps.<br />Infinite clarity.</h2>
         <div className="grid md:grid-cols-3 gap-10">
@@ -277,7 +277,7 @@ export function LandingPage() {
       </section>
 
       {/* ── TRUST ───────────────────────────────────────────── */}
-      <section className="py-24 px-8 max-w-6xl mx-auto">
+      <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
         <div style={{ color: '#3b82f6', fontSize: '.75rem', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Trust &amp; Safety</div>
         <h2 style={{ fontSize: 'clamp(2rem,3.5vw,3rem)', fontWeight: 900, letterSpacing: '-.04em', lineHeight: 1.1, marginBottom: '1.25rem' }}>Neutral by design.<br />Safe by default.</h2>
         <p style={{ color: 'rgba(248,250,252,.5)', maxWidth: 560, fontSize: '1.05rem', lineHeight: 1.7, marginBottom: '3.5rem' }}>We built the principles before we built the product. That&apos;s not a tagline — it&apos;s the architecture.</p>
@@ -303,7 +303,7 @@ export function LandingPage() {
       </section>
 
       {/* ── PRICING ─────────────────────────────────────────── */}
-      <section className="py-24 px-8">
+      <section className="py-16 sm:py-24 px-4 sm:px-8">
         <div className="max-w-6xl mx-auto">
           <div style={{ color: '#3b82f6', fontSize: '.75rem', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '1.2rem' }}>Plans</div>
           <h2 style={{ fontSize: 'clamp(2rem,3.5vw,3rem)', fontWeight: 900, letterSpacing: '-.04em', lineHeight: 1.1, marginBottom: '3.5rem' }}>Start free.<br />Go deeper with Pro.</h2>
@@ -342,7 +342,7 @@ export function LandingPage() {
       </section>
 
       {/* ── FINAL CTA ─────────────────────────────────────── */}
-      <section className="py-28 px-8 text-center" style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%,rgba(59,130,246,.08) 0%,transparent 70%)' }}>
+      <section className="py-20 sm:py-28 px-4 sm:px-8 text-center" style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%,rgba(59,130,246,.08) 0%,transparent 70%)' }}>
         <h2 style={{ fontSize: 'clamp(2.8rem,5vw,5rem)', fontWeight: 900, letterSpacing: '-.05em', lineHeight: 1, marginBottom: '1.25rem', background: 'linear-gradient(135deg,#f8fafc,rgba(248,250,252,.6))', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Build better conversations.
         </h2>
@@ -361,7 +361,7 @@ export function LandingPage() {
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
       <footer style={{ borderTop: '1px solid rgba(255,255,255,.07)', padding: '2.5rem 0' }}>
-        <div className="max-w-6xl mx-auto px-8 flex flex-wrap items-center gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 mr-auto" style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '-.02em' }}>
             <span style={{ color: '#3b82f6', fontSize: '1.2rem' }}>◈</span> Civic Social
           </div>

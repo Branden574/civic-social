@@ -127,8 +127,6 @@ const SECURITY_HEADERS: Record<string, string> = {
     'accelerometer=()',
   ].join(', '),
 
-  // Prevent search engines from caching sensitive pages
-  'X-Robots-Tag': 'noindex, nofollow',
 };
 
 // Admin pages: even stricter CSP
@@ -162,7 +160,7 @@ export function middleware(request: NextRequest) {
 
   // ── 1b. Auth-gate: redirect unauthenticated users from private routes ──
   const PUBLIC_ROUTES = new Set([
-    '/', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy',
+    '/', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy', '/contact', '/safety', '/how-it-works',
   ]);
   const isPublicRoute = PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/_next/');
   if (!isPublicRoute) {
@@ -217,6 +215,26 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // ── 3b. Sliding session refresh ──────────────────────────
+  // If the session cookie is valid and past 50% of its lifetime,
+  // refresh the cookie expiry so active users aren't logged out.
+  const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours (matches session.ts)
+  const sessionCookie = request.cookies.get('civic-session')?.value;
+  let shouldRefreshSession = false;
+  if (sessionCookie) {
+    try {
+      const payload = JSON.parse(atob(sessionCookie.split('.')[0]));
+      if (payload.iat) {
+        const ageSeconds = Math.floor((Date.now() / 1000) - payload.iat);
+        if (ageSeconds > SESSION_MAX_AGE / 2) {
+          shouldRefreshSession = true;
+        }
+      }
+    } catch {
+      // Invalid session — ignore, let downstream auth handle it
+    }
+  }
+
   // ── 4. Build response with security headers ───────────────
   const response = NextResponse.next();
 
@@ -257,7 +275,18 @@ export function middleware(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Credentials', 'true');
   }
 
-  // ── 7. Remove server info headers ─────────────────────────
+  // ── 7. Sliding session refresh — extend cookie expiry ─────
+  if (shouldRefreshSession && sessionCookie) {
+    response.cookies.set('civic-session', sessionCookie, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: SESSION_MAX_AGE,
+      path: '/',
+    });
+  }
+
+  // ── 8. Remove server info headers ─────────────────────────
   response.headers.delete('X-Powered-By');
   response.headers.delete('Server');
 
