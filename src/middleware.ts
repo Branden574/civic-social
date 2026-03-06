@@ -88,22 +88,24 @@ function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
 
 // ─── Security headers ────────────────────────────────────────
 
+const CSP_DIRECTIVES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+  "connect-src 'self' https://api.congress.gov https://vitals.vercel-insights.com https://*.vercel.app",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+  "worker-src 'self' blob:",
+].join('; ');
+
 const SECURITY_HEADERS: Record<string, string> = {
-  // Content Security Policy — relaxed for Next.js App Router compatibility
-  // Next.js requires unsafe-inline + unsafe-eval for hydration and RSC
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
-    "connect-src 'self' https://api.congress.gov https://vitals.vercel-insights.com https://*.vercel.app",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "object-src 'none'",
-    "worker-src 'self' blob:",
-  ].join('; '),
+  // CSP switched to report-only to diagnose Vercel navigation issues.
+  // TODO: Switch back to 'Content-Security-Policy' once navigation is confirmed working.
+  'Content-Security-Policy-Report-Only': CSP_DIRECTIVES,
 
   // HTTPS enforcement
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
@@ -132,7 +134,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 // Admin pages: even stricter CSP
-const ADMIN_CSP = SECURITY_HEADERS['Content-Security-Policy']
+const ADMIN_CSP = CSP_DIRECTIVES
   .replace("connect-src 'self' https://api.congress.gov", "connect-src 'self'");
 
 // ─── Middleware ──────────────────────────────────────────────
@@ -242,7 +244,7 @@ export function middleware(request: NextRequest) {
 
   // Apply security headers
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
-    if (key === 'Content-Security-Policy' && pathname.startsWith('/admin')) {
+    if (key === 'Content-Security-Policy-Report-Only' && pathname.startsWith('/admin')) {
       response.headers.set(key, ADMIN_CSP);
     } else {
       response.headers.set(key, value);
@@ -298,6 +300,6 @@ export function middleware(request: NextRequest) {
 // ─── Matcher: run on all routes except static assets ─────────
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.json|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json|xml|txt|webmanifest)$).*)',
   ],
 };

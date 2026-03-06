@@ -21,9 +21,12 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
   const [phase, setPhase] = useState<'splash' | 'fading' | 'done'>('splash');
 
   useEffect(() => {
-    if (ready && phase === 'splash') {
+    if (phase === 'splash' && ready) {
       // Start crossfade
       setPhase('fading');
+    }
+    if (phase === 'fading') {
+      // Complete transition after crossfade animation
       const timer = setTimeout(() => setPhase('done'), 500);
       return () => clearTimeout(timer);
     }
