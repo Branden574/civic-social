@@ -99,8 +99,61 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // ── Automated moderation thresholds ──
+    const totalReports = await prisma.report.count({
+      where: { postId, status: 'PENDING' },
+    });
+
+    let moderationAction: string | null = null;
+
+    // Update the post's flagCount to match total pending reports
+    await prisma.post.update({
+      where: { id: postId },
+      data: { flagCount: totalReports },
+    });
+
+    if (totalReports >= 5) {
+      // 5+ reports: mark all as actioned, create "remove" moderation action
+      const alreadyRemoved = await prisma.moderationAction.findFirst({
+        where: { postId, action: 'remove' },
+      });
+      if (!alreadyRemoved) {
+        await prisma.$transaction([
+          prisma.report.updateMany({
+            where: { postId, status: 'PENDING' },
+            data: { status: 'ACTIONED' },
+          }),
+          prisma.moderationAction.create({
+            data: {
+              action: 'remove',
+              reason: `Auto-flagged for removal: ${totalReports} reports (latest: ${category})`,
+              automated: true,
+              postId,
+            },
+          }),
+        ]);
+        moderationAction = 'removed';
+      }
+    } else if (totalReports >= 3) {
+      // 3+ reports: create "warn" moderation action (post flagged for review)
+      const alreadyWarned = await prisma.moderationAction.findFirst({
+        where: { postId, action: 'warn' },
+      });
+      if (!alreadyWarned) {
+        await prisma.moderationAction.create({
+          data: {
+            action: 'warn',
+            reason: `Auto-flagged: ${totalReports} reports received`,
+            automated: true,
+            postId,
+          },
+        });
+        moderationAction = 'flagged';
+      }
+    }
+
     return NextResponse.json(
-      { success: true, reportId: report.id },
+      { success: true, reportId: report.id, moderationAction },
       { status: 201 },
     );
   } catch (err) {

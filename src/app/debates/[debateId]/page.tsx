@@ -138,11 +138,19 @@ export default function DebateDetailPage() {
   const progressPct = totalMs > 0 ? Math.min(100, (elapsed / totalMs) * 100) : 0;
   const hasSpectatedRef = useRef(false);
 
-  // ── Fetch debate ─────────────────────────────────────────────
-  const fetchDebate = useCallback(async () => {
+  // ── Fetch debate (with retry for cold-start race conditions) ──
+  const fetchDebate = useCallback(async (retries = 2) => {
     try {
       const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}?_t=${Date.now()}`);
-      if (!res.ok) { setLoading(false); return; }
+      if (!res.ok) {
+        if (res.status === 404 && retries > 0) {
+          // Serverless cold start may not have re-seeded yet — retry
+          await new Promise((r) => setTimeout(r, 800));
+          return fetchDebate(retries - 1);
+        }
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setDebate(data.debate);
     } catch { /* ignore */ } finally { setLoading(false); }

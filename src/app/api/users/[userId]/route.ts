@@ -36,6 +36,7 @@ export async function GET(
     bio: user.bio,
     affiliation: user.affiliation,
     avatarUrl: user.avatarUrl,
+    bannerUrl: (user as unknown as Record<string, unknown>).bannerUrl ?? null,
     verificationLevel: user.verificationLevel,
     isVerified: user.isVerified,
     credibilityScore: user.credibilityScore,

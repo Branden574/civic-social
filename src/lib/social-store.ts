@@ -27,7 +27,7 @@ export interface Notification {
   recipientUserId: string;
   actorUserId: string | null;
   type: NotificationType;
-  entityType: 'post' | 'comment' | 'user' | 'bill' | 'article' | 'system';
+  entityType: 'post' | 'comment' | 'user' | 'bill' | 'article' | 'system' | 'debate';
   entityId: string;
   createdAt: string; // ISO
   readAt: string | null;
@@ -39,6 +39,7 @@ export interface Notification {
     postId?: string;
     billId?: string;
     score?: number;
+    debateTitle?: string;
   };
 }
 
@@ -189,7 +190,7 @@ function createInitialStore(): SocialStore {
       recipientUserId: CURRENT_USER,
       actorUserId: 'user-sarah',
       type: 'debate_invite',
-      entityType: 'post',
+      entityType: 'debate',
       entityId: 'debate-1',
       createdAt: ago(360),
       readAt: ago(300),
@@ -316,7 +317,7 @@ export function getSubscriptionLevel(subscriberId: string, targetUserId: string)
 // NOTIFICATION OPERATIONS
 // ═══════════════════════════════════════════════════════════════
 
-function createNotification(params: {
+export function createNotification(params: {
   recipientUserId: string;
   actorUserId: string | null;
   type: NotificationType;

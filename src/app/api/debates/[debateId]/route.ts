@@ -16,6 +16,7 @@ import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/
 import { readLimiter } from '@/lib/security/rate-limiter';
 import { isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
+import { createNotification } from '@/lib/social-store';
 
 // GET /api/debates/:debateId — get debate details
 export async function GET(
@@ -99,6 +100,20 @@ export async function PATCH(
       if (!targetUserId || !isValidId(targetUserId)) return badRequest('Valid targetUserId required.');
       const ok = inviteToDebate(debateId, userId, targetUserId);
       if (!ok) return NextResponse.json({ error: 'Cannot invite user.' }, { status: 403 });
+      // Create notification for the invited user
+      const debate = getDebateById(debateId);
+      createNotification({
+        recipientUserId: targetUserId,
+        actorUserId: userId,
+        type: 'debate_invite',
+        entityType: 'debate',
+        entityId: debateId,
+        metadata: {
+          actorName: userName,
+          debateTitle: debate?.title || 'a debate',
+        },
+      });
+      secureLog.audit('debate_invite', userId, { debateId, targetUserId });
       return NextResponse.json({ success: true });
     }
     case 'kick': {

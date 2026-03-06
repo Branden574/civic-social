@@ -307,7 +307,8 @@ export function MobileNav({ onCompose }: MobileNavProps) {
       {onCompose && (
         <button
           onClick={onCompose}
-          className="lg:hidden fixed bottom-[76px] right-4 z-[60] w-14 h-14 bg-civic text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-civic-dark transition-all duration-200 active:scale-90 animate-pulse-glow"
+          className="lg:hidden fixed right-4 z-[60] w-14 h-14 bg-civic text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-civic-dark transition-all duration-200 active:scale-90 animate-pulse-glow"
+          style={{ bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))' }}
           aria-label="New Post"
         >
           <Plus className="w-6 h-6" />

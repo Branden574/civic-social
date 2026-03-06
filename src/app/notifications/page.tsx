@@ -93,7 +93,7 @@ function getNotifRoute(n: Notification): string | null {
     case 'post_from_followed':
       return n.entityId ? `/post/${n.entityId}` : null;
     case 'debate_invite':
-      return n.entityId ? `/post/${n.entityId}` : null;
+      return n.entityId ? `/debates/${n.entityId}` : null;
     default:
       return null;
   }

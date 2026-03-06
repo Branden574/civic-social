@@ -40,6 +40,8 @@ interface PublicProfile {
   affiliation: { label: string; ideology: string } | null;
   verificationLevel: string;
   credibilityScore: number;
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
   stats: { posts: number; threads: number; following: number; followers: number };
   reputation: {
     civility: number;
@@ -343,6 +345,8 @@ function apiUserToProfile(data: Record<string, unknown>): PublicProfile {
     affiliation: affLabel ? { label: affLabel.charAt(0).toUpperCase() + affLabel.slice(1), ideology: affLabel } : null,
     verificationLevel: (data.verificationLevel as string) || 'EMAIL_VERIFIED',
     credibilityScore: (data.credibilityScore as number) ?? 50,
+    avatarUrl: (data.avatarUrl as string) || null,
+    bannerUrl: (data.bannerUrl as string) || null,
     stats: {
       posts: (data.postCount as number) ?? 0,
       threads: 0,
@@ -634,17 +638,29 @@ export default function UserProfilePage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-2xl mx-auto">
           {/* Header banner */}
-          <div className="h-32 bg-gradient-to-r from-civic-dark via-civic to-civic-light relative">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent)]" />
+          <div className="h-32 bg-gradient-to-r from-civic-dark via-civic to-civic-light relative overflow-hidden">
+            {profile.bannerUrl ? (
+              <img src={profile.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent)]" />
+            )}
           </div>
 
           {/* Profile card */}
           <div className="px-4 sm:px-6 -mt-12 relative z-10">
             {/* Avatar + action buttons */}
             <div className="flex items-end gap-4 mb-4">
-              <div className="w-24 h-24 rounded-2xl bg-surface-elevated border-4 border-bg flex items-center justify-center text-2xl font-bold text-civic-light shadow-lg">
-                {initials}
-              </div>
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.displayName}
+                  className="w-24 h-24 rounded-2xl border-4 border-bg shadow-lg object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-2xl bg-surface-elevated border-4 border-bg flex items-center justify-center text-2xl font-bold text-civic-light shadow-lg">
+                  {initials}
+                </div>
+              )}
               <div className="flex gap-2 mb-1">
                 {/* Follow / Following button */}
                 <button

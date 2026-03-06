@@ -176,6 +176,67 @@ export async function POST(
   }
 }
 
+// ─── PATCH /api/posts/:postId/comments — Comment reactions ───
+
+// In-memory comment reactions (maps commentId → userId → reaction)
+const commentReactions = new Map<string, Map<string, string | null>>();
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> },
+) {
+  const { postId } = await params;
+  if (!postId) return badRequest('Post ID required.');
+
+  const user = getSessionUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const commentId = body.commentId as string;
+    const reaction = body.reaction as string | null; // 'like', 'dislike', or null to remove
+
+    if (!commentId || !isValidId(commentId)) return badRequest('Valid commentId required.');
+    if (reaction !== null && reaction !== 'like' && reaction !== 'dislike') {
+      return badRequest('Reaction must be "like", "dislike", or null.');
+    }
+
+    // Verify comment exists
+    const comment = await getCommentById(commentId);
+    if (!comment || comment.postId !== postId) {
+      return badRequest('Comment not found on this post.');
+    }
+
+    // Store reaction
+    if (!commentReactions.has(commentId)) {
+      commentReactions.set(commentId, new Map());
+    }
+    const reactions = commentReactions.get(commentId)!;
+    reactions.set(user.id, reaction);
+
+    // Compute counts
+    let likes = 0;
+    let dislikes = 0;
+    for (const r of reactions.values()) {
+      if (r === 'like') likes++;
+      if (r === 'dislike') dislikes++;
+    }
+
+    return NextResponse.json({
+      success: true,
+      commentId,
+      viewerReaction: reaction,
+      likes,
+      dislikes,
+    });
+  } catch (err) {
+    secureLog.error('PATCH comment reaction', err);
+    return internalError('Failed to save comment reaction.');
+  }
+}
+
 // ─── DELETE /api/posts/:postId/comments?commentId=xxx ────────
 
 export async function DELETE(

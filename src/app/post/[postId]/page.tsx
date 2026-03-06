@@ -264,6 +264,7 @@ export default function ThreadPage() {
 
   // UI state
   const [replyOpen, setReplyOpen] = useState(false);
+  const [replyingToComment, setReplyingToComment] = useState<ServerComment | null>(null);
   const [bookmarked, setBookmarked] = useState(false);
   const [showAlgo, setShowAlgo] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -457,11 +458,12 @@ export default function ThreadPage() {
   // ── Submit reply ─────────────────────────────────────────
   const handleReplySubmit = useCallback(async (content: string) => {
     setCommentError(null);
+    const parentId = replyingToComment?.id || null;
     const optimisticComment: ServerComment = {
       id: `optimistic-${Date.now()}`,
       postId,
       authorId: authUser?.id || 'unknown',
-      parentCommentId: null,
+      parentCommentId: parentId,
       body: content,
       createdAt: new Date().toISOString(),
       status: 'published',
@@ -476,11 +478,16 @@ export default function ThreadPage() {
     };
     setComments((prev) => [optimisticComment, ...prev]);
     setCommentCount((c) => c + 1);
+    // If replying to a comment, bump its reply count optimistically
+    if (parentId) {
+      setComments((prev) => prev.map((c) => c.id === parentId ? { ...c, replyCount: c.replyCount + 1 } : c));
+    }
+    setReplyingToComment(null);
     try {
       const res = await fetch(`/api/posts/${encodeURIComponent(postId)}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: content }),
+        body: JSON.stringify({ body: content, parent_comment_id: parentId }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -490,14 +497,20 @@ export default function ThreadPage() {
         const err = await res.json().catch(() => ({}));
         setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
         setCommentCount((c) => Math.max(0, c - 1));
+        if (parentId) {
+          setComments((prev) => prev.map((c) => c.id === parentId ? { ...c, replyCount: Math.max(0, c.replyCount - 1) } : c));
+        }
         setCommentError(err.error || 'Failed to post comment.');
       }
     } catch {
       setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
       setCommentCount((c) => Math.max(0, c - 1));
+      if (parentId) {
+        setComments((prev) => prev.map((c) => c.id === parentId ? { ...c, replyCount: Math.max(0, c.replyCount - 1) } : c));
+      }
       setCommentError('Network error. Please try again.');
     }
-  }, [postId]);
+  }, [postId, replyingToComment, authUser]);
 
   // ── Delete comment ───────────────────────────────────────
   const handleDeleteComment = useCallback(async (commentId: string) => {
@@ -755,6 +768,8 @@ export default function ThreadPage() {
                     index={i}
                     isOwn={Boolean(authUser && comment.authorId === authUser.id)}
                     onDelete={() => handleDeleteComment(comment.id)}
+                    onReply={(c) => { setReplyingToComment(c); setReplyOpen(true); }}
+                    postId={postId}
                   />
                 ))}
                 {legacyReplies.map((reply, i) => {
@@ -822,9 +837,15 @@ export default function ThreadPage() {
 
       <ReplySheet
         isOpen={replyOpen}
-        onClose={() => setReplyOpen(false)}
+        onClose={() => { setReplyOpen(false); setReplyingToComment(null); }}
         onSubmit={handleReplySubmit}
-        replyingTo={displayPost ? { displayName: displayPost.author.displayName, content: displayPost.content.slice(0, 120) } : undefined}
+        replyingTo={
+          replyingToComment
+            ? { displayName: replyingToComment.author.displayName, content: replyingToComment.body.slice(0, 120) }
+            : displayPost
+              ? { displayName: displayPost.author.displayName, content: displayPost.content.slice(0, 120) }
+              : undefined
+        }
       />
 
       {displayPost && (
@@ -861,14 +882,66 @@ function CommentCard({
   index,
   isOwn,
   onDelete,
+  onReply,
+  postId,
 }: {
   comment: ServerComment;
   index: number;
   isOwn: boolean;
   onDelete: () => void;
+  onReply: (parentComment: ServerComment) => void;
+  postId: string;
 }) {
   const verif = verificationIcons[comment.author.verificationLevel];
   const VerifIcon = verif?.icon || ShieldCheck;
+
+  // Comment-level reactions (use postId/reactions API with comment ID as entity)
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [dislikeCount, setDislikeCount] = useState(0);
+
+  const handleLike = useCallback(async () => {
+    const wasLiked = liked;
+    const wasDisliked = disliked;
+    setLiked(!wasLiked);
+    setDisliked(false);
+    setLikeCount((c) => c + (wasLiked ? -1 : 1));
+    if (wasDisliked) setDislikeCount((c) => Math.max(0, c - 1));
+    try {
+      await fetch(`/api/posts/${encodeURIComponent(postId)}/comments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: comment.id, reaction: wasLiked ? null : 'like' }),
+      });
+    } catch {
+      setLiked(wasLiked);
+      setDisliked(wasDisliked);
+      setLikeCount((c) => c + (wasLiked ? 1 : -1));
+      if (wasDisliked) setDislikeCount((c) => c + 1);
+    }
+  }, [liked, disliked, comment.id, postId]);
+
+  const handleDislike = useCallback(async () => {
+    const wasLiked = liked;
+    const wasDisliked = disliked;
+    setDisliked(!wasDisliked);
+    setLiked(false);
+    setDislikeCount((c) => c + (wasDisliked ? -1 : 1));
+    if (wasLiked) setLikeCount((c) => Math.max(0, c - 1));
+    try {
+      await fetch(`/api/posts/${encodeURIComponent(postId)}/comments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: comment.id, reaction: wasDisliked ? null : 'dislike' }),
+      });
+    } catch {
+      setLiked(wasLiked);
+      setDisliked(wasDisliked);
+      setDislikeCount((c) => c + (wasDisliked ? 1 : -1));
+      if (wasLiked) setLikeCount((c) => c + 1);
+    }
+  }, [liked, disliked, comment.id, postId]);
 
   return (
     <div
@@ -896,13 +969,30 @@ function CommentCard({
           </div>
           <p className="text-[14px] text-text-secondary leading-relaxed">{comment.body}</p>
           <div className="flex items-center gap-3 mt-2">
-            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-positive-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center">
+            <button
+              onClick={handleLike}
+              className={clsx(
+                'flex items-center gap-1 text-xs transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center',
+                liked ? 'text-positive-light' : 'text-text-muted hover:text-positive-light',
+              )}
+            >
               <ThumbsUp className="w-3.5 h-3.5" />
+              {likeCount > 0 && <span>{likeCount}</span>}
             </button>
-            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-danger-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center">
+            <button
+              onClick={handleDislike}
+              className={clsx(
+                'flex items-center gap-1 text-xs transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center',
+                disliked ? 'text-danger-light' : 'text-text-muted hover:text-danger-light',
+              )}
+            >
               <ThumbsDown className="w-3.5 h-3.5" />
+              {dislikeCount > 0 && <span>{dislikeCount}</span>}
             </button>
-            <button className="flex items-center gap-1 text-xs text-text-muted hover:text-civic-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center">
+            <button
+              onClick={() => onReply(comment)}
+              className="flex items-center gap-1 text-xs text-text-muted hover:text-civic-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center"
+            >
               <MessageSquare className="w-3.5 h-3.5" />
               {comment.replyCount > 0 && comment.replyCount}
             </button>
