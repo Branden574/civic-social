@@ -248,7 +248,7 @@ function FeedbackModal({
 export default function ThreadPage() {
   const { postId } = useParams<{ postId: string }>();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: authUser } = useAuth();
 
   // Post state
   const [postDetail, setPostDetail] = useState<PostDetail | null>(null);
@@ -281,7 +281,7 @@ export default function ThreadPage() {
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const post = postDetail;
-  const isOwnPost = post?.author.id === 'user-current';
+  const isOwnPost = Boolean(authUser && post?.author.id === authUser.id);
   const canComment = postDetail?.viewer_can_comment ?? true;
   const blockReason = postDetail?.viewer_comment_block_reason ?? null;
 
@@ -460,16 +460,16 @@ export default function ThreadPage() {
     const optimisticComment: ServerComment = {
       id: `optimistic-${Date.now()}`,
       postId,
-      authorId: 'user-current',
+      authorId: authUser?.id || 'unknown',
       parentCommentId: null,
       body: content,
       createdAt: new Date().toISOString(),
       status: 'published',
       replyCount: 0,
       author: {
-        id: 'user-current',
-        displayName: 'You',
-        affiliations: ['center-left'],
+        id: authUser?.id || 'unknown',
+        displayName: authUser?.displayName || 'You',
+        affiliations: ['center'],
         verificationLevel: 'EMAIL_VERIFIED',
       },
       _optimistic: true,
@@ -753,7 +753,7 @@ export default function ThreadPage() {
                     key={comment.id}
                     comment={comment}
                     index={i}
-                    isOwn={comment.authorId === 'user-current'}
+                    isOwn={Boolean(authUser && comment.authorId === authUser.id)}
                     onDelete={() => handleDeleteComment(comment.id)}
                   />
                 ))}

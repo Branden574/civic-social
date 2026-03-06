@@ -22,6 +22,8 @@ export interface AuthUser {
   username: string;
   role: UserRole;
   avatarUrl?: string;
+  avatar?: string | null;
+  bannerUrl?: string | null;
   createdAt: Date;
   onboarding?: OnboardingProfile;
   isNewUser?: boolean;
@@ -46,6 +48,7 @@ export interface BootstrapData {
     followersCount: number;
     followingCount: number;
     postsCount: number;
+    credibilityScore: number;
   };
 }
 
@@ -266,7 +269,7 @@ function clientFallbackBootstrap(user: AuthUser): BootstrapData {
       percent: 0,
       missingFields: [],
     },
-    stats: { followersCount: 0, followingCount: 0, postsCount: 0 },
+    stats: { followersCount: 0, followingCount: 0, postsCount: 0, credibilityScore: 50 },
   };
 }
 
@@ -393,6 +396,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profileCompletion: data.profileCompletion,
           stats: data.stats,
         });
+        // Update avatar/banner on the user object if returned
+        if (data.user?.avatar || data.user?.bannerUrl) {
+          setUser((prev) => prev ? {
+            ...prev,
+            avatar: data.user.avatar ?? prev.avatar,
+            bannerUrl: data.user.bannerUrl ?? prev.bannerUrl,
+          } : prev);
+        }
       }
     } catch {
       // Silently fail — keep existing bootstrap
@@ -531,7 +542,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           percent: 0,
           missingFields: ['display_name', 'username', 'country', 'party', 'topics'],
         },
-        stats: { followersCount: 0, followingCount: 0, postsCount: 0 },
+        stats: { followersCount: 0, followingCount: 0, postsCount: 0, credibilityScore: 50 },
       });
 
       return { success: true };

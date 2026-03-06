@@ -18,6 +18,25 @@ import { dbGetFollowerCount, dbGetFollowingCount } from '@/lib/social-store';
 import { getPostCount } from '@/lib/post-data-store';
 import { registerUser, ensureUserRecord } from '@/lib/user-registry';
 import { isDbAvailable, prisma } from '@/lib/db';
+import { recomputeCredibilityScore } from '@/lib/credibility-recompute';
+
+async function getCredibilityScore(userId: string): Promise<number> {
+  if (!isDbAvailable()) return 50;
+  try {
+    // Recompute score on each /api/me call (returns cached 50 for new users)
+    const result = await recomputeCredibilityScore(userId);
+    if (result) return result.overall;
+
+    // Fallback: read stored score
+    const row = await prisma.searchableUser.findFirst({
+      where: { id: userId },
+      select: { credibilityScore: true },
+    });
+    return row?.credibilityScore ?? 50;
+  } catch {
+    return 50;
+  }
+}
 
 // ─── Response shape ──────────────────────────────────────────
 
@@ -28,6 +47,8 @@ interface MeResponse {
     displayName: string;
     username: string;
     role: string;
+    avatar: string | null;
+    bannerUrl: string | null;
   };
   onboarding: OnboardingState;
   profileCompletion: ProfileCompletion;
@@ -35,6 +56,7 @@ interface MeResponse {
     followersCount: number;
     followingCount: number;
     postsCount: number;
+    credibilityScore: number;
   };
 }
 
@@ -43,12 +65,19 @@ async function buildResponse(
   onboarding: OnboardingState,
   profileCompletion: ProfileCompletion,
 ): Promise<MeResponse> {
-  // Look up username from DB
+  // Look up username, avatar, banner from DB
   let username = sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
+  let avatar: string | null = null;
+  let bannerUrl: string | null = null;
   if (isDbAvailable()) {
     try {
-      const dbUser = await prisma.user.findUnique({ where: { id: sessionUser.id }, select: { username: true } });
+      const dbUser = await prisma.user.findUnique({
+        where: { id: sessionUser.id },
+        select: { username: true, avatar: true, bannerUrl: true },
+      });
       if (dbUser?.username) username = dbUser.username;
+      if (dbUser?.avatar) avatar = dbUser.avatar;
+      if (dbUser?.bannerUrl) bannerUrl = dbUser.bannerUrl;
     } catch { /* fallback to derived username */ }
   }
 
@@ -59,6 +88,8 @@ async function buildResponse(
       displayName: sessionUser.displayName,
       username,
       role: sessionUser.role,
+      avatar,
+      bannerUrl,
     },
     onboarding,
     profileCompletion,
@@ -66,6 +97,7 @@ async function buildResponse(
       followersCount: await dbGetFollowerCount(sessionUser.id),
       followingCount: await dbGetFollowingCount(sessionUser.id),
       postsCount: await getPostCount(sessionUser.id),
+      credibilityScore: await getCredibilityScore(sessionUser.id),
     },
   };
 }

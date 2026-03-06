@@ -249,16 +249,28 @@ export default function ProfilePage() {
         )}
         <div className="max-w-2xl mx-auto">
           {/* Header banner */}
-          <div className="h-32 bg-gradient-to-r from-civic-dark via-civic to-civic-light relative">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent)]" />
+          <div className="h-32 bg-gradient-to-r from-civic-dark via-civic to-civic-light relative overflow-hidden">
+            {user?.bannerUrl ? (
+              <img src={user.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent)]" />
+            )}
           </div>
 
           {/* Profile card */}
           <div className="px-4 sm:px-6 -mt-12 relative z-10">
             <div className="flex items-end gap-4 mb-4">
-              <div className="w-24 h-24 rounded-2xl bg-surface-elevated border-4 border-bg flex items-center justify-center text-2xl font-bold text-civic-light shadow-lg">
-                {initials}
-              </div>
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={displayName}
+                  className="w-24 h-24 rounded-2xl border-4 border-bg shadow-lg object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-2xl bg-surface-elevated border-4 border-bg flex items-center justify-center text-2xl font-bold text-civic-light shadow-lg">
+                  {initials}
+                </div>
+              )}
               <div className="flex gap-2 mb-1">
                 <Link
                   href="/settings"
@@ -275,7 +287,7 @@ export default function ProfilePage() {
             <div className="mb-3">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-text-primary">{displayName}</h1>
-                <CredibilityBadge score={90} size="md" showLabel />
+                <CredibilityBadge score={stats?.credibilityScore ?? 50} size="md" showLabel showAlways />
               </div>
               <p className="text-sm text-text-muted">{username}</p>
             </div>
@@ -397,7 +409,7 @@ export default function ProfilePage() {
           {/* Tab Content */}
           {activeTab === 'posts' && <PostsTab posts={getPostsForProfile()} hydrated={hydrated} />}
           {activeTab === 'overview' && <OverviewTab topics={userTopics} />}
-          {activeTab === 'credibility' && <CredibilityTab />}
+          {activeTab === 'credibility' && <CredibilityTab score={stats?.credibilityScore ?? 50} />}
           {activeTab === 'debates' && <DebatesTab />}
           {activeTab === 'activity' && <ActivityTab />}
 
@@ -638,16 +650,24 @@ function OverviewTab({ topics }: { topics: string[] }) {
 
 // ─── Credibility Tab ─────────────────────────────────────────
 
-function CredibilityTab() {
+function CredibilityTab({ score }: { score: number }) {
+  const isGold = score >= 95;
+  const isGreen = score >= 90;
+  const scoreColor = isGold ? 'text-amber-500' : isGreen ? 'text-emerald-500' : 'text-civic-light';
+  const scoreBg = isGold ? 'bg-amber-500/15' : isGreen ? 'bg-emerald-500/15' : 'bg-civic/15';
+  const tierLabel = isGold ? 'Gold Tier' : isGreen ? 'Green Tier' : 'Neutral';
+
   return (
     <div className="px-4 sm:px-6 mt-6 space-y-6">
       <div className="bg-surface-elevated rounded-xl border border-border-subtle p-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-civic/15 flex items-center justify-center mx-auto mb-3">
-          <span className="text-3xl font-bold text-civic-light">0</span>
+        <div className={`w-20 h-20 rounded-full ${scoreBg} flex items-center justify-center mx-auto mb-3`}>
+          <span className={`text-3xl font-bold ${scoreColor}`}>{score}</span>
         </div>
         <h2 className="text-lg font-bold text-text-primary">Your Credibility Score</h2>
         <p className="text-sm text-text-muted mt-1">
-          Start engaging to build your credibility score.
+          {score <= 50
+            ? 'Start engaging to build your credibility score.'
+            : `${tierLabel} — ${score}% credibility earned through participation.`}
         </p>
         <Link
           href="/credibility"

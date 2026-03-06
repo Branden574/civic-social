@@ -19,6 +19,7 @@ import { sanitizeText, sanitizeTopics, sanitizeUrl, isValidId } from '@/lib/secu
 import { secureLog } from '@/lib/security/logger';
 import { getUserById, registerUser } from '@/lib/user-registry';
 import { analyzeCivility } from '@/lib/civility';
+import { incrementalCredibilityUpdate } from '@/lib/credibility-recompute';
 
 // ─── Author profile (matches post-store.tsx) ─────────────────
 async function getAuthorProfile(authorId: string) {
@@ -189,6 +190,9 @@ export async function POST(request: NextRequest) {
       'POST /api/posts',
       `created post_id=${post.id} author_id=${userId} status=${post.status} visibility=${post.visibility} created_at=${post.createdAt}`,
     );
+
+    // Fire-and-forget credibility update based on this post
+    incrementalCredibilityUpdate(userId, civilityScore, !!safeArticleUrl).catch(() => {});
 
     return NextResponse.json({
       success: true,

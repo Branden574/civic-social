@@ -1,10 +1,11 @@
 'use client';
 
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
-import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, X, Plus, Check } from 'lucide-react';
+import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, X, Plus, Check, Camera, Loader2, ImageIcon } from 'lucide-react';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useTheme } from '@/lib/theme-context';
+import { useAuth } from '@/lib/auth-context';
 import { AuthGate } from '@/components/auth/auth-gate';
 
 export default function SettingsPage() {
@@ -22,6 +23,9 @@ export default function SettingsPage() {
           </header>
 
           <div className="px-4 sm:px-6 py-6 space-y-6">
+            {/* Profile Photo & Banner */}
+            <ProfileMediaSection />
+
             {/* Privacy & Security */}
             <SettingsSection icon={Shield} title="Privacy & Security">
               <ToggleSetting
@@ -199,6 +203,220 @@ function ToggleSetting({
           style={{ left: enabled ? '22px' : '2px' }}
         />
       </button>
+    </div>
+  );
+}
+
+function resizeImage(
+  file: File,
+  maxWidth: number,
+  maxHeight: number,
+  quality = 0.85,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width;
+        let h = img.height;
+
+        // For avatars (square), crop to center square first
+        if (maxWidth === maxHeight) {
+          const size = Math.min(w, h);
+          const sx = (w - size) / 2;
+          const sy = (h - size) / 2;
+          canvas.width = maxWidth;
+          canvas.height = maxHeight;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, maxWidth, maxHeight);
+        } else {
+          // For banners, scale to fit
+          if (w > maxWidth) { h = (h * maxWidth) / w; w = maxWidth; }
+          if (h > maxHeight) { w = (w * maxHeight) / h; h = maxHeight; }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0, w, h);
+        }
+
+        resolve(canvas.toDataURL('image/webp', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function ProfileMediaSection() {
+  const { user, refreshMe } = useAuth();
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  // Get existing avatar/banner from user data
+  const existingAvatar = user?.avatar ?? null;
+  const existingBanner = user?.bannerUrl ?? null;
+  const displayAvatar = avatarPreview || existingAvatar;
+  const displayBanner = bannerPreview || existingBanner;
+
+  const initials = (user?.displayName || 'U')
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+
+    try {
+      const resized = await resizeImage(file, 256, 256);
+      setAvatarPreview(resized);
+      setAvatarUploading(true);
+
+      const res = await fetch('/api/me/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar: resized }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to upload avatar.');
+        setAvatarPreview(null);
+      } else {
+        refreshMe();
+      }
+    } catch {
+      setError('Failed to process image.');
+      setAvatarPreview(null);
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [refreshMe]);
+
+  const handleBannerChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+
+    try {
+      const resized = await resizeImage(file, 1200, 400, 0.8);
+      setBannerPreview(resized);
+      setBannerUploading(true);
+
+      const res = await fetch('/api/me/banner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ banner: resized }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to upload banner.');
+        setBannerPreview(null);
+      } else {
+        refreshMe();
+      }
+    } catch {
+      setError('Failed to process image.');
+      setBannerPreview(null);
+    } finally {
+      setBannerUploading(false);
+    }
+  }, [refreshMe]);
+
+  return (
+    <div className="bg-surface-elevated rounded-xl border border-border-subtle overflow-hidden">
+      <div className="flex items-center gap-2 px-5 pt-5 mb-4">
+        <Camera className="w-4 h-4 text-civic-light" />
+        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+          Profile Photo & Banner
+        </h3>
+      </div>
+
+      {/* Banner */}
+      <div className="relative mx-5 mb-4">
+        <div
+          className="h-32 rounded-xl bg-gradient-to-r from-civic-dark via-civic to-civic-light relative overflow-hidden cursor-pointer group"
+          onClick={() => bannerInputRef.current?.click()}
+        >
+          {displayBanner && (
+            <img src={displayBanner} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
+          )}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-white text-sm font-medium">
+              {bannerUploading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <ImageIcon className="w-5 h-5" />
+                  Change Banner
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={handleBannerChange}
+        />
+      </div>
+
+      {/* Avatar */}
+      <div className="flex items-center gap-4 px-5 pb-5">
+        <div
+          className="relative w-20 h-20 rounded-full shrink-0 cursor-pointer group"
+          onClick={() => avatarInputRef.current?.click()}
+        >
+          {displayAvatar ? (
+            <img src={displayAvatar} alt="Avatar" className="w-20 h-20 rounded-full object-cover border-2 border-border-subtle" />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-surface border-2 border-border-subtle flex items-center justify-center text-xl font-bold text-civic-light">
+              {initials}
+            </div>
+          )}
+          <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+              {avatarUploading ? (
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              ) : (
+                <Camera className="w-5 h-5 text-white" />
+              )}
+            </div>
+          </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-text-primary">Profile Photo</p>
+          <p className="text-xs text-text-muted">Click the photo or banner to change. PNG, JPG, or WebP.</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mx-5 mb-5 p-3 bg-danger/5 border border-danger/20 rounded-lg text-xs text-danger-light">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

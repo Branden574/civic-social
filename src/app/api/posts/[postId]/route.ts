@@ -21,6 +21,7 @@ const permissionHelpers = {
 };
 
 import { getUserById } from '@/lib/user-registry';
+import { recomputeCredibilityScore } from '@/lib/credibility-recompute';
 
 async function getAuthorProfile(authorId: string) {
   const u = await getUserById(authorId);
@@ -176,12 +177,23 @@ export async function DELETE(
 
   try {
     const user = getSessionUser(request);
-    const userId = user?.id || 'user-current';
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
+    // Verify ownership
+    const post = await getPostById(postId);
+    if (post && post.authorId !== user.id) {
+      return NextResponse.json({ error: 'You can only delete your own posts.' }, { status: 403 });
+    }
 
     await deletePersistedPost(postId);
     markPostDeleted(postId);
 
-    secureLog.audit('post_deleted', userId, { postId });
+    secureLog.audit('post_deleted', user.id, { postId });
+
+    // Recompute credibility after deletion (removal changes the ratio)
+    recomputeCredibilityScore(user.id).catch(() => {});
 
     return NextResponse.json({
       success: true,

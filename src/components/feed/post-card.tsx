@@ -175,10 +175,8 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 
 // ─── Post Card Component ─────────────────────────────────────
 
-const CURRENT_USER_ID = 'user-current';
-
 export const PostCard = memo(function PostCard({ post, index, onDelete }: { post: PostData; index: number; onDelete?: (postId: string) => void }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [showAlgorithm, setShowAlgorithm] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
@@ -196,7 +194,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
   const [showFeedback, setShowFeedback] = useState<ReactionType | null>(null);
   const [hasFeedback, setHasFeedback] = useState(false);
 
-  const isOwnPost = post.author.id === CURRENT_USER_ID;
+  const isOwnPost = Boolean(user && post.author.id === user.id);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   // Close more menu on outside click (works on mobile via pointerdown)
