@@ -63,6 +63,7 @@ function generateToken(): string {
 const ALLOWED_ORIGINS = new Set([
   'https://civicsocial.com',
   'https://www.civicsocial.com',
+  'https://civic-social.vercel.app',
 ]);
 
 function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
@@ -160,7 +161,7 @@ export function middleware(request: NextRequest) {
 
   // ── 1b. Auth-gate: redirect unauthenticated users from private routes ──
   const PUBLIC_ROUTES = new Set([
-    '/', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy', '/contact', '/safety', '/how-it-works',
+    '/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/terms', '/privacy', '/contact', '/safety', '/how-it-works',
   ]);
   const isPublicRoute = PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/_next/');
   if (!isPublicRoute) {
