@@ -29,6 +29,9 @@ import {
   MoreHorizontal,
   LogIn,
   LinkIcon,
+  Shield,
+  AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
@@ -37,6 +40,7 @@ import { ContextPanel } from './context-panel';
 import { DeleteConfirmModal } from '@/components/ui/delete-confirm-modal';
 import { useAuth } from '@/lib/auth-context';
 import { MentionText } from '@/components/ui/mention-text';
+import { analyzeCivility } from '@/lib/civility';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -659,7 +663,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           )}
 
           {showReport && <InlineReportPanel postId={post.id} onClose={() => setShowReport(false)} />}
-          {showAlgorithm && <AlgorithmExplainer algorithm={post.algorithm} />}
+          {showAlgorithm && <AlgorithmExplainer algorithm={post.algorithm} postContent={post.content} />}
           {showReplies && post.replies.length > 0 && (
             <div className="mt-4 space-y-3 border-l-2 border-border-subtle pl-4 animate-fade-in">
               {post.replies.map((reply) => <ReplyCard key={reply.id} reply={reply} />)}
@@ -842,8 +846,10 @@ function FeedbackModal({
 // Sub-components (Algorithm, Report, Reply)
 // ═══════════════════════════════════════════════════════════════
 
-function AlgorithmExplainer({ algorithm }: { algorithm: PostAlgorithm }) {
+function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorithm; postContent: string }) {
   const signals = algorithm.signals;
+  const civility = analyzeCivility(postContent);
+
   return (
     <div className="mt-4 p-4 bg-surface-elevated rounded-xl border border-border-subtle animate-slide-up">
       <div className="flex items-center gap-2 mb-3">
@@ -860,6 +866,37 @@ function AlgorithmExplainer({ algorithm }: { algorithm: PostAlgorithm }) {
         <SignalBar label="Author Reputation" value={signals.authorReputation} weight="10%" color="bg-info-light" />
         {signals.penalty > 0 && <SignalBar label="Penalty" value={signals.penalty} weight="SUB" color="bg-danger" isNegative />}
       </div>
+
+      {/* Civility breakdown — shows specific issues that lowered the score */}
+      {civility.issues.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border-subtle">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="w-3.5 h-3.5 text-warning-light" />
+            <span className="text-[11px] font-semibold text-text-primary uppercase tracking-wider">
+              Civility Issues ({Math.round(civility.score * 100)}%)
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {civility.issues.map((issue, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-text-secondary">
+                <AlertTriangle className="w-3 h-3 text-warning-light mt-0.5 shrink-0" />
+                <span>{issue}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {civility.issues.length === 0 && civility.score >= 0.8 && (
+        <div className="mt-3 pt-3 border-t border-border-subtle">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-3.5 h-3.5 text-positive-light" />
+            <span className="text-[11px] text-positive-light font-medium">
+              This post promotes constructive civic discourse
+            </span>
+          </div>
+        </div>
+      )}
+
       {algorithm.explanationTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border-subtle">
           {algorithm.explanationTags.map((tag) => (

@@ -84,7 +84,38 @@ export function analyzeCivility(text: string): CivilityResult {
     }
   }
 
-  // ── 5. Straw-manning & bad-faith framing ───────────────
+  // ── 5. Racism, hate speech & discriminatory language ────
+  // SEVERE penalties — these should tank the score hard
+  const racismPatterns = [
+    // Racial slurs (partial list — covers common slurs, not exhaustive)
+    { pattern: /\b(n[i1]gg[ae3]r?s?|n[i1]gg[ae3]h?|sp[i1]c[ks]?|ch[i1]nk[s]?|w[e3]tb[a4]ck[s]?|k[i1]k[e3][s]?|g[o0]{2}k[s]?|r[a4]gh[e3][a4]d[s]?|c[o0]{2}n[s]?|b[e3][a4]n[e3]r[s]?)\b/i, msg: 'Racial slurs are strictly prohibited', penalty: 0.50 },
+    // Supremacist language
+    { pattern: /\b(white\s*power|white\s*supremac|master\s*race|racial?\s*purity|white\s*nationalist|ethno\s*state|race\s*war)\b/i, msg: 'White supremacist and racial supremacy language is prohibited', penalty: 0.45 },
+    // Dehumanization based on race/ethnicity
+    { pattern: /\b(sub\s*human|animals?|savages?|cockroach|vermin|infestation|invasion)\b.*\b(people|immigrants?|mexicans?|blacks?|whites?|asians?|muslims?|jews?|arabs?)\b/i, msg: 'Dehumanizing language toward racial or ethnic groups is prohibited', penalty: 0.45 },
+    { pattern: /\b(people|immigrants?|mexicans?|blacks?|whites?|asians?|muslims?|jews?|arabs?)\b.*\b(sub\s*human|animals?|savages?|cockroach|vermin|infestation|invasion)\b/i, msg: 'Dehumanizing language toward racial or ethnic groups is prohibited', penalty: 0.45 },
+    // Stereotyping and racist tropes
+    { pattern: /\b(go\s*back\s*to\s*(your|their)\s*(country|where))\b/i, msg: '"Go back to your country" is xenophobic and discriminatory', penalty: 0.35 },
+    { pattern: /\b(those\s+people\s+are\s+(all|always|never|just))\b/i, msg: 'Blanket negative generalizations about groups are discriminatory', penalty: 0.25 },
+    { pattern: /\b(illegal\s*alien[s]?)\b/i, msg: '"Illegal alien" is dehumanizing — use "undocumented immigrant" instead', penalty: 0.15 },
+    // Anti-semitic tropes
+    { pattern: /\b(jew[s]?\s*(control|run|own)|zionist?\s*occupation|protocols?\s*of\s*zion|jewish\s*(conspiracy|agenda|lobby))\b/i, msg: 'Anti-semitic tropes and conspiracy theories are prohibited', penalty: 0.40 },
+    // Islamophobic rhetoric
+    { pattern: /\b(all\s*muslims?\s*(are|should)|ban\s*islam|muslim\s*ban|islamic?\s*invasion|creeping\s*sharia)\b/i, msg: 'Islamophobic generalizations are discriminatory', penalty: 0.35 },
+    // Homophobic/transphobic slurs
+    { pattern: /\b(f[a4]g[gs]?[o0]?t[s]?|tr[a4]nn[yi1][e3]?[s]?|d[yi1]k[e3][s]?)\b/i, msg: 'Homophobic and transphobic slurs are strictly prohibited', penalty: 0.45 },
+    // General racial/ethnic hatred
+    { pattern: /\b(hate|kill|deport|exterminate|eradicate)\s+(all\s+)?(blacks?|whites?|asians?|mexicans?|jews?|muslims?|immigrants?|foreigners?|latinos?|hispanics?|arabs?)\b/i, msg: 'Advocating hatred or violence against racial/ethnic groups is strictly prohibited', penalty: 0.50 },
+  ];
+
+  for (const { pattern, msg, penalty } of racismPatterns) {
+    if (pattern.test(lower)) {
+      score -= penalty;
+      issues.push(msg);
+    }
+  }
+
+  // ── 6. Straw-manning & bad-faith framing ──────────────
   const strawmanPatterns = [
     { pattern: /\b(so you're saying|you basically want|you think that)\b.*\b(kill|destroy|hate|ruin)\b/i, msg: "Avoid putting extreme words in others' mouths (straw-manning)", penalty: 0.12 },
     { pattern: /\b(all (liberals|conservatives|republicans|democrats) (want|think|believe|are))\b/i, msg: 'Broad generalizations about political groups reduce nuance', penalty: 0.10 },

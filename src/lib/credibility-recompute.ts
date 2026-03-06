@@ -363,14 +363,20 @@ export async function incrementalCredibilityUpdate(
 
     if (postCount < MIN_POSTS_FOR_RECOMPUTE) return;
 
-    // Small incremental adjustment (±1-3 points max)
+    // Incremental adjustment — severity scales with how bad the post is
     let delta = 0;
 
     // Civil post nudges score up, uncivil nudges down
     if (newPostCivilityScore >= 0.8) {
       delta += 1; // good post
-    } else if (newPostCivilityScore < 0.5) {
-      delta -= 2; // uncivil post penalized more
+    } else if (newPostCivilityScore >= 0.5) {
+      delta += 0; // mediocre post — no change
+    } else if (newPostCivilityScore >= 0.3) {
+      delta -= 3; // uncivil post
+    } else if (newPostCivilityScore >= 0.1) {
+      delta -= 8; // severely uncivil (hate speech, racism, etc.)
+    } else {
+      delta -= 15; // extreme violation (slurs, violent threats, etc.)
     }
 
     // Citation bonus
