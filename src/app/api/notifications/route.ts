@@ -5,6 +5,7 @@ import {
   markAllRead,
   markNotificationRead,
   markSeen,
+  deleteNotification,
 } from '@/lib/social-store';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
@@ -104,6 +105,19 @@ export async function POST(request: NextRequest) {
       return badRequest('Valid notification_id required.');
     }
     const ok = markNotificationRead(notificationId);
+    return NextResponse.json({
+      success: ok,
+      unreadCount: getUnreadCount(currentUser),
+      serverTime: new Date().toISOString(),
+    });
+  }
+
+  if (action === 'delete') {
+    const notificationId = body.notification_id as string;
+    if (!notificationId || !isValidId(notificationId)) {
+      return badRequest('Valid notification_id required.');
+    }
+    const ok = deleteNotification(notificationId);
     return NextResponse.json({
       success: ok,
       unreadCount: getUnreadCount(currentUser),

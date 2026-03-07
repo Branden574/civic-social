@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { useNotifications } from '@/lib/notification-context';
 import {
+  getLocalReadIds,
+  getLocalDismissedIds,
+  markLocalRead,
+  markAllLocalRead,
+  markLocalDismissed,
+} from '@/lib/notification-local-state';
+import {
   Bell,
   BellRing,
   MessageSquare,
@@ -20,6 +27,7 @@ import {
   Loader2,
   WifiOff,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { Notification, NotificationType } from '@/lib/social-store';
@@ -113,7 +121,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { unreadCount, markAllRead, refresh, setUnreadCount } = useNotifications();
+  const { unreadCount, markAllRead, setUnreadCount } = useNotifications();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,35 +130,57 @@ export default function NotificationsPage() {
   const [offline, setOffline] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [hasMore, setHasMore] = useState(false);
-  const [offset, setOffset] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef(0);
 
   const PAGE_SIZE = 50;
 
-  // ── Fetch notifications ─────────────────────────────────
+  // ── Fetch notifications with client-side state merge ────
   const fetchNotifications = useCallback(async (reset = true) => {
     try {
       setOffline(false);
-      const newOffset = reset ? 0 : offset;
+      const newOffset = reset ? 0 : offsetRef.current;
       const res = await fetch(`/api/notifications?limit=${PAGE_SIZE}&offset=${newOffset}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       const fetched = data.notifications as Notification[];
 
+      // Get client-side read/dismissed state
+      const localReadIds = getLocalReadIds();
+      const localDismissedIds = getLocalDismissedIds();
+
+      // Filter out dismissed notifications, apply local read state
+      const merged = fetched
+        .filter((n) => !localDismissedIds.has(n.id))
+        .map((n) => {
+          if (!n.readAt && localReadIds.has(n.id)) {
+            return { ...n, readAt: new Date().toISOString() };
+          }
+          return n;
+        });
+
       if (reset) {
-        setNotifications(fetched);
-        setOffset(fetched.length);
+        setNotifications(merged);
+        offsetRef.current = fetched.length;
       } else {
-        setNotifications((prev) => [...prev, ...fetched]);
-        setOffset((prev) => prev + fetched.length);
+        setNotifications((prev) => {
+          // Deduplicate by ID
+          const existingIds = new Set(prev.map((n) => n.id));
+          const newOnly = merged.filter((n) => !existingIds.has(n.id));
+          return [...prev, ...newOnly];
+        });
+        offsetRef.current += fetched.length;
       }
       setHasMore(fetched.length === PAGE_SIZE);
-      setUnreadCount(data.unreadCount ?? 0);
+
+      // Compute accurate unread count from merged data
+      const localUnreadCount = merged.filter((n) => !n.readAt).length;
+      setUnreadCount(localUnreadCount);
     } catch {
       setOffline(true);
     }
-  }, [offset, setUnreadCount]);
+  }, [setUnreadCount]);
 
   // Initial load
   useEffect(() => {
@@ -164,23 +194,20 @@ export default function NotificationsPage() {
     if (markingRead) return;
     setMarkingRead(true);
 
-    // Snapshot for rollback
-    const prev = notifications;
-
     // Optimistic: mark all loaded as read in UI immediately
     const now = new Date().toISOString();
     setNotifications((current) =>
       current.map((n) => (n.readAt ? n : { ...n, readAt: now })),
     );
 
+    // Persist to localStorage so cold-start refetch respects this
+    const allIds = notifications.map((n) => n.id);
+    markAllLocalRead(allIds);
+
     try {
       await markAllRead();
-      // Don't refetch — the optimistic update is the source of truth.
-      // The server store on serverless may cold-start with fresh seed data,
-      // so refetching would overwrite our correct UI state.
     } catch {
-      // Rollback to previous state on failure
-      setNotifications(prev);
+      // Server failed but client state is saved locally — that's fine
     } finally {
       setMarkingRead(false);
     }
@@ -197,6 +224,9 @@ export default function NotificationsPage() {
       );
       setUnreadCount((c: number) => Math.max(0, c - 1));
 
+      // Persist read state locally
+      markLocalRead(n.id);
+
       // Fire and forget to server
       fetch('/api/notifications', {
         method: 'POST',
@@ -210,13 +240,33 @@ export default function NotificationsPage() {
     if (route) router.push(route);
   }, [router, setUnreadCount]);
 
+  // ── Dismiss single notification ─────────────────────────
+  const handleDismiss = useCallback((e: React.MouseEvent, n: Notification) => {
+    e.stopPropagation();
+
+    // Remove from UI immediately
+    setNotifications((prev) => prev.filter((notif) => notif.id !== n.id));
+    if (!n.readAt) {
+      setUnreadCount((c: number) => Math.max(0, c - 1));
+    }
+
+    // Persist to localStorage
+    markLocalDismissed(n.id);
+
+    // Fire and forget to server
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', notification_id: n.id }),
+    }).catch(() => {});
+  }, [setUnreadCount]);
+
   // ── Refresh ─────────────────────────────────────────────
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchNotifications(true);
-    await refresh();
     setRefreshing(false);
-  }, [fetchNotifications, refresh]);
+  }, [fetchNotifications]);
 
   // ── Load more ───────────────────────────────────────────
   const handleLoadMore = useCallback(async () => {
@@ -362,11 +412,14 @@ export default function NotificationsPage() {
                       : config.label;
 
                     return (
-                      <button
+                      <div
                         key={n.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleNotificationClick(n)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleNotificationClick(n); }}
                         className={clsx(
-                          'w-full flex items-start gap-3 px-4 sm:px-6 py-3.5 border-b border-border-subtle/50 hover:bg-surface/40 transition-colors duration-150 text-left animate-fade-in opacity-0',
+                          'w-full flex items-start gap-3 px-4 sm:px-6 py-3.5 border-b border-border-subtle/50 hover:bg-surface/40 transition-colors duration-150 text-left animate-fade-in opacity-0 cursor-pointer group',
                           isUnread && 'bg-civic/[0.03]',
                         )}
                         style={{ animationDelay: `${(gi * 10 + i) * 30}ms`, animationFillMode: 'forwards' }}
@@ -392,11 +445,20 @@ export default function NotificationsPage() {
                           <p className="text-[11px] text-text-muted mt-1">{formatRelativeTime(n.createdAt)}</p>
                         </div>
 
-                        {/* Unread dot */}
-                        {isUnread && (
-                          <span className="w-2 h-2 rounded-full bg-civic shrink-0 mt-2 animate-scale-in" />
-                        )}
-                      </button>
+                        {/* Unread dot + dismiss button */}
+                        <div className="flex items-center gap-1.5 shrink-0 mt-1">
+                          {isUnread && (
+                            <span className="w-2 h-2 rounded-full bg-civic animate-scale-in" />
+                          )}
+                          <button
+                            onClick={(e) => handleDismiss(e, n)}
+                            className="p-1 rounded-md text-text-muted/0 group-hover:text-text-muted hover:!text-text-primary hover:bg-surface-active transition-all"
+                            aria-label="Dismiss notification"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>

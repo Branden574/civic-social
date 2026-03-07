@@ -3,14 +3,16 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { playNotificationSound, unlockAudio } from '@/lib/notification-sound';
+import { getLocalReadIds, getLocalDismissedIds, markAllLocalRead } from '@/lib/notification-local-state';
 
 // ═══════════════════════════════════════════════════════════════
 // Notification Context — Badge Count + Sound + In-App Toasts
 // ═══════════════════════════════════════════════════════════════
 //
 // Polls /api/notifications?action=unread-count every 30s.
-// When unread count increases, plays a notification sound and
-// shows an in-app toast banner with the latest notification.
+// Adjusts server-reported unread count by subtracting locally
+// read/dismissed IDs (handles serverless cold-start resets).
+// When real new notifications arrive, plays sound and shows toast.
 // ═══════════════════════════════════════════════════════════════
 
 interface NotificationToastData {
@@ -57,6 +59,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const prevCountRef = useRef(0);
   const initialFetchDone = useRef(false);
+  // Track known notification IDs to detect genuinely new ones
+  const knownIdsRef = useRef<Set<string>>(new Set());
 
   // Load sound preference
   useEffect(() => {
@@ -112,45 +116,50 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const res = await fetch('/api/notifications?action=unread-count');
+      // Fetch the latest unread notifications (small batch) to compute accurate count
+      const res = await fetch('/api/notifications?limit=50&offset=0&unreadOnly=true');
       if (!res.ok) return;
       const data = await res.json();
-      const newCount = data.unreadCount ?? 0;
+      const serverNotifs = (data.notifications ?? []) as { id: string; type: string; metadata?: Record<string, unknown>; entityId?: string; entityType?: string }[];
 
+      // Filter out notifications the client has already read or dismissed
+      const localReadIds = getLocalReadIds();
+      const localDismissedIds = getLocalDismissedIds();
+      const actuallyUnread = serverNotifs.filter(
+        (n) => !localReadIds.has(n.id) && !localDismissedIds.has(n.id),
+      );
+
+      const newCount = actuallyUnread.length;
       setUnreadCount(newCount);
 
-      // Play sound + show toast if count increased (not on initial load)
-      if (initialFetchDone.current && newCount > prevCountRef.current) {
-        if (soundEnabled) {
-          playNotificationSound();
-        }
-        // Fetch the latest notification for the toast
-        try {
-          const listRes = await fetch('/api/notifications?limit=1&offset=0&unreadOnly=true');
-          if (listRes.ok) {
-            const listData = await listRes.json();
-            const latest = listData.notifications?.[0];
-            if (latest) {
-              setActiveToast({
-                id: latest.id,
-                type: latest.type,
-                actorName: latest.metadata?.actorName,
-                preview: latest.metadata?.preview,
-                entityId: latest.entityId,
-                entityType: latest.entityType,
-              });
+      // Detect genuinely new notifications (not on initial load, not already known)
+      if (initialFetchDone.current) {
+        const newNotifs = actuallyUnread.filter((n) => !knownIdsRef.current.has(n.id));
+        if (newNotifs.length > 0 && newCount > prevCountRef.current) {
+          if (soundEnabled) {
+            playNotificationSound();
+          }
+          // Show toast for the newest one
+          const latest = newNotifs[0];
+          if (latest) {
+            setActiveToast({
+              id: latest.id,
+              type: latest.type,
+              actorName: (latest.metadata?.actorName as string) || undefined,
+              preview: (latest.metadata?.preview as string) || undefined,
+              entityId: latest.entityId,
+              entityType: latest.entityType,
+            });
 
-              // Also show a system notification if permission granted and app is not focused
-              if (typeof document !== 'undefined' && document.visibilityState === 'hidden' && Notification.permission === 'granted') {
-                showSystemNotification(latest);
-              }
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden' && Notification.permission === 'granted') {
+              showSystemNotification(latest as Parameters<typeof showSystemNotification>[0]);
             }
           }
-        } catch {
-          // Non-critical
         }
       }
 
+      // Update known IDs
+      for (const n of serverNotifs) knownIdsRef.current.add(n.id);
       prevCountRef.current = newCount;
       initialFetchDone.current = true;
     } catch {
@@ -171,6 +180,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setUnreadCount(0);
       prevCountRef.current = 0;
       initialFetchDone.current = false;
+      knownIdsRef.current.clear();
       return;
     }
 
@@ -182,24 +192,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [isAuthenticated, isLoading, fetchUnreadCount]);
 
   const markAllRead = useCallback(async () => {
+    // Save all known IDs as read locally so cold-start refetch doesn't resurface them
+    markAllLocalRead(Array.from(knownIdsRef.current));
     setUnreadCount(0);
+    prevCountRef.current = 0;
+
     try {
-      const res = await fetch('/api/notifications', {
+      await fetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'mark-all-read' }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadCount(data.unreadCountRemaining ?? 0);
-        prevCountRef.current = data.unreadCountRemaining ?? 0;
-      } else {
-        await fetchUnreadCount();
-      }
     } catch {
-      await fetchUnreadCount();
+      // Server call failed but client state is correct
     }
-  }, [fetchUnreadCount]);
+  }, []);
 
   const dismissToast = useCallback(() => setActiveToast(null), []);
 

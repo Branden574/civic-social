@@ -399,10 +399,20 @@ export function markAllRead(
   }
 
   const unreadCountRemaining = store.notifications.filter(
-    (n) => n.recipientUserId === recipientUserId && !n.readAt,
+    (n) => (n.recipientUserId === recipientUserId || n.recipientUserId === CURRENT_USER) && !n.readAt,
   ).length;
 
   return { markedCount, unreadCountRemaining, serverTime };
+}
+
+export function deleteNotification(notificationId: string): boolean {
+  const store = getStore();
+  const idx = store.notifications.findIndex((n) => n.id === notificationId);
+  if (idx !== -1) {
+    store.notifications.splice(idx, 1);
+    return true;
+  }
+  return false;
 }
 
 export function markSeen(recipientUserId: string): void {
