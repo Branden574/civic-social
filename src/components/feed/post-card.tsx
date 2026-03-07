@@ -47,6 +47,7 @@ import { analyzeCivility } from '@/lib/civility';
 interface PostAuthor {
   id: string;
   displayName: string;
+  avatarUrl?: string | null;
   affiliations: string[];
   verificationLevel: string;
   civicReputation?: number;
@@ -389,9 +390,15 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
         <div className="flex items-start gap-3 mb-3">
           <Link
             href={`/profile/${encodeURIComponent(post.author.id)}`}
-            className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-sm font-semibold shrink-0 border border-border-subtle hover:border-civic/50 hover:ring-2 hover:ring-civic/20 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-full shrink-0 hover:ring-2 hover:ring-civic/20 transition-all cursor-pointer overflow-hidden"
           >
-            {post.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+            {post.author.avatarUrl ? (
+              <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-10 h-10 rounded-full object-cover border border-border-subtle" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-sm font-semibold border border-border-subtle">
+                {post.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              </div>
+            )}
           </Link>
 
           <div className="flex-1 min-w-0">
@@ -1005,9 +1012,13 @@ function ReplyCard({ reply }: { reply: PostReply }) {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-2 mb-1">
-        <div className="w-6 h-6 rounded-full bg-surface-active flex items-center justify-center text-text-muted text-[10px] font-semibold">
-          {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-        </div>
+        {reply.author.avatarUrl ? (
+          <img src={reply.author.avatarUrl} alt={reply.author.displayName} className="w-6 h-6 rounded-full object-cover" />
+        ) : (
+          <div className="w-6 h-6 rounded-full bg-surface-active flex items-center justify-center text-text-muted text-[10px] font-semibold">
+            {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+          </div>
+        )}
         <span className="text-xs font-semibold text-text-primary">{reply.author.displayName}</span>
         {verification && <verification.icon className={clsx('w-3 h-3', verification.color)} />}
         {ideology && <span className={clsx('text-[9px] font-medium px-1 py-0.5 rounded-full', ideologyStyle)}>{ideology}</span>}

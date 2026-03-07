@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getClientIp, tooManyRequests } from '@/lib/security/api-guard';
 import { readLimiter } from '@/lib/security/rate-limiter';
-import { getUserById, getUserByUsername } from '@/lib/user-registry';
+import { getUserById, getUserByUsername, getUserBannerUrl } from '@/lib/user-registry';
 
 export async function GET(
   request: NextRequest,
@@ -28,6 +28,9 @@ export async function GET(
     );
   }
 
+  // Fetch bannerUrl from the User table (not available in SearchableUser)
+  const bannerUrl = await getUserBannerUrl(user.id);
+
   // Return a public-safe profile (no email, no normalized fields)
   return NextResponse.json({
     id: user.id,
@@ -36,7 +39,7 @@ export async function GET(
     bio: user.bio,
     affiliation: user.affiliation,
     avatarUrl: user.avatarUrl,
-    bannerUrl: (user as unknown as Record<string, unknown>).bannerUrl ?? null,
+    bannerUrl,
     verificationLevel: user.verificationLevel,
     isVerified: user.isVerified,
     credibilityScore: user.credibilityScore,

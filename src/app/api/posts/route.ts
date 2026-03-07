@@ -27,6 +27,7 @@ async function getAuthorProfile(authorId: string) {
   if (u) {
     return {
       displayName: u.displayName,
+      avatarUrl: u.avatarUrl || null,
       affiliations: [u.affiliation || 'center'],
       verificationLevel: u.verificationLevel,
       civicReputation: Math.max(0, Math.min(1, u.credibilityScore / 100)),
@@ -34,6 +35,7 @@ async function getAuthorProfile(authorId: string) {
   }
   return {
     displayName: authorId === 'user-current' ? 'Branden Vincent-Walker' : 'Unknown User',
+    avatarUrl: null,
     affiliations: ['center'],
     verificationLevel: 'EMAIL_VERIFIED',
     civicReputation: 0.5,
@@ -58,6 +60,7 @@ async function serializePost(p: PersistedPost) {
     author: {
       id: p.authorId,
       displayName: author.displayName,
+      avatarUrl: author.avatarUrl,
       affiliations: author.affiliations,
       verificationLevel: author.verificationLevel,
       civicReputation: author.civicReputation,

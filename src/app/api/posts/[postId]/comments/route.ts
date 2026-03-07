@@ -31,11 +31,12 @@ async function getAuthorMeta(authorId: string) {
   if (u) {
     return {
       displayName: u.displayName,
+      avatarUrl: u.avatarUrl || null,
       affiliations: [u.affiliation || 'center'],
       verificationLevel: u.verificationLevel,
     };
   }
-  return { displayName: 'User', affiliations: [], verificationLevel: 'CITIZEN_VERIFIED' };
+  return { displayName: 'User', avatarUrl: null, affiliations: [], verificationLevel: 'CITIZEN_VERIFIED' };
 }
 
 async function serializeComment(c: { id: string; postId: string; authorId: string; parentCommentId: string | null; body: string; createdAt: string; status: string }, replyCount = 0) {
@@ -52,6 +53,7 @@ async function serializeComment(c: { id: string; postId: string; authorId: strin
     author: {
       id: c.authorId,
       displayName: author.displayName,
+      avatarUrl: author.avatarUrl,
       affiliations: author.affiliations,
       verificationLevel: author.verificationLevel,
     },

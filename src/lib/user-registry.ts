@@ -467,15 +467,22 @@ export async function searchUsers(options: {
     candidateIds = new Set(getFollowingIds(viewerId));
   }
 
+  // Get followed user IDs to boost them in results
+  const followedIds = viewerId ? new Set(getFollowingIds(viewerId)) : new Set<string>();
+
   const scored: UserSearchResult[] = [];
 
   for (const user of users) {
+    // Exclude the requesting user from mention results
+    if (viewerId && user.id === viewerId) continue;
     if (candidateIds && !candidateIds.has(user.id)) continue;
 
     const matchScore = computeMatchScore(q, user);
     if (matchScore === 0 && q) continue;
 
-    const rankScore = computeRankScore(matchScore, user);
+    // Boost followed users so they appear first
+    const followBoost = followedIds.has(user.id) ? 500000 : 0;
+    const rankScore = computeRankScore(matchScore, user) + followBoost;
     const { _displayNameNorm, _usernameNorm, email, ...safeUser } = user;
     scored.push({ user: safeUser, matchScore, rankScore });
   }
@@ -509,6 +516,21 @@ export async function getFollowersWithDetails(userId: string): Promise<Registere
   return followerIds
     .map((id) => store.users.get(id))
     .filter((u): u is RegisteredUser => u !== undefined);
+}
+
+/**
+ * Fetch bannerUrl directly from the User table (not SearchableUser).
+ * Banner images are stored on User.bannerUrl but SearchableUser has no bannerUrl column.
+ */
+export async function getUserBannerUrl(userId: string): Promise<string | null> {
+  if (isDbAvailable()) {
+    const row = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { bannerUrl: true },
+    });
+    return (row?.bannerUrl as string) ?? null;
+  }
+  return null;
 }
 
 export async function getAllUserCount(): Promise<number> {

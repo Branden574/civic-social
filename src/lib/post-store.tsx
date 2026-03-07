@@ -15,6 +15,7 @@ export interface UserPost {
   author: {
     id: string;
     displayName: string;
+    avatarUrl?: string | null;
     affiliations: string[];
     verificationLevel: string;
     civicReputation: number;
@@ -94,6 +95,7 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
       const fallbackAuthor: UserPost['author'] = {
         id: authorId,
         displayName: user?.displayName || 'You',
+        avatarUrl: user?.avatar || null,
         affiliations: [user?.onboarding?.affiliation || 'center'],
         verificationLevel: 'EMAIL_VERIFIED',
         civicReputation: 0.5,
@@ -144,6 +146,7 @@ export function PostStoreProvider({ children }: { children: ReactNode }) {
     const currentAuthor = {
       id: user?.id || 'user-current',
       displayName: user?.displayName || 'You',
+      avatarUrl: user?.avatar || null,
       affiliations: [user?.onboarding?.affiliation || 'center'],
       verificationLevel: 'EMAIL_VERIFIED',
       civicReputation: 0.5,

@@ -94,30 +94,27 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
     const mentionMatch = textBefore.match(/(?:^|[\s,.()!?])@([a-zA-Z0-9._-]{0,30})$/);
     if (mentionMatch) {
       const query = mentionMatch[1];
-      if (query.length >= 1) {
-        setMentionQuery(query);
-        setMentionIdx(0);
-      } else {
-        setMentionQuery('');
-        setMentionResults([]);
-      }
+      setMentionQuery(query); // show suggestions even on bare @ (empty string)
+      setMentionIdx(0);
     } else {
       setMentionQuery(null);
       setMentionResults([]);
     }
   }, []);
 
-  // Search users when mention query changes
+  // Search users when mention query changes (including empty string for bare @)
   useEffect(() => {
-    if (mentionQuery === null || mentionQuery.length < 1) {
+    if (mentionQuery === null) {
       setMentionResults([]);
       return;
     }
     const controller = new AbortController();
+    // Shorter debounce for snappier feel; bare @ is instant
+    const delay = mentionQuery.length === 0 ? 50 : 120;
     const timer = setTimeout(async () => {
       setMentionLoading(true);
       try {
-        const res = await fetch(`/api/search/users?q=${encodeURIComponent(mentionQuery)}&limit=5`, {
+        const res = await fetch(`/api/search/users?q=${encodeURIComponent(mentionQuery)}&limit=6&scope=global`, {
           signal: controller.signal,
         });
         if (res.ok) {
@@ -129,7 +126,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
       } finally {
         setMentionLoading(false);
       }
-    }, 200);
+    }, delay);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [mentionQuery]);
 
@@ -306,9 +303,13 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
         <div className="flex-1 overflow-y-auto p-4">
           {/* User indicator */}
           <div className="flex items-start gap-3 mb-1">
-            <div className="w-10 h-10 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold shrink-0">
-              {user?.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-            </div>
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.displayName} className="w-10 h-10 rounded-full object-cover shrink-0 border border-border-subtle" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold shrink-0">
+                {user?.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-text-primary">{user?.displayName || 'Anonymous'}</p>
               <div className="relative">
@@ -364,8 +365,11 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
             />
 
             {/* @mention autocomplete dropdown */}
-            {mentionQuery !== null && mentionResults.length > 0 && (
-              <div className="absolute left-0 right-0 mt-1 bg-bg-alt border border-border-subtle rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in">
+            {mentionQuery !== null && (mentionResults.length > 0 || mentionLoading) && (
+              <div className="absolute left-0 right-0 mt-1 bg-bg-alt border border-border-subtle rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in max-h-[280px] overflow-y-auto">
+                {mentionLoading && mentionResults.length === 0 && (
+                  <div className="px-3 py-3 text-xs text-text-muted">Searching...</div>
+                )}
                 {mentionResults.map((u, i) => (
                   <button
                     key={u.id}
@@ -376,18 +380,19 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
                       i === mentionIdx ? 'bg-civic/10' : 'hover:bg-surface-hover',
                     )}
                   >
-                    <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold shrink-0 border border-border-subtle">
-                      {u.displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
+                    {u.avatarUrl ? (
+                      <img src={u.avatarUrl} alt={u.displayName} className="w-8 h-8 rounded-full object-cover shrink-0 border border-border-subtle" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold shrink-0 border border-border-subtle">
+                        {u.displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-text-primary truncate">{u.displayName}</p>
                       <p className="text-xs text-text-muted truncate">@{u.username}</p>
                     </div>
                   </button>
                 ))}
-                {mentionLoading && (
-                  <div className="px-3 py-2 text-xs text-text-muted">Searching...</div>
-                )}
               </div>
             )}
           </div>

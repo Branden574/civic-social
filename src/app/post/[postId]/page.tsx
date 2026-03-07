@@ -52,6 +52,7 @@ interface ServerComment {
   author: {
     id: string;
     displayName: string;
+    avatarUrl?: string | null;
     affiliations: string[];
     verificationLevel: string;
   };
@@ -64,6 +65,7 @@ interface LegacyReply {
   author: {
     id: string;
     displayName: string;
+    avatarUrl?: string | null;
     affiliations: string[];
     verificationLevel: string;
   };
@@ -87,6 +89,7 @@ interface PostDetail {
   author: {
     id: string;
     displayName: string;
+    avatarUrl?: string | null;
     affiliations: string[];
     verificationLevel: string;
     civicReputation: number;
@@ -602,9 +605,15 @@ export default function ThreadPage() {
                 <div className="flex items-start gap-3 mb-4">
                   <Link
                     href={`/profile/${encodeURIComponent(displayPost.author.id)}`}
-                    className="w-12 h-12 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary font-semibold shrink-0 border border-border-subtle hover:border-civic/50 hover:ring-2 hover:ring-civic/20 transition-all"
+                    className="w-12 h-12 rounded-full shrink-0 hover:ring-2 hover:ring-civic/20 transition-all overflow-hidden"
                   >
-                    {displayPost.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                    {displayPost.author.avatarUrl ? (
+                      <img src={displayPost.author.avatarUrl} alt={displayPost.author.displayName} className="w-12 h-12 rounded-full object-cover border border-border-subtle" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary font-semibold border border-border-subtle">
+                        {displayPost.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                      </div>
+                    )}
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -778,8 +787,14 @@ export default function ThreadPage() {
                   return (
                     <div key={reply.id} className="px-4 sm:px-6 py-4 border-b border-border-subtle hover:bg-surface/30 transition-colors duration-150 animate-fade-in" style={{ animationDelay: `${(comments.length + i) * 50}ms`, animationFillMode: 'forwards', opacity: 0 }}>
                       <div className="flex items-start gap-3">
-                        <Link href={`/profile/${encodeURIComponent(reply.author.id)}`} className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle hover:border-civic/50 transition-all shrink-0">
-                          {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                        <Link href={`/profile/${encodeURIComponent(reply.author.id)}`} className="w-8 h-8 rounded-full shrink-0 hover:border-civic/50 transition-all overflow-hidden">
+                          {reply.author.avatarUrl ? (
+                            <img src={reply.author.avatarUrl} alt={reply.author.displayName} className="w-8 h-8 rounded-full object-cover border border-border-subtle" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle">
+                              {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                            </div>
+                          )}
                         </Link>
                         <div className="flex-1 min-w-0 pb-1">
                           <div className="flex items-center gap-1.5 mb-1">
@@ -954,9 +969,15 @@ function CommentCard({
       <div className="flex items-start gap-3">
         <Link
           href={`/profile/${encodeURIComponent(comment.author.id)}`}
-          className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle hover:border-civic/50 transition-all shrink-0"
+          className="w-8 h-8 rounded-full shrink-0 hover:border-civic/50 transition-all overflow-hidden"
         >
-          {comment.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+          {comment.author.avatarUrl ? (
+            <img src={comment.author.avatarUrl} alt={comment.author.displayName} className="w-8 h-8 rounded-full object-cover border border-border-subtle" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-semibold border border-border-subtle">
+              {comment.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+            </div>
+          )}
         </Link>
         <div className="flex-1 min-w-0 pb-1">
           <div className="flex items-center gap-1.5 mb-1">
