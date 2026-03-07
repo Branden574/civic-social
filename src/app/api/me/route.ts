@@ -130,21 +130,45 @@ export async function GET(request: NextRequest) {
     displayName: sessionUser.displayName,
   });
 
-  const state = getUserState(sessionUser.id);
+  let state = getUserState(sessionUser.id);
   if (!state) {
-    // User exists in session cookie but not in server store (cold start).
-    // Return defaults — client should POST /api/me to sync.
-    const defaultOnboarding: OnboardingState = {
-      isDone: false,
-      stepCompleted: '',
-      completedAt: null,
-    };
-    const defaultCompletion: ProfileCompletion = {
-      isComplete: false,
-      percent: 0,
-      missingFields: ['display_name', 'username', 'country', 'party', 'topics'],
-    };
-    return NextResponse.json(await buildResponse(sessionUser, defaultOnboarding, defaultCompletion));
+    // Cold start — check DB for persisted onboarding state and profile data
+    let dbOnboardingDone = false;
+    let dbOnboardingCompletedAt: string | null = null;
+    let dbDisplayName = sessionUser.displayName || '';
+    let dbUsername = '';
+    if (isDbAvailable()) {
+      try {
+        const dbUser = await prisma.searchableUser.findFirst({
+          where: { id: sessionUser.id },
+          select: { onboardingCompletedAt: true, displayName: true, username: true },
+        });
+        if (dbUser?.onboardingCompletedAt) {
+          dbOnboardingDone = true;
+          dbOnboardingCompletedAt = dbUser.onboardingCompletedAt.toISOString();
+        }
+        if (dbUser?.displayName) dbDisplayName = dbUser.displayName;
+        if (dbUser?.username) dbUsername = dbUser.username;
+      } catch { /* DB read failed — use defaults */ }
+    }
+
+    // Seed in-memory store from DB data so subsequent requests are fast
+    state = upsertUserState(sessionUser.id, {
+      onboarding: {
+        isDone: dbOnboardingDone,
+        stepCompleted: dbOnboardingDone ? 'done' : '',
+        completedAt: dbOnboardingCompletedAt,
+      },
+      profile: {
+        displayName: dbDisplayName,
+        username: dbUsername,
+        email: sessionUser.email,
+      },
+    });
+
+    return NextResponse.json(
+      await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
+    );
   }
 
   return NextResponse.json(
@@ -185,13 +209,31 @@ export async function POST(request: NextRequest) {
   let state = getUserState(sessionUser.id);
 
   if (!state) {
-    // Server doesn't know this user — seed from client data
-    const onboardingDone = !!clientOnboarding?.completedAt;
+    // Cold start — check DB for persisted onboarding before falling back to client
+    let dbOnboardingDone = false;
+    let dbOnboardingCompletedAt: string | null = null;
+    if (isDbAvailable()) {
+      try {
+        const dbUser = await prisma.searchableUser.findFirst({
+          where: { id: sessionUser.id },
+          select: { onboardingCompletedAt: true },
+        });
+        if (dbUser?.onboardingCompletedAt) {
+          dbOnboardingDone = true;
+          dbOnboardingCompletedAt = dbUser.onboardingCompletedAt.toISOString();
+        }
+      } catch { /* DB read failed */ }
+    }
+
+    // Determine onboarding: DB wins, then client, then default
+    const onboardingDone = dbOnboardingDone || !!clientOnboarding?.completedAt;
+    const completedAt = dbOnboardingCompletedAt || clientOnboarding?.completedAt || null;
+
     state = upsertUserState(sessionUser.id, {
       onboarding: {
         isDone: onboardingDone,
         stepCompleted: onboardingDone ? 'done' : '',
-        completedAt: clientOnboarding?.completedAt || null,
+        completedAt,
       },
       profile: {
         displayName: clientProfile?.displayName || sessionUser.displayName || '',
@@ -204,10 +246,25 @@ export async function POST(request: NextRequest) {
         avatarUrl: null,
       },
     });
+
+    // If client said done but DB didn't have it yet, persist to DB
+    if (onboardingDone && !dbOnboardingDone && isDbAvailable()) {
+      prisma.searchableUser.update({
+        where: { id: sessionUser.id },
+        data: { onboardingCompletedAt: new Date(completedAt || Date.now()) },
+      }).catch(() => {});
+    }
   } else {
     // Server has state — reconcile: if client says done but server doesn't, trust client
     if (clientOnboarding?.completedAt && !state.onboarding.isDone) {
       state = markOnboardingComplete(sessionUser.id);
+      // Persist to DB
+      if (isDbAvailable()) {
+        prisma.searchableUser.update({
+          where: { id: sessionUser.id },
+          data: { onboardingCompletedAt: new Date(clientOnboarding.completedAt) },
+        }).catch(() => {});
+      }
     }
     // Fill empty profile fields from client
     if (clientProfile) {

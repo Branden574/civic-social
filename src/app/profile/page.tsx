@@ -46,7 +46,9 @@ interface ConnectionUser {
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
-  const [profileCardDismissed, setProfileCardDismissed] = useState(false);
+  const [profileCardDismissed, setProfileCardDismissed] = useState(() => {
+    try { return localStorage.getItem('profile_card_dismissed') === 'true'; } catch { return false; }
+  });
   const [connectionsPanel, setConnectionsPanel] = useState<'followers' | 'following' | null>(null);
   const [connectionsList, setConnectionsList] = useState<ConnectionUser[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
@@ -132,15 +134,6 @@ export default function ProfilePage() {
     };
   }, [isAuthenticated, runRefresh]);
 
-  // Load dismiss state from localStorage
-  useEffect(() => {
-    try {
-      if (localStorage.getItem('profile_card_dismissed') === 'true') {
-        setProfileCardDismissed(true);
-      }
-    } catch { /* SSR or private browsing */ }
-  }, []);
-
   const dismissProfileCard = () => {
     setProfileCardDismissed(true);
     try { localStorage.setItem('profile_card_dismissed', 'true'); } catch { /* ignore */ }
@@ -216,8 +209,10 @@ export default function ProfilePage() {
   const followingCount = stats?.followingCount ?? 0;
   const postsCount = stats?.postsCount ?? postCount;
 
-  // Profile completion: show card only if NOT complete, NOT dismissed
-  const showFinishProfile = !!profileCompletion && !profileCompletion.isComplete && !onboardingDone && !profileCardDismissed;
+  // Profile completion: show card only if server confirmed profile is incomplete and user hasn't dismissed it.
+  // Don't gate on onboardingDone — that flickers on cold start. The server-side profileCompletion
+  // already accounts for onboarding state (it checks real fields from DB).
+  const showFinishProfile = !!profileCompletion && !profileCompletion.isComplete && !profileCardDismissed;
 
   return (
     <AuthGate>

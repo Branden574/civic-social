@@ -13,6 +13,7 @@ import {
 } from '@/lib/user-state-store';
 import { dbGetFollowerCount, dbGetFollowingCount } from '@/lib/social-store';
 import { getPostCount } from '@/lib/post-data-store';
+import { isDbAvailable, prisma } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -48,6 +49,18 @@ export async function POST(request: NextRequest) {
   }
 
   const state = markOnboardingComplete(sessionUser.id);
+
+  // Persist to database (survives cold starts)
+  if (isDbAvailable()) {
+    try {
+      await prisma.searchableUser.update({
+        where: { id: sessionUser.id },
+        data: { onboardingCompletedAt: new Date() },
+      });
+    } catch {
+      // DB write failed — in-memory state is still correct for this request
+    }
+  }
 
   return NextResponse.json({
     success: true,

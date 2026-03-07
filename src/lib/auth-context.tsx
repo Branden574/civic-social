@@ -662,7 +662,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isCreator = user?.role === 'creator';
   const isModerator = user?.role === 'moderator' || isAdmin;
   const isNewUser = user ? checkIsNewUserByAge(user) : false;
-  const onboardingDone = bootstrap?.onboarding?.isDone ?? !!user?.onboarding?.completedAt;
+  // Onboarding is done if:
+  // 1. Server (bootstrap) confirmed it, OR
+  // 2. Client localStorage has completedAt, OR
+  // 3. Bootstrap hasn't loaded yet but user exists — assume done to prevent carousel flicker
+  const onboardingDone = bootstrap
+    ? (bootstrap.onboarding?.isDone || !!user?.onboarding?.completedAt)
+    : (!!user?.onboarding?.completedAt || !!user); // while loading, assume done if user exists
 
   return (
     <AuthContext.Provider

@@ -78,6 +78,7 @@ model SearchableUser {
   followerCount     Int     @default(0)
   followingCount    Int     @default(0)
   postCount         Int     @default(0)
+  onboardingCompletedAt DateTime?  // persisted onboarding completion
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   displayNameNorm   String   // lowercase, for search

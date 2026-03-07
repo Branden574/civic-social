@@ -46,7 +46,13 @@ export async function POST(request: NextRequest) {
 
   if (isDbAvailable()) {
     // DB path: look up by email, verify stored hash
-    const row = await prisma.searchableUser.findFirst({ where: { email } });
+    const row = await prisma.searchableUser.findFirst({
+      where: { email },
+      select: {
+        id: true, email: true, displayName: true, username: true,
+        passwordHash: true, createdAt: true, onboardingCompletedAt: true,
+      },
+    });
 
     if (!row) {
       return NextResponse.json({ error: INVALID_CREDENTIALS }, { status: 401 });
@@ -66,6 +72,14 @@ export async function POST(request: NextRequest) {
       username: row.username,
       displayName: row.displayName,
     });
+
+    // Returning users: ensure onboarding is marked complete in DB
+    if (!row.onboardingCompletedAt) {
+      prisma.searchableUser.update({
+        where: { id: row.id },
+        data: { onboardingCompletedAt: new Date() },
+      }).catch(() => {});
+    }
 
     const userData = {
       id: row.id,
