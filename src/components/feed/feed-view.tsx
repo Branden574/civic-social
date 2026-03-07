@@ -12,6 +12,29 @@ import { OnboardingCarousel } from '@/components/onboarding/onboarding-carousel'
 import { FeedSkeleton } from '@/components/ui/skeleton';
 import { usePerf, useTrackedFetch } from '@/lib/performance';
 
+// ═══════════════════════════════════════════════════════════════
+// X/Twitter-style Timeline Architecture
+// ═══════════════════════════════════════════════════════════════
+//
+// State separation:
+//   renderedPosts   — currently visible in the feed (server + user posts)
+//   pendingNewIds   — IDs of real new posts detected by polling (not yet shown)
+//   isAtTop         — whether user is scrolled to the top of the feed
+//
+// Behavior:
+//   1. Poll /api/feed/check-new every 30s for genuinely new posts
+//   2. check-new only counts real DB-persisted posts, excludes user's own
+//   3. If new posts found: buffer their IDs in pendingNewIds
+//   4. Show floating "N new posts" pill only when pendingNewIds.length > 0
+//   5. If user is at top: pill still shown (user taps to load)
+//   6. On tap: full feed refetch, merge, reset pending count
+//   7. Optimistic/temp posts never trigger the pill
+//   8. Deduplication by post ID at every merge point
+// ═══════════════════════════════════════════════════════════════
+
+const POLL_INTERVAL_MS = 30_000; // 30 seconds
+const AT_TOP_THRESHOLD = 120; // px from top to consider "at top"
+
 interface FeedDiversity {
   affiliationDistribution: Record<string, number>;
   shannonEntropy: number;
@@ -38,7 +61,6 @@ export function FeedView() {
   const [loading, setLoading] = useState(true);
   const [showDiversity, setShowDiversity] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
-  const [hasNewPosts, setHasNewPosts] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
@@ -47,7 +69,17 @@ export function FeedView() {
   const { markFirstContent } = usePerf();
   const trackedFetch = useTrackedFetch();
   const feedTopRef = useRef<HTMLDivElement>(null);
-  const feedVersionRef = useRef(0);
+
+  // ─── Pending new posts buffer (X/Twitter-style) ──────────────
+  const [pendingNewIds, setPendingNewIds] = useState<string[]>([]);
+  const pendingCount = pendingNewIds.length;
+
+  // ─── Scroll position tracking ────────────────────────────────
+  const [isAtTop, setIsAtTop] = useState(true);
+  const isAtTopRef = useRef(true);
+
+  // Track rendered post IDs for dedup in check-new polling
+  const renderedIdsRef = useRef<Set<string>>(new Set());
 
   // Build cold-start query params if new user
   const coldStartParams = useMemo(() => {
@@ -63,6 +95,7 @@ export function FeedView() {
     return '&' + params.toString();
   }, [isNewUser, user]);
 
+  // ─── Initial feed fetch ──────────────────────────────────────
   const fetchFeed = useCallback(async () => {
     setLoading(true);
     try {
@@ -70,9 +103,8 @@ export function FeedView() {
       if (!res.ok) throw new Error(`Feed fetch failed: ${res.status}`);
       const data = await res.json();
       setFeed(data);
-      setHasNewPosts(false);
+      setPendingNewIds([]);
       setLastFetchTime(Date.now());
-      feedVersionRef.current++;
       markFirstContent();
     } catch {
       // Feed fetch failed — keep existing feed visible
@@ -85,40 +117,62 @@ export function FeedView() {
     fetchFeed();
   }, [fetchFeed]);
 
-  const [newPostCount, setNewPostCount] = useState(0);
-
-  // Poll server for genuinely new posts every 12 seconds
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (!loading && lastFetchTime > 0) {
-        try {
-          const res = await fetch(
-            `/api/feed/check-new?since=${lastFetchTime}&tab=${activeTab}&_t=${Date.now()}`,
-          );
-          if (res.ok) {
-            const data = await res.json();
-            if (data.count > 0) {
-              setHasNewPosts(true);
-              setNewPostCount(data.count);
-            }
-          }
-        } catch {
-          // Silently skip — next poll will retry
-        }
-      }
-    }, 12000);
-    return () => clearInterval(interval);
-  }, [lastFetchTime, loading, activeTab]);
-
-  // Show "jump to top" button on scroll
+  // ─── Scroll tracking ────────────────────────────────────────
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 600);
+      const y = window.scrollY;
+      const atTop = y < AT_TOP_THRESHOLD;
+      isAtTopRef.current = atTop;
+      setIsAtTop(atTop);
+      setShowScrollTop(y > 600);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // ─── Poll for genuinely new posts (30s interval) ─────────────
+  // Only counts real DB-persisted posts from OTHER users.
+  // Sends currently rendered IDs so server can exclude them.
+  useEffect(() => {
+    if (loading || lastFetchTime === 0) return;
+
+    const poll = async () => {
+      try {
+        // Send rendered IDs to exclude (up to 100 to keep URL manageable)
+        const ids = Array.from(renderedIdsRef.current).slice(0, 100);
+        const excludeParam = ids.length > 0 ? `&excludeIds=${ids.join(',')}` : '';
+        const res = await fetch(
+          `/api/feed/check-new?since=${lastFetchTime}${excludeParam}&_t=${Date.now()}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.count > 0 && data.postIds?.length > 0) {
+          // Filter out any IDs we already have rendered or pending
+          const currentRendered = renderedIdsRef.current;
+          const genuinelyNew = (data.postIds as string[]).filter(
+            (id: string) => !currentRendered.has(id),
+          );
+
+          if (genuinelyNew.length > 0) {
+            setPendingNewIds((prev) => {
+              // Deduplicate with already-pending IDs
+              const existing = new Set(prev);
+              const fresh = genuinelyNew.filter((id: string) => !existing.has(id));
+              return fresh.length > 0 ? [...prev, ...fresh] : prev;
+            });
+          }
+        }
+      } catch {
+        // Silently skip — next poll will retry
+      }
+    };
+
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [lastFetchTime, loading]);
+
+  // ─── Feed refresh (used by pull-to-refresh, manual, and load-new) ──
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
@@ -126,9 +180,8 @@ export function FeedView() {
       if (!res.ok) throw new Error(`Refresh failed: ${res.status}`);
       const data = await res.json();
       setFeed(data);
-      setHasNewPosts(false);
+      setPendingNewIds([]);
       setLastFetchTime(Date.now());
-      feedVersionRef.current++;
     } catch {
       // Refresh failed — keep existing feed visible
     } finally {
@@ -136,40 +189,40 @@ export function FeedView() {
     }
   }, [activeTab, sortMode, coldStartParams, trackedFetch]);
 
-  const handleManualRefresh = useCallback(async () => {
-    await handleRefresh();
-  }, [handleRefresh]);
-
   const scrollToTop = () => {
     feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleLoadNewPosts = () => {
-    setHasNewPosts(false);
-    setNewPostCount(0);
-    handleRefresh();
+  // ─── "Load new posts" handler (user taps the pill) ──────────
+  const handleLoadNewPosts = useCallback(() => {
+    // Scroll to top first, then refetch
     scrollToTop();
-  };
+    // Small delay so the scroll starts before feed replaces
+    setTimeout(() => {
+      handleRefresh();
+    }, 150);
+  }, [handleRefresh]);
 
-  // Called when a new post is created via ComposeModal
+  // ─── Post creation handler (optimistic insert) ──────────────
   const handlePostCreated = useCallback(() => {
-    setHasNewPosts(false);
+    setPendingNewIds([]);
     refreshMe();
-    // Refresh the feed so the server-ranked version of the new post
-    // appears and deduplication against userPosts works correctly.
-    fetchFeed();
+    // Refetch feed so server-ranked version appears and dedup works
+    handleRefresh();
     setTimeout(() => {
       feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  }, [refreshMe, fetchFeed]);
+    }, 200);
+  }, [refreshMe, handleRefresh]);
 
-  // Called when a post is deleted — remove from client + refetch server truth
+  // ─── Post deletion handler ──────────────────────────────────
   const handlePostDeleted = useCallback(async (postId: string) => {
     removePost(postId);
     setFeed((prev) => prev ? {
       ...prev,
       posts: prev.posts.filter((p) => p.id !== postId),
     } : prev);
+    // Also remove from pending if it was there
+    setPendingNewIds((prev) => prev.filter((id) => id !== postId));
     refreshMe();
     try {
       const res = await trackedFetch(`/api/feed?tab=${activeTab}&sort=${sortMode}${coldStartParams}&_t=${Date.now()}`);
@@ -177,43 +230,56 @@ export function FeedView() {
         const data = await res.json();
         setFeed(data);
         setLastFetchTime(Date.now());
-        feedVersionRef.current++;
       }
     } catch {
       // If refetch fails, the optimistic removal still holds
     }
   }, [removePost, activeTab, sortMode, coldStartParams, trackedFetch, refreshMe]);
 
-  // ─── Merge user-created posts into feed ────────────────────
+  // ─── Merge user-created posts into feed (with dedup) ────────
   const mergedPosts: PostData[] = useMemo(() => {
     const serverPosts = feed?.posts ?? [];
     const myPosts = getPostsForFeed(activeTab);
 
-    if (myPosts.length === 0) return serverPosts;
-
     // Convert UserPost to PostData shape
-    const userPostsAsPostData: PostData[] = myPosts.map((p: UserPost) => ({
-      id: p.id,
-      content: p.content,
-      createdAt: p.createdAt,
-      topics: p.topics,
-      author: p.author,
-      thread: p.thread,
-      sources: p.sources,
-      reactions: p.reactions,
-      algorithm: p.algorithm,
-      replies: p.replies as PostData['replies'],
-      _optimistic: p._optimistic,
-      _failed: p._failed,
-    }));
+    const userPostsAsPostData: PostData[] = myPosts
+      .filter((p) => !p._failed)
+      .map((p: UserPost) => ({
+        id: p.id,
+        content: p.content,
+        createdAt: p.createdAt,
+        topics: p.topics,
+        author: p.author,
+        thread: p.thread,
+        sources: p.sources,
+        reactions: p.reactions,
+        algorithm: p.algorithm,
+        replies: p.replies as PostData['replies'],
+        _optimistic: p._optimistic,
+        _failed: p._failed,
+      }));
 
-    // Deduplicate (in case server returns the same post)
+    // Deduplicate: server posts win over optimistic (they have real data)
     const serverIds = new Set(serverPosts.map((p) => p.id));
     const uniqueUserPosts = userPostsAsPostData.filter((p) => !serverIds.has(p.id));
 
-    // User posts on top, then server posts
-    return [...uniqueUserPosts, ...serverPosts];
+    // Final merged list: user's optimistic posts on top, then server posts
+    const merged = [...uniqueUserPosts, ...serverPosts];
+
+    // Update rendered IDs ref for poll dedup (only non-optimistic)
+    const ids = new Set<string>();
+    for (const p of merged) {
+      if (!p._optimistic) ids.add(p.id);
+    }
+    renderedIdsRef.current = ids;
+
+    return merged;
   }, [feed?.posts, getPostsForFeed, activeTab, userPosts]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Should we show the new posts pill? ─────────────────────
+  // Only when there are genuinely new posts buffered and the feed
+  // is not in its initial loading state.
+  const showNewPostsPill = pendingCount > 0 && !loading && !isRefreshing;
 
   return (
     <div className="max-w-2xl mx-auto relative">
@@ -257,7 +323,7 @@ export function FeedView() {
 
             {/* Manual refresh button */}
             <button
-              onClick={handleManualRefresh}
+              onClick={handleRefresh}
               disabled={isRefreshing}
               className="p-1.5 rounded-lg text-text-muted hover:text-civic-light hover:bg-surface-hover transition-colors disabled:opacity-50"
               title="Refresh feed"
@@ -265,7 +331,6 @@ export function FeedView() {
               <RefreshCw className={clsx('w-4 h-4', isRefreshing && 'animate-spin')} />
             </button>
 
-            {/* Removed: theme toggle moved to Settings > Appearance */}
             <button
               onClick={() => setShowDiversity(!showDiversity)}
               className={clsx(
@@ -338,17 +403,27 @@ export function FeedView() {
       {/* ── Onboarding Carousel (shown until dismissed / completed) ── */}
       {!onboardingDone && <OnboardingCarousel onComplete={completeOnboarding} />}
 
-      {/* ── New Posts Banner ── */}
-      {hasNewPosts && (
-        <button
-          onClick={handleLoadNewPosts}
-          className="sticky top-[105px] z-30 w-full flex items-center justify-center gap-2 py-2.5 bg-civic text-white text-sm font-semibold hover:bg-civic-dark transition-all animate-slide-down cursor-pointer"
-        >
-          <ArrowUp className="w-4 h-4" />
-          {newPostCount > 1
-            ? `${newPostCount} new posts available — tap to load`
-            : 'New post available — tap to load'}
-        </button>
+      {/* ── New Posts Pill (X/Twitter-style) ── */}
+      {showNewPostsPill && (
+        <div className="sticky top-[105px] z-30 flex justify-center pointer-events-none">
+          <button
+            onClick={handleLoadNewPosts}
+            className={clsx(
+              'pointer-events-auto',
+              'flex items-center gap-2 px-5 py-2.5 mt-2',
+              'bg-civic text-white text-sm font-semibold',
+              'rounded-full shadow-lg',
+              'hover:bg-civic-dark active:scale-95',
+              'transition-all duration-200',
+              'animate-slide-down cursor-pointer',
+            )}
+          >
+            <ArrowUp className="w-4 h-4" />
+            {pendingCount === 1
+              ? 'New post available'
+              : `${pendingCount} new posts`}
+          </button>
+        </div>
       )}
 
       {/* ── Feed Diversity Panel ── */}
@@ -444,8 +519,8 @@ export function FeedView() {
         </PullToRefresh>
       )}
 
-      {/* ── Jump to Latest / Scroll to Top ── */}
-      {showScrollTop && (
+      {/* ── Jump to Top button (only when scrolled down) ── */}
+      {showScrollTop && !showNewPostsPill && (
         <button
           onClick={scrollToTop}
           className="fixed bottom-36 right-4 lg:bottom-8 lg:right-8 z-50 w-10 h-10 bg-surface-elevated border border-border-subtle text-text-secondary rounded-full flex items-center justify-center shadow-lg hover:bg-surface-hover hover:text-civic-light transition-all active:scale-95"
