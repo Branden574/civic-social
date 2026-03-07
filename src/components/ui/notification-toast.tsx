@@ -81,9 +81,12 @@ export function NotificationToast({
         visible && !exiting ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4',
       )}
     >
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={handleClick}
-        className="w-full flex items-start gap-3 p-3.5 bg-surface-elevated border border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl text-left hover:bg-surface-hover transition-colors active:scale-[0.98]"
+        onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
+        className="w-full flex items-start gap-3 p-3.5 bg-surface-elevated border border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl text-left hover:bg-surface-hover transition-colors active:scale-[0.98] cursor-pointer"
       >
         <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', config.color, 'bg-surface-active')}>
           <Icon className="w-4.5 h-4.5" />
@@ -104,7 +107,7 @@ export function NotificationToast({
         >
           <X className="w-4 h-4" />
         </button>
-      </button>
+      </div>
     </div>
   );
 }

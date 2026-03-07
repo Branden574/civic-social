@@ -487,12 +487,23 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
 
         {/* ── Content (clickable → thread view) ── */}
         <div className="ml-[52px]">
-          <Link
-            href={`/post/${encodeURIComponent(post.id)}`}
+          <div
+            role="link"
+            tabIndex={0}
+            onClick={(e) => {
+              // Don't navigate if user clicked a link inside (e.g. @mention)
+              if ((e.target as HTMLElement).closest('a')) return;
+              window.location.href = `/post/${encodeURIComponent(post.id)}`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !(e.target as HTMLElement).closest('a')) {
+                window.location.href = `/post/${encodeURIComponent(post.id)}`;
+              }
+            }}
             className="block text-[14.5px] leading-relaxed text-text-primary whitespace-pre-line hover:text-text-primary/90 transition-colors cursor-pointer"
           >
             <MentionText text={displayContent} />
-          </Link>
+          </div>
           {isLong && (
             <button
               onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
