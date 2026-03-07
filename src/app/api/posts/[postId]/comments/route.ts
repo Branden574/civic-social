@@ -10,7 +10,7 @@ import {
   canComment,
   canCommentMockPost,
 } from '@/lib/post-data-store';
-import { isFollowing } from '@/lib/social-store';
+import { isFollowing, createNotification } from '@/lib/social-store';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest, internalError } from '@/lib/security/api-guard';
 import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, clampInt, isValidId } from '@/lib/security/sanitize';
@@ -163,6 +163,43 @@ export async function POST(
     ]);
 
     secureLog.info('POST comment', `comment=${comment.id} post=${postId} author=${userId}`);
+
+    // Create notification for the post author (don't notify yourself)
+    const postAuthorId = persistedPost?.authorId
+      || mockCandidates.find((c) => c.post.id === postId)?.author.id;
+    if (postAuthorId && postAuthorId !== userId) {
+      const authorMeta = await getAuthorMeta(userId);
+      createNotification({
+        recipientUserId: postAuthorId,
+        actorUserId: userId,
+        type: 'reply',
+        entityType: 'post',
+        entityId: postId,
+        metadata: {
+          actorName: authorMeta.displayName,
+          preview: sanitizedBody.slice(0, 100),
+        },
+      });
+    }
+
+    // If replying to a comment, also notify the parent comment author
+    if (parentCommentId) {
+      const parentComment = await getCommentById(parentCommentId);
+      if (parentComment && parentComment.authorId !== userId && parentComment.authorId !== postAuthorId) {
+        const authorMeta = await getAuthorMeta(userId);
+        createNotification({
+          recipientUserId: parentComment.authorId,
+          actorUserId: userId,
+          type: 'reply',
+          entityType: 'comment',
+          entityId: postId,
+          metadata: {
+            actorName: authorMeta.displayName,
+            preview: sanitizedBody.slice(0, 100),
+          },
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

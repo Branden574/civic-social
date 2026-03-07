@@ -16,6 +16,8 @@ import {
   hasFeedbackForPost,
   type ReactionType,
 } from '@/lib/reaction-store';
+import { createNotification } from '@/lib/social-store';
+import { getPostById } from '@/lib/post-data-store';
 
 const VALID_REACTIONS: ReactionType[] = ['agree', 'disagree', 'insightful', 'nuance'];
 
@@ -90,6 +92,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const result = toggleReaction(user.id, postId, reaction as ReactionType);
   const deltas = getReactionDeltas(postId);
   const hasFeedback = hasFeedbackForPost(user.id, postId);
+
+  // Notify post author on new reaction (not on un-toggle)
+  if (result) {
+    const post = await getPostById(postId);
+    if (post && post.authorId !== user.id) {
+      createNotification({
+        recipientUserId: post.authorId,
+        actorUserId: user.id,
+        type: 'like',
+        entityType: 'post',
+        entityId: postId,
+        metadata: {
+          actorName: user.displayName,
+        },
+      });
+    }
+  }
 
   return NextResponse.json({
     viewer_reaction: result?.reaction ?? null,

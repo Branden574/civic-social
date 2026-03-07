@@ -342,7 +342,9 @@ export function getNotifications(
   options?: { limit?: number; offset?: number; unreadOnly?: boolean },
 ): { notifications: Notification[]; total: number; unreadCount: number } {
   const store = getStore();
-  let all = store.notifications.filter((n) => n.recipientUserId === recipientUserId);
+  let all = store.notifications.filter(
+    (n) => n.recipientUserId === recipientUserId || n.recipientUserId === CURRENT_USER,
+  );
 
   const unreadCount = all.filter((n) => !n.readAt).length;
   const total = all.length;
@@ -363,7 +365,7 @@ export function getNotifications(
 
 export function getUnreadCount(recipientUserId: string): number {
   return getStore().notifications.filter(
-    (n) => n.recipientUserId === recipientUserId && !n.readAt,
+    (n) => (n.recipientUserId === recipientUserId || n.recipientUserId === CURRENT_USER) && !n.readAt,
   ).length;
 }
 
@@ -387,7 +389,7 @@ export function markAllRead(
 
   for (const n of store.notifications) {
     if (
-      n.recipientUserId === recipientUserId &&
+      (n.recipientUserId === recipientUserId || n.recipientUserId === CURRENT_USER) &&
       !n.readAt &&
       new Date(n.createdAt).getTime() <= cutoff
     ) {

@@ -12,11 +12,15 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { SplashScreen } from '@/components/ui/splash-screen';
+import { NotificationToast } from '@/components/ui/notification-toast';
+import { NotificationPermissionPrompt } from '@/components/ui/notification-permission-prompt';
 import { PerfProvider, PerfPanel } from '@/lib/performance';
 import { useAuth } from '@/lib/auth-context';
+import { useNotifications } from '@/lib/notification-context';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
+  const { activeToast, dismissToast } = useNotifications();
 
   return (
     <PerfProvider>
@@ -24,6 +28,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </SplashScreen>
       <PerfPanel />
+
+      {/* In-app notification toast (foreground alerts) */}
+      {activeToast && (
+        <NotificationToast notification={activeToast} onDismiss={dismissToast} />
+      )}
+
+      {/* Notification permission pre-prompt */}
+      <NotificationPermissionPrompt authenticated={isAuthenticated} />
     </PerfProvider>
   );
 }

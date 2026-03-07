@@ -9,6 +9,7 @@ import {
   dbIsFollowing,
   dbGetFollowerCount,
   dbGetFollowingCount,
+  createNotification,
 } from '@/lib/social-store';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { socialLimiter, readLimiter } from '@/lib/security/rate-limiter';
@@ -98,6 +99,18 @@ export async function POST(request: NextRequest) {
   switch (action) {
     case 'follow': {
       await dbFollow(currentUser, targetUserId);
+      // Create follow notification for the target user
+      createNotification({
+        recipientUserId: targetUserId,
+        actorUserId: currentUser,
+        type: 'follow',
+        entityType: 'user',
+        entityId: targetUserId,
+        metadata: {
+          actorName: user.displayName,
+          actorUsername: '',
+        },
+      });
       return NextResponse.json({
         success: true,
         isFollowing: true,

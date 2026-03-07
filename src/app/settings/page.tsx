@@ -1,11 +1,12 @@
 'use client';
 
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
-import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, X, Plus, Check, Camera, Loader2, ImageIcon } from 'lucide-react';
+import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, Volume2, X, Plus, Check, Camera, Loader2, ImageIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { useState, useRef, useCallback } from 'react';
 import { useTheme } from '@/lib/theme-context';
 import { useAuth } from '@/lib/auth-context';
+import { useNotifications } from '@/lib/notification-context';
 import { AuthGate } from '@/components/auth/auth-gate';
 
 export default function SettingsPage() {
@@ -53,6 +54,7 @@ export default function SettingsPage() {
 
             {/* Notifications */}
             <SettingsSection icon={Bell} title="Notifications">
+              <NotificationSoundSetting />
               <ToggleSetting
                 label="Cross-party replies"
                 description="When someone from a different perspective replies to you"
@@ -417,6 +419,39 @@ function ProfileMediaSection() {
           {error}
         </div>
       )}
+    </div>
+  );
+}
+
+function NotificationSoundSetting() {
+  const { soundEnabled, setSoundEnabled } = useNotifications();
+
+  return (
+    <div className="flex items-center justify-between py-3">
+      <div className="flex items-center gap-3">
+        <div className={clsx(
+          'w-7 h-7 rounded-lg flex items-center justify-center',
+          soundEnabled ? 'bg-civic/10 text-civic-light' : 'bg-surface-active text-text-muted',
+        )}>
+          {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+        </div>
+        <div>
+          <p className="text-sm text-text-primary font-medium">Notification sound</p>
+          <p className="text-xs text-text-muted">Play a chime when new notifications arrive</p>
+        </div>
+      </div>
+      <button
+        onClick={() => setSoundEnabled(!soundEnabled)}
+        className={clsx(
+          'w-10 h-5 rounded-full transition-colors relative shrink-0',
+          soundEnabled ? 'bg-civic' : 'bg-surface-active',
+        )}
+      >
+        <div
+          className="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all"
+          style={{ left: soundEnabled ? '22px' : '2px' }}
+        />
+      </button>
     </div>
   );
 }
