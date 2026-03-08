@@ -27,6 +27,9 @@ import {
   X,
   MessageSquare,
   Mic,
+  Camera,
+  CameraOff,
+  Video,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -513,6 +516,18 @@ export default function DebateDetailPage() {
             </div>
           )}
 
+          {/* ── Live Video Grid ── */}
+          {debate.status !== 'completed' && debate.participants.length > 0 && (
+            <DebateVideoGrid
+              participants={debate.participants}
+              sideA={debate.sideA}
+              sideB={debate.sideB}
+              currentUserId={currentUserId}
+              creatorId={debate.creatorId}
+              debateStatus={debate.status}
+            />
+          )}
+
           {/* ── Sides & Participants ── */}
           <div className="px-4 sm:px-6 py-5">
             <div className="grid grid-cols-[1fr_auto_1fr] gap-3">
@@ -727,6 +742,268 @@ export default function DebateDetailPage() {
         )}
       </main>
       <MobileNav />
+    </div>
+  );
+}
+
+// ─── Debate Video Grid ──────────────────────────────────────────
+// Shows live camera feeds for debaters as they join and enable cameras.
+// Slots only appear when a debater joins — empty by default.
+// Smooth scale + fade animation when cameras turn on.
+
+interface VideoGridProps {
+  participants: Participant[];
+  sideA: DebateSide;
+  sideB: DebateSide;
+  currentUserId: string;
+  creatorId: string;
+  debateStatus: 'waiting' | 'live' | 'paused' | 'completed';
+}
+
+function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId, debateStatus }: VideoGridProps) {
+  const [cameraOn, setCameraOn] = useState(false);
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const sideAParticipants = participants.filter((p) => p.side === 'A');
+  const sideBParticipants = participants.filter((p) => p.side === 'B');
+  const isParticipant = participants.some((p) => p.userId === currentUserId);
+
+  const toggleCamera = useCallback(async () => {
+    setCameraError(null);
+    if (cameraOn && videoStream) {
+      videoStream.getVideoTracks().forEach((t) => t.stop());
+      setVideoStream(null);
+      setCameraOn(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+        });
+        setVideoStream(stream);
+        setCameraOn(true);
+      } catch (err) {
+        const name = (err as DOMException)?.name;
+        if (name === 'NotAllowedError') setCameraError('Camera access denied. Check browser settings.');
+        else if (name === 'NotFoundError') setCameraError('No camera found on this device.');
+        else setCameraError('Could not access camera.');
+      }
+    }
+  }, [cameraOn, videoStream]);
+
+  // Wire video element
+  useEffect(() => {
+    if (videoRef.current && videoStream) {
+      videoRef.current.srcObject = videoStream;
+    }
+  }, [videoStream]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      videoStream?.getVideoTracks().forEach((t) => t.stop());
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (participants.length === 0) return null;
+
+  return (
+    <div className="px-4 sm:px-6 py-4 border-b border-border-subtle">
+      {/* Header with camera toggle */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Video className="w-4 h-4 text-civic-light" />
+          <span className="text-xs font-semibold text-text-primary">Live Cameras</span>
+          <span className="text-[10px] text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full">
+            {participants.length}/8 debaters
+          </span>
+        </div>
+        {isParticipant && debateStatus !== 'completed' && (
+          <button
+            onClick={toggleCamera}
+            className={clsx(
+              'flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-lg transition-all duration-300',
+              cameraOn
+                ? 'bg-civic/15 text-civic-light hover:bg-civic/25 shadow-[0_0_8px_rgba(59,130,246,0.15)]'
+                : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover',
+            )}
+          >
+            {cameraOn ? <Camera className="w-3.5 h-3.5" /> : <CameraOff className="w-3.5 h-3.5" />}
+            {cameraOn ? 'Camera On' : 'Turn On Camera'}
+          </button>
+        )}
+      </div>
+
+      {cameraError && (
+        <p className="text-[11px] text-danger-light mb-2">{cameraError}</p>
+      )}
+
+      {/* Two-column layout: Side A | Side B */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Side A */}
+        <div>
+          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2 text-center">
+            {sideA.label}
+          </p>
+          <div className={clsx(
+            'grid gap-2',
+            sideAParticipants.length > 1 ? 'grid-cols-2' : 'grid-cols-1',
+          )}>
+            {sideAParticipants.slice(0, 4).map((p) => (
+              <VideoSlot
+                key={p.userId}
+                participant={p}
+                side="A"
+                isMe={p.userId === currentUserId}
+                isHost={p.userId === creatorId}
+                cameraOn={p.userId === currentUserId && cameraOn}
+                videoStream={p.userId === currentUserId ? videoStream : null}
+                videoRef={p.userId === currentUserId ? videoRef : undefined}
+              />
+            ))}
+          </div>
+          {sideAParticipants.length === 0 && (
+            <p className="text-xs text-text-muted/40 text-center py-6">No debaters yet</p>
+          )}
+        </div>
+
+        {/* Side B */}
+        <div>
+          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2 text-center">
+            {sideB.label}
+          </p>
+          <div className={clsx(
+            'grid gap-2',
+            sideBParticipants.length > 1 ? 'grid-cols-2' : 'grid-cols-1',
+          )}>
+            {sideBParticipants.slice(0, 4).map((p) => (
+              <VideoSlot
+                key={p.userId}
+                participant={p}
+                side="B"
+                isMe={p.userId === currentUserId}
+                isHost={p.userId === creatorId}
+                cameraOn={p.userId === currentUserId && cameraOn}
+                videoStream={p.userId === currentUserId ? videoStream : null}
+                videoRef={p.userId === currentUserId ? videoRef : undefined}
+              />
+            ))}
+          </div>
+          {sideBParticipants.length === 0 && (
+            <p className="text-xs text-text-muted/40 text-center py-6">No debaters yet</p>
+          )}
+        </div>
+      </div>
+
+      {!isParticipant && participants.length > 0 && (
+        <p className="text-[9px] text-text-muted text-center mt-3">
+          Join a side to enable your camera.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Individual video slot with enter/camera animations ─────────
+
+function VideoSlot({
+  participant,
+  side,
+  isMe,
+  isHost,
+  cameraOn,
+  videoStream,
+  videoRef,
+}: {
+  participant: Participant;
+  side: 'A' | 'B';
+  isMe: boolean;
+  isHost: boolean;
+  cameraOn: boolean;
+  videoStream: MediaStream | null;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+}) {
+  const [entered, setEntered] = useState(false);
+  const [cameraRevealed, setCameraRevealed] = useState(false);
+
+  const initials = participant.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2);
+
+  // Slot entrance animation
+  useEffect(() => {
+    const t = setTimeout(() => setEntered(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Camera reveal animation (slight delay for smoothness)
+  useEffect(() => {
+    if (cameraOn && videoStream) {
+      const t = setTimeout(() => setCameraRevealed(true), 100);
+      return () => clearTimeout(t);
+    } else {
+      setCameraRevealed(false);
+    }
+  }, [cameraOn, videoStream]);
+
+  return (
+    <div
+      className={clsx(
+        'relative aspect-video rounded-xl overflow-hidden transition-all duration-500 ease-out',
+        entered ? 'opacity-100 scale-100' : 'opacity-0 scale-90',
+        cameraRevealed
+          ? 'border-2 border-civic/40 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+          : 'border-2 border-border-subtle',
+      )}
+    >
+      {/* Camera feed — fades in smoothly */}
+      {cameraOn && videoStream ? (
+        <div className={clsx(
+          'absolute inset-0 transition-all duration-700 ease-out',
+          cameraRevealed ? 'opacity-100 scale-100' : 'opacity-0 scale-105',
+        )}>
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : null}
+
+      {/* Placeholder (initials) — visible when camera is off, fades out when camera turns on */}
+      <div className={clsx(
+        'absolute inset-0 flex flex-col items-center justify-center bg-surface-elevated transition-all duration-500',
+        cameraRevealed ? 'opacity-0 scale-95' : 'opacity-100 scale-100',
+      )}>
+        <div className={clsx(
+          'w-14 h-14 rounded-2xl flex items-center justify-center text-base font-bold mb-2 transition-all duration-300',
+          side === 'A' ? 'bg-ideology-center-left/15 text-ideology-center-left' : 'bg-ideology-center-right/15 text-ideology-center-right',
+        )}>
+          {initials}
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-text-muted">
+          <CameraOff className="w-3 h-3" />
+          Camera off
+        </div>
+      </div>
+
+      {/* Name overlay — always visible */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-2.5 py-2 z-10">
+        <div className="flex items-center gap-1.5">
+          {isHost && <Crown className="w-3 h-3 text-warning shrink-0" />}
+          <span className="text-[11px] font-medium text-white truncate">
+            {isMe ? 'You' : participant.displayName}
+          </span>
+          {cameraRevealed && (
+            <span className="ml-auto flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-positive animate-pulse" />
+              <span className="text-[9px] text-positive-light font-medium">LIVE</span>
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

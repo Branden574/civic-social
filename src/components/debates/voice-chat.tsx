@@ -796,23 +796,6 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
             </div>
           )}
 
-          {/* ── Local Camera Preview ── */}
-          {cameraEnabled && localVideoStream && (
-            <div className="pt-2 border-t border-border-subtle">
-              <p className="text-[10px] text-text-muted mb-1.5 font-medium">Camera Preview</p>
-              <div className="relative w-32 h-24 rounded-lg overflow-hidden border border-border-subtle bg-black">
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-                <span className="absolute bottom-1 left-1 text-[9px] text-white bg-black/60 px-1 rounded">You</span>
-              </div>
-            </div>
-          )}
-
           {/* ── Controls ── */}
           <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
             {!joined && !isDebater ? (
