@@ -551,17 +551,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setUser(null);
     setBootstrap(null);
     clearPersistedUser();
     clearLoginAttempts();
     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
     try { localStorage.removeItem('profile_card_dismissed'); } catch { /* noop */ }
-    // Ask server to clear the HttpOnly session cookie (client JS cannot do this)
-    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    // Clear the HttpOnly session cookie BEFORE redirecting — otherwise the
+    // page reload recovers the session from the still-valid cookie.
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch { /* noop — redirect anyway */ }
     if (typeof window !== 'undefined') {
-      window.location.href = '/';
+      window.location.href = '/login';
     }
   }, []);
 
