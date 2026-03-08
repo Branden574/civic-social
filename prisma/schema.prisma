@@ -78,6 +78,8 @@ model SearchableUser {
   followerCount     Int     @default(0)
   followingCount    Int     @default(0)
   postCount         Int     @default(0)
+  role              String   @default("user")   // user | moderator | admin | creator
+  suspendedUntil    DateTime?
   onboardingCompletedAt DateTime?  // persisted onboarding completion
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -107,6 +109,7 @@ model StoredPost {
   visibility     String    @default("public")
   commentPolicy  String    @default("everyone")
   isThreadLocked Boolean   @default(false)
+  postType       String    @default("OPEN_DISCUSSION")
 
   comments       StoredComment[]
 
@@ -449,5 +452,44 @@ model ContactSubmission {
   createdAt DateTime @default(now())
 
   @@index([email])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// ADMIN AUDIT LOG
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  action      String   // ban_user, unban_user, suspend_user, resolve_report, etc.
+  targetType  String   // user, post, report
+  targetId    String
+  details     String?  // JSON blob
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// FEEDBACK / BUG REPORTS
+// ─────────────────────────────────────────────
+
+model FeedbackSubmission {
+  id          String   @id @default(cuid())
+  userId      String?
+  type        String   // bug | feature | general
+  title       String
+  description String
+  status      String   @default("open")    // open | in_progress | resolved | closed
+  priority    String   @default("medium")  // low | medium | high | critical
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
   @@index([createdAt])
 }

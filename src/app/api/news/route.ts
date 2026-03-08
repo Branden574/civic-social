@@ -18,10 +18,12 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '30', 10), 100);
   const refresh = searchParams.get('refresh') === 'true';
 
-  // Optionally trigger a background refresh from RSS feeds
+  // On refresh, await the RSS fetch so real articles are available in the response.
+  // The store has a 15-min cooldown so this won't spam external feeds.
   if (refresh) {
-    // Don't await — let it happen in background so the response is fast
-    refreshNews().catch(() => { /* ignore fetch errors */ });
+    try {
+      await refreshNews();
+    } catch { /* ignore fetch errors — will fall back to existing articles */ }
   }
 
   const articles = topic ? getNewsByTopic(topic, limit) : getAllNews(limit);

@@ -222,6 +222,15 @@ function parseRssXml(xml: string, source: SourceConfig): NewsArticle[] {
 
     if (!title || !link) continue;
 
+    // Validate URL — skip articles with malformed or non-HTTP URLs
+    const trimmedLink = link.trim();
+    try {
+      const parsed = new URL(trimmedLink);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') continue;
+    } catch {
+      continue;
+    }
+
     // Clean HTML from description
     const cleanSummary = (description || '')
       .replace(/<[^>]*>/g, '')
@@ -237,10 +246,10 @@ function parseRssXml(xml: string, source: SourceConfig): NewsArticle[] {
     const detectedTopics = detectTopics(title + ' ' + cleanSummary, source.topics);
 
     articles.push({
-      id: `news-${Buffer.from(link).toString('base64url').slice(0, 16)}-${Date.now().toString(36).slice(-4)}`,
+      id: `news-${Buffer.from(trimmedLink).toString('base64url').slice(0, 16)}-${Date.now().toString(36).slice(-4)}`,
       title: title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim(),
       summary: cleanSummary || `Read the full article from ${source.name}.`,
-      url: link.trim(),
+      url: trimmedLink,
       source: source.name,
       sourceDomain: source.domain,
       publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),

@@ -28,6 +28,15 @@ interface ComposeModalProps {
   onPostCreated?: () => void;
 }
 
+const POST_TYPE_OPTIONS = [
+  { value: 'OPEN_DISCUSSION', label: 'Discussion' },
+  { value: 'POLICY_PROPOSAL', label: 'Policy Proposal' },
+  { value: 'NEWS_DISCUSSION', label: 'News Discussion' },
+  { value: 'STRUCTURED_DEBATE', label: 'Debate' },
+  { value: 'CROSS_PARTY_ROUNDTABLE', label: 'Cross-Party Roundtable' },
+  { value: 'EXPERT_AMA', label: 'Expert Q&A' },
+];
+
 const SUGGESTED_TOPICS = [
   'healthcare', 'economy', 'climate', 'education', 'immigration',
   'criminal-justice', 'technology', 'defense', 'infrastructure',
@@ -49,6 +58,8 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
   const [showCivilityCheck, setShowCivilityCheck] = useState(false);
   const [posting, setPosting] = useState(false);
   const [commentPolicy, setCommentPolicy] = useState<'everyone' | 'followers_only' | 'off'>('everyone');
+  const [postType, setPostType] = useState('OPEN_DISCUSSION');
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showReplyMenu, setShowReplyMenu] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -222,6 +233,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
           topics: allTopics,
           articleUrl: safeArticleUrl,
           comment_policy: commentPolicy,
+          postType,
         }),
       });
       if (!res.ok) {
@@ -342,6 +354,35 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
                         <div>
                           <p className={clsx('text-xs font-medium', commentPolicy === opt.value ? 'text-civic-light' : 'text-text-primary')}>{opt.label}</p>
                           <p className="text-[10px] text-text-muted">{opt.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Post type selector */}
+              <div className="relative mt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowTypeMenu(!showTypeMenu)}
+                  className="flex items-center gap-1 text-[11px] text-text-muted hover:text-civic-light transition-colors"
+                >
+                  {POST_TYPE_OPTIONS.find((o) => o.value === postType)?.label || 'Discussion'}
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                {showTypeMenu && (
+                  <div className="absolute top-full left-0 mt-1 w-52 bg-bg-alt border border-border-subtle rounded-lg shadow-lg z-50 py-1 animate-fade-in">
+                    {POST_TYPE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { setPostType(opt.value); setShowTypeMenu(false); }}
+                        className={clsx(
+                          'w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover transition-colors',
+                          postType === opt.value && 'bg-civic/5',
+                        )}
+                      >
+                        <div>
+                          <p className={clsx('text-xs font-medium', postType === opt.value ? 'text-civic-light' : 'text-text-primary')}>{opt.label}</p>
                         </div>
                       </button>
                     ))}

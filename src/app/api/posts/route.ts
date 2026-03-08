@@ -91,6 +91,7 @@ async function serializePost(p: PersistedPost) {
     },
     replies: [],
     status: p.status,
+    postType: p.postType,
   };
 }
 
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
     if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
     const body = await request.json();
-    const { content, topics, articleUrl, comment_policy } = body;
+    const { content, topics, articleUrl, comment_policy, postType } = body;
 
     // Validate and sanitize content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -179,6 +180,10 @@ export async function POST(request: NextRequest) {
     const validPolicies: CommentPolicy[] = ['everyone', 'followers_only', 'off'];
     const safePolicy: CommentPolicy = validPolicies.includes(comment_policy) ? comment_policy : 'everyone';
 
+    // Validate post type
+    const VALID_POST_TYPES = ['OPEN_DISCUSSION', 'STRUCTURED_DEBATE', 'POLICY_PROPOSAL', 'CROSS_PARTY_ROUNDTABLE', 'EXPERT_AMA', 'NEWS_DISCUSSION'];
+    const safePostType = VALID_POST_TYPES.includes(postType) ? postType : 'OPEN_DISCUSSION';
+
     // Create the post
     const post = await createPost({
       authorId: userId,
@@ -187,6 +192,7 @@ export async function POST(request: NextRequest) {
       articleUrl: safeArticleUrl || undefined,
       civilityScore,
       comment_policy: safePolicy,
+      postType: safePostType,
     });
 
     secureLog.info(

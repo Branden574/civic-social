@@ -39,6 +39,8 @@ import {
   ChevronUp,
   Radio,
   CircleDot,
+  Camera,
+  CameraOff,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -248,6 +250,47 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   const [deviceError, setDeviceError] = useState<string | null>(null);
   // Ref for the hidden <audio> element used to route output
   const audioOutputRef = useRef<HTMLAudioElement | null>(null);
+
+  // ── Camera state ────────────────────────────────────────────
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [localVideoStream, setLocalVideoStream] = useState<MediaStream | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+
+  const toggleCamera = useCallback(async () => {
+    if (cameraEnabled && localVideoStream) {
+      localVideoStream.getVideoTracks().forEach((t) => t.stop());
+      setLocalVideoStream(null);
+      setCameraEnabled(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
+        });
+        setLocalVideoStream(stream);
+        setCameraEnabled(true);
+      } catch (err) {
+        const name = (err as DOMException)?.name;
+        if (name === 'NotAllowedError') setDeviceError('Camera access was denied.');
+        else if (name === 'NotFoundError') setDeviceError('No camera found.');
+        else setDeviceError('Could not access camera.');
+      }
+    }
+  }, [cameraEnabled, localVideoStream]);
+
+  // Wire video element to stream
+  useEffect(() => {
+    if (localVideoRef.current && localVideoStream) {
+      localVideoRef.current.srcObject = localVideoStream;
+    }
+  }, [localVideoStream]);
+
+  // Cleanup video on unmount
+  useEffect(() => {
+    return () => {
+      localVideoStream?.getVideoTracks().forEach((t) => t.stop());
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Current user's participant state
   const myParticipant = room?.participants.find((p) => p.userId === currentUserId) ?? null;
@@ -753,6 +796,23 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
             </div>
           )}
 
+          {/* ── Local Camera Preview ── */}
+          {cameraEnabled && localVideoStream && (
+            <div className="pt-2 border-t border-border-subtle">
+              <p className="text-[10px] text-text-muted mb-1.5 font-medium">Camera Preview</p>
+              <div className="relative w-32 h-24 rounded-lg overflow-hidden border border-border-subtle bg-black">
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-1 left-1 text-[9px] text-white bg-black/60 px-1 rounded">You</span>
+              </div>
+            </div>
+          )}
+
           {/* ── Controls ── */}
           <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
             {!joined && !isDebater ? (
@@ -784,6 +844,20 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                 >
                   {isSelfMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
                   {isSelfMuted ? 'Unmute' : 'Mute'}
+                </button>
+
+                {/* Camera toggle */}
+                <button
+                  onClick={toggleCamera}
+                  className={clsx(
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors',
+                    cameraEnabled
+                      ? 'bg-civic/15 text-civic-light hover:bg-civic/25'
+                      : 'bg-surface text-text-muted border border-border-subtle hover:bg-surface-hover',
+                  )}
+                >
+                  {cameraEnabled ? <Camera className="w-3.5 h-3.5" /> : <CameraOff className="w-3.5 h-3.5" />}
+                  {cameraEnabled ? 'Cam On' : 'Cam Off'}
                 </button>
 
                 {/* Request to speak (if listener) */}

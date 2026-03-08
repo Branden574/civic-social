@@ -121,7 +121,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 
   // Permissions policy: disable unnecessary APIs
   'Permissions-Policy': [
-    'camera=()',
+    'camera=(self)',     // Needed for debate video
     'microphone=(self)', // Needed for voice debates
     'geolocation=()',
     'payment=()',

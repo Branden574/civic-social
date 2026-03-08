@@ -34,6 +34,7 @@ function applySafetyFilter(candidates: FeedCandidate[]): { safe: FeedCandidate[]
 // ─── Serialize for "latest" mode (no algorithm scores) ───────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, number>) {
+  const registryUser = await getUserById(c.author.id);
   return {
     id: c.post.id,
     content: c.post.content,
@@ -42,6 +43,7 @@ async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, 
     author: {
       id: c.author.id,
       displayName: c.author.displayName,
+      avatarUrl: registryUser?.avatarUrl || null,
       affiliations: c.author.affiliations,
       verificationLevel: c.author.verificationLevel,
       civicReputation: c.author.civicReputation,
@@ -91,6 +93,7 @@ async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, 
         author: {
           id: r.author.id,
           displayName: r.author.displayName,
+          avatarUrl: null as string | null,
           affiliations: r.author.affiliations,
           verificationLevel: r.author.verificationLevel,
         },
@@ -113,6 +116,7 @@ async function serializeUserPost(p: PersistedPost, counts: Map<string, number>) 
   const authorProfile = {
     id: p.authorId,
     displayName: registryUser?.displayName || (p.authorId === 'user-current' ? 'Branden Vincent-Walker' : 'User'),
+    avatarUrl: registryUser?.avatarUrl || null,
     affiliations: [registryUser?.affiliation || 'center'],
     verificationLevel: registryUser?.verificationLevel || 'EMAIL_VERIFIED',
     civicReputation: civicRep,
@@ -144,6 +148,7 @@ async function serializeUserPost(p: PersistedPost, counts: Map<string, number>) 
     },
     comment_policy: p.comment_policy ?? 'everyone',
     comment_count: counts.get(p.id) ?? 0,
+    postType: p.postType || 'OPEN_DISCUSSION',
     replies: [],
   };
 }
@@ -323,6 +328,7 @@ export async function GET(request: NextRequest) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function serializeRankedPost(rp: any, counts: Map<string, number>) {
+  const registryUser = await getUserById(rp.candidate.author.id);
   return {
     id: rp.candidate.post.id,
     content: rp.candidate.post.content,
@@ -331,6 +337,7 @@ async function serializeRankedPost(rp: any, counts: Map<string, number>) {
     author: {
       id: rp.candidate.author.id,
       displayName: rp.candidate.author.displayName,
+      avatarUrl: registryUser?.avatarUrl || null,
       affiliations: rp.candidate.author.affiliations,
       verificationLevel: rp.candidate.author.verificationLevel,
       civicReputation: rp.candidate.author.civicReputation,
@@ -380,6 +387,7 @@ async function serializeRankedPost(rp: any, counts: Map<string, number>) {
         author: {
           id: r.author.id,
           displayName: r.author.displayName,
+          avatarUrl: null as string | null,
           affiliations: r.author.affiliations,
           verificationLevel: r.author.verificationLevel,
         },

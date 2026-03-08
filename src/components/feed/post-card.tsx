@@ -113,6 +113,7 @@ export interface PostData {
   comment_policy?: 'everyone' | 'followers_only' | 'off';
   comment_count?: number;
   is_thread_locked?: boolean;
+  postType?: string;
   _optimistic?: boolean;
   _failed?: boolean;
 }
@@ -349,6 +350,10 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
 
   const verification = verificationIcons[post.author.verificationLevel];
   const threadType = post.thread ? threadTypeLabels[post.thread.type] : null;
+  const postTypeLabel = !threadType && post.postType && post.postType !== 'OPEN_DISCUSSION'
+    ? threadTypeLabels[post.postType] || null
+    : null;
+  const displayType = threadType || postTypeLabel;
   const ideology = post.author.affiliations[0];
   const ideologyStyle = ideology ? ideologyColors[ideology] : '';
   const credibilityData = buildCredibilityData(post);
@@ -424,11 +429,11 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
               <span className="text-xs text-text-muted">
                 {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
               </span>
-              {threadType && (
+              {displayType && (
                 <>
                   <span className="text-text-muted">·</span>
-                  <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-md', threadType.color)}>
-                    {threadType.label}
+                  <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-md', displayType.color)}>
+                    {displayType.label}
                   </span>
                 </>
               )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import {
   ExternalLink,
@@ -195,6 +196,7 @@ export default function NewsPage() {
 // ─── Article Card ────────────────────────────────────────────
 
 function NewsArticleCard({ article, index }: { article: NewsArticle; index: number }) {
+  const router = useRouter();
   const [showPerspectives, setShowPerspectives] = useState(false);
   const [saved, setSaved] = useState(false);
   const factCheck = factCheckStyles[article.factCheckStatus] || factCheckStyles.UNCHECKED;
@@ -317,9 +319,15 @@ function NewsArticleCard({ article, index }: { article: NewsArticle; index: numb
 
           {/* Actions */}
           <div className="flex items-center gap-3 sm:gap-4 mt-3 flex-wrap">
-            <button className="flex items-center gap-1.5 text-xs text-text-muted hover:text-civic-light transition-colors">
+            <button
+              onClick={() => {
+                const query = article.topics[0] || article.title.split(' ').slice(0, 3).join(' ');
+                router.push(`/search?q=${encodeURIComponent(query)}`);
+              }}
+              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-civic-light transition-colors"
+            >
               <MessageCircle className="w-3.5 h-3.5" />
-              {article.discussionCount} discussions
+              Discuss
             </button>
             <a
               href={article.url}

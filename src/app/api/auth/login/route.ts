@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       select: {
         id: true, email: true, displayName: true, username: true,
         passwordHash: true, createdAt: true, onboardingCompletedAt: true,
+        role: true, suspendedUntil: true,
       },
     });
 
@@ -64,6 +65,22 @@ export async function POST(request: NextRequest) {
     }
 
     secureLog.info('POST /api/auth/login', `success id=${row.id} email=${email}`);
+
+    // Check if user is suspended
+    if (row.suspendedUntil && new Date(row.suspendedUntil) > new Date()) {
+      return NextResponse.json(
+        { error: `Your account is suspended until ${new Date(row.suspendedUntil).toLocaleDateString()}.` },
+        { status: 403 },
+      );
+    }
+
+    // Check if user is banned (role = 'banned')
+    if (row.role === 'banned') {
+      return NextResponse.json(
+        { error: 'Your account has been permanently banned.' },
+        { status: 403 },
+      );
+    }
 
     // Ensure User table has a record (needed for Follow foreign keys)
     await ensureUserRecord({
@@ -81,12 +98,18 @@ export async function POST(request: NextRequest) {
       }).catch(() => {});
     }
 
+    // Read role from DB — never hardcode
+    const VALID_ROLES = ['user', 'moderator', 'admin', 'creator'] as const;
+    type ValidRole = typeof VALID_ROLES[number];
+    const dbRole = row.role || 'user';
+    const role: ValidRole = (VALID_ROLES as readonly string[]).includes(dbRole) ? (dbRole as ValidRole) : 'user';
+
     const userData = {
       id: row.id,
       email: row.email,
       displayName: row.displayName,
       username: row.username,
-      role: 'user' as const,
+      role,
       createdAt: row.createdAt.toISOString(),
     };
 
@@ -94,7 +117,7 @@ export async function POST(request: NextRequest) {
     const token = signSession({
       id: row.id,
       email: row.email,
-      role: 'user',
+      role,
       displayName: row.displayName,
       iat: Date.now(),
     });

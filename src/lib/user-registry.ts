@@ -30,6 +30,7 @@ export interface RegisteredUser {
   followerCount: number;
   followingCount: number;
   postCount: number;
+  role: string;
   createdAt: string;
   // Normalized search fields (lowercase, trimmed)
   _displayNameNorm: string;
@@ -58,6 +59,7 @@ function rowToRegisteredUser(row: {
   followerCount: number;
   followingCount: number;
   postCount: number;
+  role?: string;
   createdAt: Date;
   displayNameNorm: string;
   usernameNorm: string;
@@ -76,6 +78,7 @@ function rowToRegisteredUser(row: {
     followerCount: row.followerCount,
     followingCount: row.followingCount,
     postCount: row.postCount,
+    role: row.role ?? 'user',
     createdAt: row.createdAt.toISOString(),
     _displayNameNorm: row.displayNameNorm,
     _usernameNorm: row.usernameNorm,
@@ -121,6 +124,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 14200,
       followingCount: 340,
       postCount: 287,
+      role: 'user',
       createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
     },
     {
@@ -137,6 +141,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 8700,
       followingCount: 520,
       postCount: 154,
+      role: 'user',
       createdAt: new Date(Date.now() - 120 * 86400000).toISOString(),
     },
     {
@@ -153,6 +158,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 22300,
       followingCount: 180,
       postCount: 412,
+      role: 'user',
       createdAt: new Date(Date.now() - 240 * 86400000).toISOString(),
     },
     {
@@ -169,6 +175,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 1200,
       followingCount: 890,
       postCount: 67,
+      role: 'user',
       createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
     },
     {
@@ -185,6 +192,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 18500,
       followingCount: 290,
       postCount: 356,
+      role: 'user',
       createdAt: new Date(Date.now() - 200 * 86400000).toISOString(),
     },
     {
@@ -201,6 +209,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 5400,
       followingCount: 410,
       postCount: 98,
+      role: 'user',
       createdAt: new Date(Date.now() - 150 * 86400000).toISOString(),
     },
     {
@@ -217,6 +226,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 9800,
       followingCount: 350,
       postCount: 201,
+      role: 'user',
       createdAt: new Date(Date.now() - 160 * 86400000).toISOString(),
     },
     {
@@ -233,6 +243,7 @@ function seedMockUsers(store: UserRegistryStore) {
       followerCount: 31000,
       followingCount: 120,
       postCount: 524,
+      role: 'user',
       createdAt: new Date(Date.now() - 300 * 86400000).toISOString(),
     },
   ];
@@ -240,6 +251,7 @@ function seedMockUsers(store: UserRegistryStore) {
   for (const s of seeds) {
     store.users.set(s.id, {
       ...s,
+      role: s.role ?? 'user',
       _displayNameNorm: s.displayName.toLowerCase().trim(),
       _usernameNorm: s.username.toLowerCase().trim(),
     });
@@ -315,6 +327,7 @@ export async function registerUser(input: {
     followerCount: 0,
     followingCount: 0,
     postCount: 0,
+    role: 'user',
     createdAt: new Date().toISOString(),
     _displayNameNorm: displayNameNorm,
     _usernameNorm: usernameNorm,
@@ -445,7 +458,7 @@ export async function searchUsers(options: {
   let users: RegisteredUser[];
 
   if (isDbAvailable()) {
-    const where = q
+    const searchFilter = q
       ? {
           OR: [
             { displayName: { contains: q, mode: 'insensitive' as const } },
@@ -456,6 +469,8 @@ export async function searchUsers(options: {
           ],
         }
       : {};
+    // Hide admin/creator accounts from public search
+    const where = { ...searchFilter, role: { notIn: ['admin', 'creator', 'banned'] } };
     const rows = await prisma.searchableUser.findMany({ where });
     users = rows.map(rowToRegisteredUser);
   } else {

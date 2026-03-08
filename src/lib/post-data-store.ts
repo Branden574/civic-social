@@ -32,6 +32,7 @@ export interface PersistedPost {
   visibility: PostVisibility;
   comment_policy: CommentPolicy;
   is_thread_locked: boolean;
+  postType: string;
 }
 
 export interface PersistedComment {
@@ -67,6 +68,7 @@ function rowToPost(row: {
   visibility: string;
   commentPolicy: string;
   isThreadLocked: boolean;
+  postType?: string;
 }): PersistedPost {
   return {
     id: row.id,
@@ -81,6 +83,7 @@ function rowToPost(row: {
     visibility: row.visibility as PostVisibility,
     comment_policy: row.commentPolicy as CommentPolicy,
     is_thread_locked: row.isThreadLocked,
+    postType: row.postType ?? 'OPEN_DISCUSSION',
   };
 }
 
@@ -141,6 +144,7 @@ export async function createPost(input: {
   civilityScore: number;
   comment_policy?: CommentPolicy;
   visibility?: PostVisibility;
+  postType?: string;
 }): Promise<PersistedPost> {
   const id = `user-post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -157,6 +161,7 @@ export async function createPost(input: {
         visibility: input.visibility ?? 'public',
         commentPolicy: input.comment_policy ?? 'everyone',
         isThreadLocked: false,
+        postType: input.postType ?? 'OPEN_DISCUSSION',
       },
     });
     return rowToPost(row);
@@ -175,6 +180,7 @@ export async function createPost(input: {
     visibility: input.visibility ?? 'public',
     comment_policy: input.comment_policy ?? 'everyone',
     is_thread_locked: false,
+    postType: input.postType ?? 'OPEN_DISCUSSION',
   };
   getStore().posts.unshift(post);
   return post;
@@ -508,6 +514,7 @@ export function canCommentMockPost(
     visibility: mockPostMeta.visibility ?? 'public',
     comment_policy: mockPostMeta.comment_policy ?? 'everyone',
     is_thread_locked: mockPostMeta.is_thread_locked ?? false,
+    postType: 'OPEN_DISCUSSION',
   };
   return canComment(viewerId, fakePost, helpers);
 }
