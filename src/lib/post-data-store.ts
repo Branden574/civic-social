@@ -250,6 +250,20 @@ export async function deletePost(id: string): Promise<boolean> {
   return false;
 }
 
+export async function setPostStatus(postId: string, status: PostStatus): Promise<boolean> {
+  if (isDbAvailable()) {
+    const updated = await prisma.storedPost.updateMany({
+      where: { id: postId },
+      data: { status },
+    });
+    return updated.count > 0;
+  }
+  const post = getStore().posts.find((p) => p.id === postId);
+  if (!post) return false;
+  post.status = status;
+  return true;
+}
+
 export async function getPostCount(authorId: string): Promise<number> {
   if (isDbAvailable()) {
     return prisma.storedPost.count({

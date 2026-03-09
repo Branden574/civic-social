@@ -17,9 +17,10 @@ import {
 import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeTopics, sanitizeUrl, isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
-import { getUserById, registerUser } from '@/lib/user-registry';
+import { getUserById, getUserByUsername, registerUser } from '@/lib/user-registry';
 import { analyzeCivility } from '@/lib/civility';
 import { incrementalCredibilityUpdate } from '@/lib/credibility-recompute';
+import { dbCreateNotification } from '@/lib/social-store';
 
 // ─── Author profile (matches post-store.tsx) ─────────────────
 async function getAuthorProfile(authorId: string) {
@@ -203,6 +204,9 @@ export async function POST(request: NextRequest) {
     // Fire-and-forget credibility update based on this post
     incrementalCredibilityUpdate(userId, civilityScore, !!safeArticleUrl).catch(() => {});
 
+    // Extract @mentions and create notifications (fire-and-forget)
+    extractAndNotifyMentions(sanitizedContent, post.id, userId, user.displayName).catch(() => {});
+
     return NextResponse.json({
       success: true,
       post: await serializePost(post),
@@ -211,5 +215,44 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     secureLog.error('POST /api/posts', err);
     return internalError('Failed to create post. Please try again.');
+  }
+}
+
+// ─── @mention extraction and notification ───────────────────
+
+async function extractAndNotifyMentions(
+  content: string,
+  postId: string,
+  authorId: string,
+  authorDisplayName: string,
+) {
+  // Match @username patterns (alphanumeric, dots, hyphens, underscores)
+  const mentionRegex = /@([a-zA-Z0-9._-]{2,30})/g;
+  const usernames = new Set<string>();
+  let match: RegExpExecArray | null;
+  while ((match = mentionRegex.exec(content)) !== null) {
+    usernames.add(match[1].toLowerCase());
+  }
+
+  if (usernames.size === 0) return;
+
+  // Limit to 10 mentions per post to prevent spam
+  const limited = [...usernames].slice(0, 10);
+
+  for (const username of limited) {
+    const mentioned = await getUserByUsername(username);
+    if (!mentioned || mentioned.id === authorId) continue;
+
+    await dbCreateNotification({
+      recipientUserId: mentioned.id,
+      actorUserId: authorId,
+      type: 'mention',
+      entityType: 'post',
+      entityId: postId,
+      metadata: {
+        actorName: authorDisplayName,
+        preview: content.slice(0, 120),
+      },
+    });
   }
 }

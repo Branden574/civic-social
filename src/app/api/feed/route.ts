@@ -194,10 +194,10 @@ export async function GET(request: NextRequest) {
 
   const allPublishedUserCreatedPosts = await Promise.all(userPosts.map((p) => serializeUserPost(p, counts)));
 
-  // Filter by hashtag if provided
+  // Filter by hashtag if provided (exact match, not substring)
   if (hashtag) {
     candidates = candidates.filter((c) =>
-      c.post.topics.some((t) => t.toLowerCase().includes(hashtag)),
+      c.post.topics.some((t) => t.toLowerCase() === hashtag),
     );
   }
 

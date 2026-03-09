@@ -505,6 +505,150 @@ export async function dbGetFollowingCount(userId: string): Promise<number> {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// DB-BACKED NOTIFICATION OPERATIONS
+// Persist notifications to the Notification table so they
+// survive serverless cold starts.
+// ═══════════════════════════════════════════════════════════════
+
+export async function dbCreateNotification(params: {
+  recipientUserId: string;
+  actorUserId: string | null;
+  type: string;
+  entityType: Notification['entityType'];
+  entityId: string;
+  metadata: Notification['metadata'];
+}): Promise<Notification> {
+  // Always create in-memory for immediate polling pickup
+  const notif = createNotification({
+    ...params,
+    type: params.type as NotificationType,
+  });
+
+  // Persist to DB if available
+  if (isDbAvailable()) {
+    try {
+      await prisma.notification.create({
+        data: {
+          id: notif.id,
+          recipientUserId: params.recipientUserId,
+          actorUserId: params.actorUserId,
+          type: params.type,
+          entityType: params.entityType,
+          entityId: params.entityId,
+          metadata: JSON.stringify(params.metadata),
+        },
+      });
+    } catch (err) {
+      console.error('[dbCreateNotification]', err);
+    }
+  }
+
+  // Push SSE event for realtime delivery
+  try {
+    const { pushSSEEvent } = await import('@/app/api/notifications/stream/route');
+    pushSSEEvent(params.recipientUserId, 'notification', {
+      id: notif.id,
+      type: params.type,
+      metadata: params.metadata,
+      entityId: params.entityId,
+      entityType: params.entityType,
+    });
+  } catch { /* SSE not available */ }
+
+  return notif;
+}
+
+export async function dbGetNotifications(
+  recipientUserId: string,
+  options?: { limit?: number; offset?: number; unreadOnly?: boolean },
+): Promise<{ notifications: Notification[]; total: number; unreadCount: number }> {
+  if (!isDbAvailable()) return getNotifications(recipientUserId, options);
+
+  try {
+    const where: Record<string, unknown> = { recipientUserId };
+    if (options?.unreadOnly) where.readAt = null;
+
+    const limit = options?.limit ?? 50;
+    const offset = options?.offset ?? 0;
+
+    const [rows, total, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.notification.count({ where: { recipientUserId } }),
+      prisma.notification.count({ where: { recipientUserId, readAt: null } }),
+    ]);
+
+    const notifications: Notification[] = rows.map((r) => ({
+      id: r.id,
+      recipientUserId: r.recipientUserId,
+      actorUserId: r.actorUserId,
+      type: r.type as NotificationType,
+      entityType: r.entityType as Notification['entityType'],
+      entityId: r.entityId,
+      createdAt: r.createdAt.toISOString(),
+      readAt: r.readAt?.toISOString() ?? null,
+      seenAt: r.seenAt?.toISOString() ?? null,
+      metadata: r.metadata ? JSON.parse(r.metadata) : {},
+    }));
+
+    return { notifications, total, unreadCount };
+  } catch (err) {
+    console.error('[dbGetNotifications]', err);
+    return getNotifications(recipientUserId, options);
+  }
+}
+
+export async function dbGetUnreadCount(recipientUserId: string): Promise<number> {
+  if (!isDbAvailable()) return getUnreadCount(recipientUserId);
+  try {
+    return await prisma.notification.count({
+      where: { recipientUserId, readAt: null },
+    });
+  } catch {
+    return getUnreadCount(recipientUserId);
+  }
+}
+
+export async function dbMarkAllRead(recipientUserId: string): Promise<number> {
+  // Mark in-memory
+  const result = markAllRead(recipientUserId);
+
+  if (isDbAvailable()) {
+    try {
+      const updated = await prisma.notification.updateMany({
+        where: { recipientUserId, readAt: null },
+        data: { readAt: new Date() },
+      });
+      return updated.count;
+    } catch (err) {
+      console.error('[dbMarkAllRead]', err);
+    }
+  }
+
+  return result.markedCount;
+}
+
+export async function dbMarkNotificationRead(notificationId: string): Promise<boolean> {
+  markNotificationRead(notificationId);
+
+  if (isDbAvailable()) {
+    try {
+      await prisma.notification.updateMany({
+        where: { id: notificationId, readAt: null },
+        data: { readAt: new Date() },
+      });
+    } catch (err) {
+      console.error('[dbMarkNotificationRead]', err);
+    }
+  }
+  return true;
+}
+
 export async function dbGetFollowingIds(userId: string): Promise<string[]> {
   if (!isDbAvailable()) return getFollowingIds(userId);
   try {

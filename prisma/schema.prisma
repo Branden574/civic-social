@@ -475,6 +475,26 @@ model AuditLog {
 }
 
 // ─────────────────────────────────────────────
+// NOTIFICATIONS (DB-persisted)
+// ─────────────────────────────────────────────
+
+model Notification {
+  id              String   @id @default(cuid())
+  recipientUserId String
+  actorUserId     String?
+  type            String   // follow, like, reply, mention, post_removed, system, etc.
+  entityType      String   // post, comment, user, debate, system
+  entityId        String
+  metadata        String?  // JSON blob
+  readAt          DateTime?
+  seenAt          DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([recipientUserId, readAt])
+  @@index([recipientUserId, createdAt])
+}
+
+// ─────────────────────────────────────────────
 // FEEDBACK / BUG REPORTS
 // ─────────────────────────────────────────────
 

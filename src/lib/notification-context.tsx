@@ -48,7 +48,7 @@ const NotificationContext = createContext<NotificationContextValue>({
   setSoundEnabled: () => {},
 });
 
-const POLL_INTERVAL = 30_000; // 30 seconds
+const POLL_INTERVAL = 60_000; // 60s fallback (SSE is primary)
 const SOUND_PREF_KEY = 'civic-notif-sound';
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
@@ -57,6 +57,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [activeToast, setActiveToast] = useState<NotificationToastData | null>(null);
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const sseRef = useRef<EventSource | null>(null);
   const prevCountRef = useRef(0);
   const initialFetchDone = useRef(false);
   // Track known notification IDs to detect genuinely new ones
@@ -167,11 +168,40 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [soundEnabled]);
 
-  // Only fetch + poll when authenticated. Reset to 0 on logout.
+  // Handle incoming SSE notification event
+  const handleSSENotification = useCallback((data: { id: string; type: string; metadata?: Record<string, unknown>; entityId?: string; entityType?: string }) => {
+    if (knownIdsRef.current.has(data.id)) return;
+    knownIdsRef.current.add(data.id);
+
+    setUnreadCount((prev) => prev + 1);
+
+    if (soundEnabled) {
+      playNotificationSound();
+    }
+
+    setActiveToast({
+      id: data.id,
+      type: data.type,
+      actorName: (data.metadata?.actorName as string) || undefined,
+      preview: (data.metadata?.preview as string) || undefined,
+      entityId: data.entityId,
+      entityType: data.entityType,
+    });
+
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden' && Notification.permission === 'granted') {
+      showSystemNotification(data as Parameters<typeof showSystemNotification>[0]);
+    }
+  }, [soundEnabled]);
+
+  // Connect SSE + fallback polling when authenticated
   useEffect(() => {
     if (pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
+    }
+    if (sseRef.current) {
+      sseRef.current.close();
+      sseRef.current = null;
     }
 
     if (isLoading) return;
@@ -184,12 +214,49 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       return;
     }
 
+    // Initial fetch
     fetchUnreadCount();
-    pollRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
+
+    // Try SSE connection
+    let sseConnected = false;
+    try {
+      const es = new EventSource('/api/notifications/stream');
+      sseRef.current = es;
+
+      es.addEventListener('unread-count', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          setUnreadCount(data.unreadCount ?? 0);
+          sseConnected = true;
+        } catch { /* ignore */ }
+      });
+
+      es.addEventListener('notification', (e) => {
+        try {
+          handleSSENotification(JSON.parse(e.data));
+        } catch { /* ignore */ }
+      });
+
+      es.onerror = () => {
+        // SSE failed — ensure polling is active as fallback
+        if (!pollRef.current) {
+          pollRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
+        }
+      };
+    } catch {
+      // SSE not supported
+    }
+
+    // Fallback polling (slower interval since SSE is primary)
+    if (!sseConnected) {
+      pollRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
+    }
+
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (sseRef.current) sseRef.current.close();
     };
-  }, [isAuthenticated, isLoading, fetchUnreadCount]);
+  }, [isAuthenticated, isLoading, fetchUnreadCount, handleSSENotification]);
 
   const markAllRead = useCallback(async () => {
     // Save all known IDs as read locally so cold-start refetch doesn't resurface them
@@ -249,6 +316,7 @@ function showSystemNotification(notif: {
     mention: 'mentioned you',
     debate_invite: 'invited you to a debate',
     post_from_followed: 'published a new post',
+    post_removed: 'removed your post',
     system: '',
   };
 

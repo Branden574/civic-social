@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getNotifications,
   getUnreadCount,
-  markAllRead,
   markNotificationRead,
   markSeen,
   deleteNotification,
+  dbGetNotifications,
+  dbGetUnreadCount,
+  dbMarkAllRead,
+  dbMarkNotificationRead,
 } from '@/lib/social-store';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
@@ -37,8 +40,9 @@ export async function GET(request: NextRequest) {
   const action = searchParams.get('action') || 'list';
 
   if (action === 'unread-count') {
+    const count = await dbGetUnreadCount(currentUser);
     return NextResponse.json({
-      unreadCount: getUnreadCount(currentUser),
+      unreadCount: count,
       serverTime: new Date().toISOString(),
     });
   }
@@ -48,7 +52,7 @@ export async function GET(request: NextRequest) {
   const offset = clampInt(searchParams.get('offset'), 0, 10000, 0);
   const unreadOnly = searchParams.get('unreadOnly') === 'true';
 
-  const result = getNotifications(currentUser, { limit, offset, unreadOnly });
+  const result = await dbGetNotifications(currentUser, { limit, offset, unreadOnly });
 
   // Enrich actor display names from user registry (fixes follow notifications showing ID or wrong name)
   const enriched = await Promise.all(
@@ -91,11 +95,12 @@ export async function POST(request: NextRequest) {
   const action = body.action as string;
 
   if (action === 'mark-all-read') {
-    const upTo = typeof body.up_to === 'string' ? body.up_to : undefined;
-    const result = markAllRead(currentUser, upTo);
+    const markedCount = await dbMarkAllRead(currentUser);
     return NextResponse.json({
       success: true,
-      ...result,
+      markedCount,
+      unreadCountRemaining: 0,
+      serverTime: new Date().toISOString(),
     });
   }
 
@@ -104,10 +109,11 @@ export async function POST(request: NextRequest) {
     if (!notificationId || !isValidId(notificationId)) {
       return badRequest('Valid notification_id required.');
     }
-    const ok = markNotificationRead(notificationId);
+    await dbMarkNotificationRead(notificationId);
+    const unreadCount = await dbGetUnreadCount(currentUser);
     return NextResponse.json({
-      success: ok,
-      unreadCount: getUnreadCount(currentUser),
+      success: true,
+      unreadCount,
       serverTime: new Date().toISOString(),
     });
   }

@@ -26,7 +26,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 // ─── Types ───────────────────────────────────────────────────
 
-type Tab = 'overview' | 'users' | 'reports' | 'feedback' | 'audit';
+type Tab = 'overview' | 'users' | 'posts' | 'reports' | 'feedback' | 'audit';
 
 interface Stats {
   totalUsers: number;
@@ -71,6 +71,17 @@ interface Feedback {
   createdAt: string;
 }
 
+interface AdminPost {
+  id: string;
+  authorId: string;
+  content: string;
+  topics: string[];
+  status: string;
+  postType: string;
+  createdAt: string;
+  deletedAt: string | null;
+}
+
 interface AuditEntry {
   id: string;
   actorId: string;
@@ -87,6 +98,7 @@ interface AuditEntry {
 const TABS: { id: Tab; label: string; icon: typeof Shield }[] = [
   { id: 'overview', label: 'Overview', icon: Activity },
   { id: 'users', label: 'Users', icon: Users },
+  { id: 'posts', label: 'Posts', icon: FileText },
   { id: 'reports', label: 'Reports', icon: AlertTriangle },
   { id: 'feedback', label: 'Feedback', icon: MessageSquare },
   { id: 'audit', label: 'Audit Log', icon: ScrollText },
@@ -123,6 +135,7 @@ export default function AdminPage() {
 
       {tab === 'overview' && <OverviewTab />}
       {tab === 'users' && <UsersTab />}
+      {tab === 'posts' && <PostsTab />}
       {tab === 'reports' && <ReportsTab />}
       {tab === 'feedback' && <FeedbackTab />}
       {tab === 'audit' && <AuditTab />}
@@ -287,6 +300,195 @@ function UsersTab() {
       )}
 
       <Pagination page={page} total={total} limit={20} onPageChange={setPage} />
+    </div>
+  );
+}
+
+// ─── Posts Tab ──────────────────────────────────────────────
+
+function PostsTab() {
+  const [posts, setPosts] = useState<AdminPost[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [removeModal, setRemoveModal] = useState<{ postId: string; authorId: string } | null>(null);
+  const [removeReason, setRemoveReason] = useState('spam');
+
+  const fetchPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '20' });
+      if (query) params.set('q', query);
+      if (statusFilter) params.set('status', statusFilter);
+      const res = await fetch(`/api/admin/posts?${params}`);
+      const data = await res.json();
+      setPosts(data.posts || []);
+      setTotal(data.total || 0);
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, [query, page, statusFilter]);
+
+  useEffect(() => { fetchPosts(); }, [fetchPosts]);
+
+  const handleRemove = async () => {
+    if (!removeModal) return;
+    setActionLoading(removeModal.postId);
+    try {
+      await fetch(`/api/admin/posts/${removeModal.postId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'remove', reason: removeReason, authorId: removeModal.authorId }),
+      });
+      setRemoveModal(null);
+      await fetchPosts();
+    } catch { /* ignore */ }
+    setActionLoading(null);
+  };
+
+  const handleRestore = async (postId: string) => {
+    setActionLoading(postId);
+    try {
+      await fetch(`/api/admin/posts/${postId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'restore' }),
+      });
+      await fetchPosts();
+    } catch { /* ignore */ }
+    setActionLoading(null);
+  };
+
+  const statusStyles: Record<string, string> = {
+    published: 'bg-positive/10 text-positive-light',
+    removed: 'bg-danger/10 text-danger-light',
+    pending_review: 'bg-warning/10 text-warning-light',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          <input
+            type="text"
+            placeholder="Search post content..."
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+            className="w-full pl-9 pr-3 py-2 bg-surface-elevated border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="bg-surface-elevated border border-border-subtle rounded-lg text-xs text-text-primary px-2 py-2 focus:outline-none"
+        >
+          <option value="">All</option>
+          <option value="published">Published</option>
+          <option value="removed">Removed</option>
+          <option value="pending_review">Pending</option>
+        </select>
+        <span className="text-xs text-text-muted shrink-0">{total} posts</span>
+      </div>
+
+      {loading ? <LoadingSpinner /> : (
+        <div className="bg-surface-elevated rounded-xl border border-border-subtle overflow-hidden">
+          <div className="divide-y divide-border-subtle">
+            {posts.map((p) => (
+              <div key={p.id} className="px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-md', statusStyles[p.status] || 'bg-surface-active text-text-muted')}>
+                        {p.status}
+                      </span>
+                      <span className="text-[10px] text-text-muted">{formatDistanceToNow(new Date(p.createdAt), { addSuffix: true })}</span>
+                      <span className="text-[10px] text-text-muted">by {p.authorId.slice(0, 16)}</span>
+                    </div>
+                    <p className="text-xs text-text-primary line-clamp-2">{p.content}</p>
+                    {p.topics.length > 0 && (
+                      <div className="flex items-center gap-1 mt-1">
+                        {p.topics.slice(0, 4).map((t) => (
+                          <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted">#{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {p.status === 'published' && (
+                      <button
+                        onClick={() => { setRemoveModal({ postId: p.id, authorId: p.authorId }); setRemoveReason('spam'); }}
+                        disabled={actionLoading === p.id}
+                        className="text-[10px] px-2 py-1 rounded-md bg-danger/10 text-danger-light hover:bg-danger/20 font-medium transition-colors disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    )}
+                    {p.status === 'removed' && (
+                      <button
+                        onClick={() => handleRestore(p.id)}
+                        disabled={actionLoading === p.id}
+                        className="text-[10px] px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium transition-colors disabled:opacity-50"
+                      >
+                        Restore
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {posts.length === 0 && <p className="px-4 py-8 text-sm text-text-muted text-center">No posts found.</p>}
+          </div>
+        </div>
+      )}
+
+      <Pagination page={page} total={total} limit={20} onPageChange={setPage} />
+
+      {/* Remove modal */}
+      {removeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-surface-elevated rounded-xl border border-border-subtle p-6 w-full max-w-sm mx-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-text-primary">Remove Post</h3>
+              <button onClick={() => setRemoveModal(null)} className="text-text-muted hover:text-text-primary">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div>
+              <label className="text-xs text-text-muted block mb-1.5">Removal reason (sent to author)</label>
+              <select
+                value={removeReason}
+                onChange={(e) => setRemoveReason(e.target.value)}
+                className="w-full bg-bg border border-border-subtle rounded-lg text-sm text-text-primary px-3 py-2 focus:outline-none focus:border-civic/40"
+              >
+                <option value="spam">Spam / Misleading</option>
+                <option value="harassment">Harassment</option>
+                <option value="misinformation">Misinformation</option>
+                <option value="hate_speech">Hate Speech</option>
+                <option value="violence">Violence / Threats</option>
+                <option value="other">Other / Community Guidelines</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => setRemoveModal(null)}
+                className="text-xs px-3 py-1.5 rounded-lg text-text-muted hover:bg-surface-hover transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemove}
+                disabled={actionLoading === removeModal.postId}
+                className="text-xs px-3 py-1.5 rounded-lg bg-danger text-white hover:bg-danger/90 font-medium transition-colors disabled:opacity-50"
+              >
+                Remove Post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
