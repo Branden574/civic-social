@@ -71,7 +71,7 @@ export default function HashtagPage() {
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-text-primary">#{tag}</h1>
-                  <p className="text-xs text-text-muted">{totalCount} results across posts & news</p>
+                  <p className="text-xs text-text-muted">{posts.length} {posts.length === 1 ? 'post' : 'posts'} · {news.length} news</p>
                 </div>
               </div>
             </div>
