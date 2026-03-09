@@ -5,13 +5,11 @@ import {
   X,
   Link2,
   Hash,
-  Send,
   Shield,
   AlertTriangle,
   CheckCircle2,
   Loader2,
   Globe,
-  MessageCircle,
   Users,
   Lock,
   ChevronDown,
@@ -273,137 +271,68 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
-      {/* Backdrop */}
+      {/* Backdrop — hidden on mobile (full screen takeover), visible on desktop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm hidden sm:block"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative w-full sm:max-w-xl bg-bg-alt sm:rounded-2xl border border-border-subtle max-h-[90vh] overflow-hidden flex flex-col animate-slide-up rounded-t-2xl sm:rounded-b-2xl">
-        {/* Header */}
+      {/* Modal — full screen on mobile, centered card on desktop */}
+      <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-xl bg-bg sm:bg-bg-alt sm:rounded-2xl sm:border sm:border-border-subtle overflow-hidden flex flex-col sm:animate-slide-up">
+        {/* Header — Twitter-style: Cancel on left, Post on right */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors py-1"
           >
-            <X className="w-5 h-5" />
+            Cancel
           </button>
-          <span className="text-sm font-semibold text-text-primary">New Post</span>
           <button
             onClick={handlePost}
             disabled={!content.trim() || posting}
             className={clsx(
-              'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all',
+              'px-5 py-1.5 rounded-full text-sm font-bold transition-all',
               content.trim() && !posting
                 ? 'bg-civic text-white hover:bg-civic-dark'
-                : 'bg-surface-active text-text-muted cursor-not-allowed',
+                : 'bg-civic/40 text-white/50 cursor-not-allowed',
             )}
           >
             {posting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <Send className="w-3.5 h-3.5" />
-                Post
-              </>
+              'Post'
             )}
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {/* User indicator */}
-          <div className="flex items-start gap-3 mb-1">
-            {user?.avatar ? (
-              <img src={user.avatar} alt={user.displayName} className="w-10 h-10 rounded-full object-cover shrink-0 border border-border-subtle" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold shrink-0">
-                {user?.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text-primary">{user?.displayName || 'Anonymous'}</p>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowReplyMenu(!showReplyMenu)}
-                  className="flex items-center gap-1 text-[11px] text-text-muted hover:text-civic-light transition-colors"
-                >
-                  {commentPolicy === 'everyone' && <><MessageCircle className="w-3 h-3" /> Everyone can reply</>}
-                  {commentPolicy === 'followers_only' && <><Users className="w-3 h-3" /> Followers only</>}
-                  {commentPolicy === 'off' && <><Lock className="w-3 h-3" /> Replies off</>}
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                {showReplyMenu && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-bg-alt border border-border-subtle rounded-lg shadow-lg z-50 py-1 animate-fade-in">
-                    {[
-                      { value: 'everyone' as const, icon: MessageCircle, label: 'Everyone', desc: 'Anyone can reply' },
-                      { value: 'followers_only' as const, icon: Users, label: 'Followers', desc: 'Only followers can reply' },
-                      { value: 'off' as const, icon: Lock, label: 'No one', desc: 'Replies turned off' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => { setCommentPolicy(opt.value); setShowReplyMenu(false); }}
-                        className={clsx(
-                          'w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover transition-colors',
-                          commentPolicy === opt.value && 'bg-civic/5',
-                        )}
-                      >
-                        <opt.icon className={clsx('w-4 h-4', commentPolicy === opt.value ? 'text-civic-light' : 'text-text-muted')} />
-                        <div>
-                          <p className={clsx('text-xs font-medium', commentPolicy === opt.value ? 'text-civic-light' : 'text-text-primary')}>{opt.label}</p>
-                          <p className="text-[10px] text-text-muted">{opt.desc}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {/* Post type selector */}
-              <div className="relative mt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowTypeMenu(!showTypeMenu)}
-                  className="flex items-center gap-1 text-[11px] text-text-muted hover:text-civic-light transition-colors"
-                >
-                  {POST_TYPE_OPTIONS.find((o) => o.value === postType)?.label || 'Discussion'}
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                {showTypeMenu && (
-                  <div className="absolute top-full left-0 mt-1 w-52 bg-bg-alt border border-border-subtle rounded-lg shadow-lg z-50 py-1 animate-fade-in">
-                    {POST_TYPE_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => { setPostType(opt.value); setShowTypeMenu(false); }}
-                        className={clsx(
-                          'w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover transition-colors',
-                          postType === opt.value && 'bg-civic/5',
-                        )}
-                      >
-                        <div>
-                          <p className={clsx('text-xs font-medium', postType === opt.value ? 'text-civic-light' : 'text-text-primary')}>{opt.label}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+        {/* Body — avatar on left, textarea fills the right */}
+        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2">
+          <div className="flex gap-3">
+            {/* Avatar column */}
+            <div className="shrink-0 pt-0.5">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-border-subtle" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold">
+                  {user?.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Textarea */}
-          <div className="relative">
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => handleContentChange(e.target.value)}
-              onKeyDown={handleTextareaKeyDown}
-              placeholder="Share your perspective... What policy matters to you? Link an article. @mention someone."
-              className="w-full mt-3 bg-transparent text-text-primary text-[15px] leading-relaxed placeholder:text-text-muted resize-none focus:outline-none min-h-[120px]"
-              maxLength={maxChars}
-              autoFocus
-            />
+            {/* Content column */}
+            <div className="flex-1 min-w-0">
+              {/* Textarea — main compose area */}
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={(e) => handleContentChange(e.target.value)}
+                  onKeyDown={handleTextareaKeyDown}
+                  placeholder="What's happening?"
+                  className="w-full bg-transparent text-text-primary text-lg leading-relaxed placeholder:text-text-muted/60 resize-none focus:outline-none min-h-[180px] sm:min-h-[120px]"
+                  maxLength={maxChars}
+                  autoFocus
+                />
 
             {/* @mention autocomplete dropdown */}
             {mentionQuery !== null && (mentionResults.length > 0 || mentionLoading) && (
@@ -611,30 +540,100 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
               {submitError}
             </div>
           )}
+
+            </div> {/* end content column */}
+          </div> {/* end flex row (avatar + content) */}
+        </div> {/* end body */}
+
+        {/* Reply policy + type — sits above toolbar like Twitter's "Everyone can reply" */}
+        <div className="px-4 py-2 border-t border-border-subtle flex items-center gap-3">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowReplyMenu(!showReplyMenu)}
+              className="flex items-center gap-1.5 text-xs font-medium text-civic-light hover:text-civic transition-colors"
+            >
+              {commentPolicy === 'everyone' && <><Globe className="w-3.5 h-3.5" /> Everyone can reply</>}
+              {commentPolicy === 'followers_only' && <><Users className="w-3.5 h-3.5" /> Followers only</>}
+              {commentPolicy === 'off' && <><Lock className="w-3.5 h-3.5" /> Replies off</>}
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {showReplyMenu && (
+              <div className="absolute bottom-full left-0 mb-2 w-52 bg-bg-alt border border-border-subtle rounded-xl shadow-lg z-50 py-1 animate-fade-in">
+                {[
+                  { value: 'everyone' as const, icon: Globe, label: 'Everyone', desc: 'Anyone can reply' },
+                  { value: 'followers_only' as const, icon: Users, label: 'Followers', desc: 'Only followers can reply' },
+                  { value: 'off' as const, icon: Lock, label: 'No one', desc: 'Replies turned off' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setCommentPolicy(opt.value); setShowReplyMenu(false); }}
+                    className={clsx(
+                      'w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover transition-colors',
+                      commentPolicy === opt.value && 'bg-civic/5',
+                    )}
+                  >
+                    <opt.icon className={clsx('w-4 h-4', commentPolicy === opt.value ? 'text-civic-light' : 'text-text-muted')} />
+                    <div>
+                      <p className={clsx('text-xs font-medium', commentPolicy === opt.value ? 'text-civic-light' : 'text-text-primary')}>{opt.label}</p>
+                      <p className="text-[10px] text-text-muted">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <span className="text-border-subtle">|</span>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowTypeMenu(!showTypeMenu)}
+              className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-civic-light transition-colors"
+            >
+              {POST_TYPE_OPTIONS.find((o) => o.value === postType)?.label || 'Discussion'}
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {showTypeMenu && (
+              <div className="absolute bottom-full left-0 mb-2 w-52 bg-bg-alt border border-border-subtle rounded-xl shadow-lg z-50 py-1 animate-fade-in">
+                {POST_TYPE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setPostType(opt.value); setShowTypeMenu(false); }}
+                    className={clsx(
+                      'w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover transition-colors',
+                      postType === opt.value && 'bg-civic/5',
+                    )}
+                  >
+                    <p className={clsx('text-xs font-medium', postType === opt.value ? 'text-civic-light' : 'text-text-primary')}>{opt.label}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Footer toolbar */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border-subtle">
-          <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Footer toolbar — icons on left, char count + civility on right */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border-subtle bg-bg sm:bg-bg-alt">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => setShowUrlInput(!showUrlInput)}
               className={clsx(
-                'p-2 rounded-lg transition-colors',
-                showUrlInput ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                'p-2 rounded-full transition-colors',
+                showUrlInput ? 'text-civic-light bg-civic/10' : 'text-civic-light/70 hover:bg-civic/10',
               )}
               title="Attach article"
             >
-              <Link2 className="w-4.5 h-4.5" />
+              <Link2 className="w-5 h-5" />
             </button>
             <button
               onClick={() => setShowTopics(!showTopics)}
               className={clsx(
-                'p-2 rounded-lg transition-colors',
-                showTopics ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                'p-2 rounded-full transition-colors',
+                showTopics ? 'text-civic-light bg-civic/10' : 'text-civic-light/70 hover:bg-civic/10',
               )}
               title="Add hashtags"
             >
-              <Hash className="w-4.5 h-4.5" />
+              <Hash className="w-5 h-5" />
             </button>
             <button
               onClick={() => {
@@ -653,32 +652,19 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
                   textarea.focus();
                 });
               }}
-              className="p-2 rounded-lg transition-colors text-text-muted hover:text-text-secondary hover:bg-surface-hover"
+              className="p-2 rounded-full transition-colors text-civic-light/70 hover:bg-civic/10"
               title="Mention someone"
             >
-              <AtSign className="w-4.5 h-4.5" />
+              <AtSign className="w-5 h-5" />
             </button>
           </div>
           <div className="flex items-center gap-3">
-            {/* Character count */}
-            <span
-              className={clsx(
-                'text-xs font-mono',
-                charCount > maxChars * 0.9
-                  ? 'text-danger-light'
-                  : charCount > maxChars * 0.7
-                    ? 'text-warning-light'
-                    : 'text-text-muted',
-              )}
-            >
-              {charCount}/{maxChars}
-            </span>
             {/* Civility indicator */}
             {content.length > 10 && (
               <button
                 onClick={() => setShowCivilityCheck(!showCivilityCheck)}
                 className={clsx(
-                  'flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md transition-colors',
+                  'flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-colors',
                   civility.score >= 0.8
                     ? 'bg-positive/10 text-positive-light'
                     : civility.score >= 0.5
@@ -690,6 +676,28 @@ export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalPro
                 {Math.round(civility.score * 100)}%
               </button>
             )}
+            {/* Character count ring */}
+            <div className="flex items-center gap-2">
+              <svg className="w-6 h-6 -rotate-90" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" className="text-surface-active" />
+                <circle
+                  cx="12" cy="12" r="10" fill="none" strokeWidth="2"
+                  strokeDasharray={`${(charCount / maxChars) * 62.83} 62.83`}
+                  strokeLinecap="round"
+                  className={clsx(
+                    charCount > maxChars * 0.9 ? 'text-danger' : charCount > maxChars * 0.7 ? 'text-warning' : 'text-civic',
+                  )}
+                />
+              </svg>
+              {charCount > maxChars * 0.8 && (
+                <span className={clsx(
+                  'text-xs font-mono',
+                  charCount > maxChars * 0.9 ? 'text-danger-light' : 'text-text-muted',
+                )}>
+                  {maxChars - charCount}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
