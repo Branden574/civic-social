@@ -152,11 +152,12 @@ export async function GET(request: NextRequest) {
     let dbOnboardingCompletedAt: string | null = null;
     let dbDisplayName = sessionUser.displayName || '';
     let dbUsername = '';
+    let dbBio = '';
     if (isDbAvailable()) {
       try {
         const dbUser = await prisma.searchableUser.findFirst({
           where: { id: sessionUser.id },
-          select: { onboardingCompletedAt: true, displayName: true, username: true },
+          select: { onboardingCompletedAt: true, displayName: true, username: true, bio: true },
         });
         if (dbUser?.onboardingCompletedAt) {
           dbOnboardingDone = true;
@@ -164,6 +165,7 @@ export async function GET(request: NextRequest) {
         }
         if (dbUser?.displayName) dbDisplayName = dbUser.displayName;
         if (dbUser?.username) dbUsername = dbUser.username;
+        if (dbUser?.bio) dbBio = dbUser.bio;
       } catch { /* DB read failed — use defaults */ }
     }
 
@@ -178,6 +180,7 @@ export async function GET(request: NextRequest) {
         displayName: dbDisplayName,
         username: dbUsername,
         email: sessionUser.email,
+        bio: dbBio,
       },
     });
 

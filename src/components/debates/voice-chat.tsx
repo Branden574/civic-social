@@ -43,6 +43,7 @@ import {
   CameraOff,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useWebRTC } from '@/lib/use-webrtc';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -72,6 +73,9 @@ interface VoiceChatProps {
   isCreator: boolean;
   isDebater: boolean;       // true if user is a debate participant (not just a spectator)
   currentUserId: string;
+  onRemoteStreamsChange?: (streams: Map<string, MediaStream>) => void;
+  onLocalStreamChange?: (stream: MediaStream | null) => void;
+  onCameraChange?: (on: boolean) => void;
 }
 
 // ─── Audio device types ─────────────────────────────────────────
@@ -231,7 +235,7 @@ function useVoiceActivity(stream: MediaStream | null, muted: boolean): boolean {
 
 // ─── Component ──────────────────────────────────────────────────
 
-export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, currentUserId }: VoiceChatProps) {
+export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, currentUserId, onRemoteStreamsChange, onLocalStreamChange, onCameraChange }: VoiceChatProps) {
   const [room, setRoom] = useState<VoiceRoom | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -250,6 +254,14 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   const [deviceError, setDeviceError] = useState<string | null>(null);
   // Ref for the hidden <audio> element used to route output
   const audioOutputRef = useRef<HTMLAudioElement | null>(null);
+
+  // ── WebRTC peer connections ─────────────────────────────────
+  const { remoteStreams, setLocalStream, connectToPeers, start: startWebRTC, stop: stopWebRTC } = useWebRTC(debateId, currentUserId, joined);
+
+  // Notify parent when remote streams change
+  useEffect(() => {
+    onRemoteStreamsChange?.(remoteStreams);
+  }, [remoteStreams, onRemoteStreamsChange]);
 
   // ── Camera state ────────────────────────────────────────────
   const [cameraEnabled, setCameraEnabled] = useState(false);
@@ -284,6 +296,29 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     }
   }, [localVideoStream]);
 
+  // ── Sync local tracks (mic + camera) to WebRTC ────────────
+  useEffect(() => {
+    if (!joined) return;
+    const combinedStream = new MediaStream();
+    if (micStream) {
+      for (const track of micStream.getAudioTracks()) {
+        combinedStream.addTrack(track);
+      }
+    }
+    if (localVideoStream) {
+      for (const track of localVideoStream.getVideoTracks()) {
+        combinedStream.addTrack(track);
+      }
+    }
+    setLocalStream(combinedStream.getTracks().length > 0 ? combinedStream : null);
+    onLocalStreamChange?.(combinedStream.getTracks().length > 0 ? combinedStream : null);
+  }, [micStream, localVideoStream, joined, setLocalStream, onLocalStreamChange]);
+
+  // Notify parent of camera state changes
+  useEffect(() => {
+    onCameraChange?.(cameraEnabled);
+  }, [cameraEnabled, onCameraChange]);
+
   // Cleanup video on unmount
   useEffect(() => {
     return () => {
@@ -291,6 +326,15 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Connect to new peers when room participants change ─────
+  useEffect(() => {
+    if (!joined || !room?.participants) return;
+    const peerIds = room.participants
+      .map((p) => p.userId)
+      .filter((id) => id !== currentUserId);
+    if (peerIds.length > 0) connectToPeers(peerIds);
+  }, [joined, room?.participants, currentUserId, connectToPeers]);
 
   // Current user's participant state
   const myParticipant = room?.participants.find((p) => p.userId === currentUserId) ?? null;
@@ -446,6 +490,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
       if (res.ok) {
         setRoom(data.room);
         setJoined(true);
+        startWebRTC();
       } else {
         setError(data.error);
         // Release mic if server failed
@@ -490,6 +535,14 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
       if (res.ok) {
         setRoom(data.room);
         setJoined(true);
+        startWebRTC();
+        // Connect to existing participants
+        if (data.room?.participants) {
+          const peerIds = data.room.participants
+            .map((p: VoiceParticipant) => p.userId)
+            .filter((id: string) => id !== currentUserId);
+          connectToPeers(peerIds);
+        }
       } else {
         setError(data.error);
         mic.stream?.getTracks().forEach((t) => t.stop());
@@ -505,22 +558,30 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   }, [debateId, selectedInputId]);
 
   const leaveRoom = useCallback(async () => {
+    stopWebRTC();
     stopMicStream();
+    // Stop camera too
+    if (localVideoStream) {
+      localVideoStream.getVideoTracks().forEach((t) => t.stop());
+      setLocalVideoStream(null);
+      setCameraEnabled(false);
+    }
     try {
       await fetch(`/api/debates/${encodeURIComponent(debateId)}/voice?leave=1`, { method: 'DELETE' });
       setJoined(false);
       setMicPermission('prompt');
       fetchRoom();
     } catch { /* ignore */ }
-  }, [debateId, fetchRoom, stopMicStream]);
+  }, [debateId, fetchRoom, stopMicStream, stopWebRTC, localVideoStream]);
 
   const disableVoice = useCallback(async () => {
+    stopWebRTC();
     try {
       await fetch(`/api/debates/${encodeURIComponent(debateId)}/voice`, { method: 'DELETE' });
       setRoom(null);
       setJoined(false);
     } catch { /* ignore */ }
-  }, [debateId]);
+  }, [debateId, stopWebRTC]);
 
   const voiceAction = useCallback(async (action: string, extra: Record<string, string> = {}) => {
     setActionLoading(action);
@@ -914,7 +975,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
 
           {/* ── Info note ── */}
           <p className="text-[9px] text-text-muted text-center leading-relaxed">
-            Voice chat is for debate participants only. Audio is encrypted in transit (DTLS-SRTP).
+            Voice &amp; video is peer-to-peer (WebRTC). Audio/video is encrypted in transit (DTLS-SRTP).
             No recordings are stored. Microphone permission is required to join.
           </p>
         </div>
@@ -923,6 +984,11 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
       {/* Hidden audio element for output device routing */}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={audioOutputRef} className="hidden" />
+
+      {/* Remote audio playback — one <audio> per remote peer stream */}
+      {Array.from(remoteStreams.entries()).map(([userId, stream]) => (
+        <RemoteAudio key={userId} stream={stream} />
+      ))}
     </div>
   );
 }
@@ -1011,4 +1077,20 @@ function VoiceAvatar({
       )}
     </div>
   );
+}
+
+// ─── RemoteAudio ─────────────────────────────────────────────────
+// Hidden audio element that plays a remote peer's audio stream.
+
+function RemoteAudio({ stream }: { stream: MediaStream }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  // eslint-disable-next-line jsx-a11y/media-has-caption
+  return <audio ref={audioRef} autoPlay playsInline className="hidden" />;
 }

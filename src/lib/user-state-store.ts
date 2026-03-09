@@ -146,15 +146,16 @@ export function updateUserProfile(
 // ─── Profile Completion ──────────────────────────────────────
 
 export function computeProfileCompletion(state: UserState): ProfileCompletion {
+  // Only require fields that are reliably persisted to DB.
+  // Country, party, and topics are in-memory-only and get lost on cold start —
+  // don't nag the user about ephemeral fields.
   const missing: string[] = [];
 
   if (!state.profile.displayName) missing.push('display_name');
   if (!state.profile.username) missing.push('username');
-  if (!state.profile.countryCode) missing.push('country');
-  if (!state.profile.partyAffiliation) missing.push('party');
-  if (!state.profile.topics || state.profile.topics.length < 3) missing.push('topics');
+  if (!state.profile.bio) missing.push('bio');
 
-  const totalRequired = 5;
+  const totalRequired = 3;
   const completed = totalRequired - missing.length;
   const percent = Math.round((completed / totalRequired) * 100);
 

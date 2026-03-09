@@ -136,6 +136,21 @@ export default function DebateDetailPage() {
   const [showMobilePanel, setShowMobilePanel] = useState<'chat' | 'voice' | null>(null);
   const [joinLoading, setJoinLoading] = useState<'A' | 'B' | null>(null);
 
+  // WebRTC streams from VoiceChat
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [localWebRTCStream, setLocalWebRTCStream] = useState<MediaStream | null>(null);
+  const [voiceCameraOn, setVoiceCameraOn] = useState(false);
+
+  const handleRemoteStreamsChange = useCallback((streams: Map<string, MediaStream>) => {
+    setRemoteStreams(streams);
+  }, []);
+  const handleLocalStreamChange = useCallback((stream: MediaStream | null) => {
+    setLocalWebRTCStream(stream);
+  }, []);
+  const handleCameraChange = useCallback((on: boolean) => {
+    setVoiceCameraOn(on);
+  }, []);
+
   const { elapsed, remaining, totalMs } = useLiveTimer(debate);
   const isCreator = !!currentUserId && debate?.creatorId === currentUserId;
   const isDebater = !!currentUserId && (debate?.participants.some((p) => p.userId === currentUserId) ?? false);
@@ -615,6 +630,9 @@ export default function DebateDetailPage() {
               currentUserId={currentUserId}
               creatorId={debate.creatorId}
               debateStatus={debate.status}
+              remoteStreams={remoteStreams}
+              localStream={localWebRTCStream}
+              localCameraOn={voiceCameraOn}
             />
           )}
 
@@ -792,6 +810,9 @@ export default function DebateDetailPage() {
                 isCreator={isCreator}
                 isDebater={isDebater}
                 currentUserId={currentUserId}
+                onRemoteStreamsChange={handleRemoteStreamsChange}
+                onLocalStreamChange={handleLocalStreamChange}
+                onCameraChange={handleCameraChange}
               />
             </div>
           )}
@@ -815,6 +836,9 @@ export default function DebateDetailPage() {
             isCreator={isCreator}
             isDebater={isDebater}
             currentUserId={currentUserId}
+            onRemoteStreamsChange={handleRemoteStreamsChange}
+            onLocalStreamChange={handleLocalStreamChange}
+            onCameraChange={handleCameraChange}
           />
         </div>
 
@@ -848,87 +872,46 @@ interface VideoGridProps {
   currentUserId: string;
   creatorId: string;
   debateStatus: 'waiting' | 'live' | 'paused' | 'completed';
+  remoteStreams: Map<string, MediaStream>;
+  localStream: MediaStream | null;
+  localCameraOn: boolean;
 }
 
-function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId, debateStatus }: VideoGridProps) {
-  const [cameraOn, setCameraOn] = useState(false);
-  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
+function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId, remoteStreams, localStream, localCameraOn }: VideoGridProps) {
   const sideAParticipants = participants.filter((p) => p.side === 'A');
   const sideBParticipants = participants.filter((p) => p.side === 'B');
-  const isParticipant = participants.some((p) => p.userId === currentUserId);
 
-  const toggleCamera = useCallback(async () => {
-    setCameraError(null);
-    if (cameraOn && videoStream) {
-      videoStream.getVideoTracks().forEach((t) => t.stop());
-      setVideoStream(null);
-      setCameraOn(false);
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
-        });
-        setVideoStream(stream);
-        setCameraOn(true);
-      } catch (err) {
-        const name = (err as DOMException)?.name;
-        if (name === 'NotAllowedError') setCameraError('Camera access denied. Check browser settings.');
-        else if (name === 'NotFoundError') setCameraError('No camera found on this device.');
-        else setCameraError('Could not access camera.');
-      }
-    }
-  }, [cameraOn, videoStream]);
-
-  // Wire video element
-  useEffect(() => {
-    if (videoRef.current && videoStream) {
-      videoRef.current.srcObject = videoStream;
-    }
-  }, [videoStream]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      videoStream?.getVideoTracks().forEach((t) => t.stop());
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Count how many participants have active video
+  const activeVideoCount = (localCameraOn ? 1 : 0) + Array.from(remoteStreams.values()).filter((s) => s.getVideoTracks().length > 0).length;
 
   if (participants.length === 0) return null;
 
+  // Get the video stream for a given participant
+  function getStreamFor(userId: string): MediaStream | null {
+    if (userId === currentUserId) return localCameraOn ? localStream : null;
+    return remoteStreams.get(userId) ?? null;
+  }
+
+  function hasVideoFor(userId: string): boolean {
+    const stream = getStreamFor(userId);
+    return !!stream && stream.getVideoTracks().length > 0;
+  }
+
   return (
     <div className="px-4 sm:px-6 py-4 border-b border-border-subtle">
-      {/* Header with camera toggle */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Video className="w-4 h-4 text-civic-light" />
           <span className="text-xs font-semibold text-text-primary">Live Cameras</span>
           <span className="text-[10px] text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full">
-            {participants.length}/8 debaters
+            {activeVideoCount > 0 ? `${activeVideoCount} live` : `${participants.length} debaters`}
           </span>
         </div>
-        {isParticipant && debateStatus !== 'completed' && (
-          <button
-            onClick={toggleCamera}
-            className={clsx(
-              'flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-lg transition-all duration-300',
-              cameraOn
-                ? 'bg-civic/15 text-civic-light hover:bg-civic/25 shadow-[0_0_8px_rgba(59,130,246,0.15)]'
-                : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover',
-            )}
-          >
-            {cameraOn ? <Camera className="w-3.5 h-3.5" /> : <CameraOff className="w-3.5 h-3.5" />}
-            {cameraOn ? 'Camera On' : 'Turn On Camera'}
-          </button>
-        )}
+        <span className="text-[10px] text-text-muted">
+          Toggle camera in Voice Chat below
+        </span>
       </div>
-
-      {cameraError && (
-        <p className="text-[11px] text-danger-light mb-2">{cameraError}</p>
-      )}
 
       {/* Two-column layout: Side A | Side B */}
       <div className="grid grid-cols-2 gap-4">
@@ -948,9 +931,8 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
                 side="A"
                 isMe={p.userId === currentUserId}
                 isHost={p.userId === creatorId}
-                cameraOn={p.userId === currentUserId && cameraOn}
-                videoStream={p.userId === currentUserId ? videoStream : null}
-                videoRef={p.userId === currentUserId ? videoRef : undefined}
+                cameraOn={hasVideoFor(p.userId)}
+                videoStream={getStreamFor(p.userId)}
               />
             ))}
           </div>
@@ -975,9 +957,8 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
                 side="B"
                 isMe={p.userId === currentUserId}
                 isHost={p.userId === creatorId}
-                cameraOn={p.userId === currentUserId && cameraOn}
-                videoStream={p.userId === currentUserId ? videoStream : null}
-                videoRef={p.userId === currentUserId ? videoRef : undefined}
+                cameraOn={hasVideoFor(p.userId)}
+                videoStream={getStreamFor(p.userId)}
               />
             ))}
           </div>
@@ -986,18 +967,6 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
           )}
         </div>
       </div>
-
-      {!isParticipant && participants.length > 0 && (
-        <p className="text-[9px] text-text-muted text-center mt-3">
-          Join a side to enable your camera.
-        </p>
-      )}
-
-      {cameraOn && (
-        <p className="text-[9px] text-text-muted text-center mt-3 bg-surface-active/50 rounded-lg py-1.5 px-3">
-          Camera is a local preview. Peer-to-peer video sharing requires WebRTC infrastructure (coming soon).
-        </p>
-      )}
     </div>
   );
 }
@@ -1011,7 +980,6 @@ function VideoSlot({
   isHost,
   cameraOn,
   videoStream,
-  videoRef,
 }: {
   participant: Participant;
   side: 'A' | 'B';
@@ -1019,10 +987,10 @@ function VideoSlot({
   isHost: boolean;
   cameraOn: boolean;
   videoStream: MediaStream | null;
-  videoRef?: React.RefObject<HTMLVideoElement | null>;
 }) {
   const [entered, setEntered] = useState(false);
   const [cameraRevealed, setCameraRevealed] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const initials = participant.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2);
 
@@ -1031,6 +999,13 @@ function VideoSlot({
     const t = setTimeout(() => setEntered(true), 50);
     return () => clearTimeout(t);
   }, []);
+
+  // Wire video element to stream
+  useEffect(() => {
+    if (videoRef.current && videoStream) {
+      videoRef.current.srcObject = videoStream;
+    }
+  }, [videoStream]);
 
   // Camera reveal animation (slight delay for smoothness)
   useEffect(() => {
@@ -1061,7 +1036,7 @@ function VideoSlot({
           <video
             ref={videoRef}
             autoPlay
-            muted
+            muted={isMe}
             playsInline
             className="w-full h-full object-cover"
           />
