@@ -146,18 +146,23 @@ function debateToDbData(d: Debate) {
   };
 }
 
-/** Persist debate state to DB (best-effort, non-blocking) */
-function persistDebate(debate: Debate): void {
+/** Persist debate state to DB. Awaitable for critical mutations. */
+async function persistDebate(debate: Debate, awaitDb = false): Promise<void> {
   getCache().debates.set(debate.id, debate);
   if (isDbAvailable()) {
     const data = debateToDbData(debate);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, ...updateData } = data;
-    prisma.debate.upsert({
+    const op = prisma.debate.upsert({
       where: { id: debate.id },
       create: data,
       update: updateData,
-    }).catch(() => { /* best-effort */ });
+    });
+    if (awaitDb) {
+      await op.catch(() => { /* DB write failed, cache is still correct */ });
+    } else {
+      op.catch(() => { /* best-effort */ });
+    }
   }
 }
 
@@ -286,7 +291,7 @@ export async function startDebate(debateId: string, userId: string): Promise<Deb
     debate.startedAt = new Date().toISOString();
   }
   debate.status = 'live';
-  persistDebate(debate);
+  await persistDebate(debate, true);
   return debate;
 }
 
@@ -300,7 +305,7 @@ export async function pauseDebate(debateId: string, userId: string): Promise<Deb
   }
   debate.pausedAt = new Date().toISOString();
   debate.status = 'paused';
-  persistDebate(debate);
+  await persistDebate(debate, true);
   return debate;
 }
 
@@ -312,7 +317,7 @@ export async function stopDebate(debateId: string, userId: string): Promise<Deba
   debate.status = 'completed';
   debate.completedAt = new Date().toISOString();
   debate.currentStageIndex = debate.stages.length - 1;
-  persistDebate(debate);
+  await persistDebate(debate, true);
   return debate;
 }
 
@@ -348,7 +353,7 @@ export async function kickFromDebate(debateId: string, creatorId: string, target
     debate.kickedUserIds.push(targetUserId);
   }
   debate.invitedUserIds = debate.invitedUserIds.filter((id) => id !== targetUserId);
-  persistDebate(debate);
+  await persistDebate(debate, true);
   return true;
 }
 
@@ -364,7 +369,7 @@ export async function joinDebate(debateId: string, userId: string, displayName: 
     side,
     joinedAt: new Date().toISOString(),
   });
-  persistDebate(debate);
+  await persistDebate(debate, true);
   return true;
 }
 

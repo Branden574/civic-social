@@ -197,20 +197,29 @@ export default function DebateDetailPage() {
     }
   }, [debate, debateId]);
 
-  // Auto-refresh debate state every 5s (keeps spectator/participant counts live)
+  // Auto-refresh debate state every 8s (only updates if data changed to avoid re-renders)
+  const debateLoadedRef = useRef(false);
   useEffect(() => {
-    if (!debate) return;
+    if (!debate && !debateLoadedRef.current) return;
+    debateLoadedRef.current = true;
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}?_t=${Date.now()}`);
         if (res.ok) {
           const data = await res.json();
-          setDebate(data.debate);
+          // Only update state if something actually changed (avoids re-renders that reset video/camera)
+          setDebate((prev) => {
+            if (!prev || !data.debate) return data.debate;
+            const prevJson = JSON.stringify(prev);
+            const nextJson = JSON.stringify(data.debate);
+            return prevJson === nextJson ? prev : data.debate;
+          });
         }
       } catch { /* ignore */ }
-    }, 5000);
+    }, 8000);
     return () => clearInterval(interval);
-  }, [debate, debateId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debateId]);
 
   // ── Creator actions ──────────────────────────────────────────
   const doAction = useCallback(async (action: string, extra?: Record<string, string>) => {
@@ -981,6 +990,12 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
       {!isParticipant && participants.length > 0 && (
         <p className="text-[9px] text-text-muted text-center mt-3">
           Join a side to enable your camera.
+        </p>
+      )}
+
+      {cameraOn && (
+        <p className="text-[9px] text-text-muted text-center mt-3 bg-surface-active/50 rounded-lg py-1.5 px-3">
+          Camera is a local preview. Peer-to-peer video sharing requires WebRTC infrastructure (coming soon).
         </p>
       )}
     </div>
