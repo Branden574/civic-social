@@ -28,6 +28,7 @@ import {
   WifiOff,
   ChevronDown,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { Notification, NotificationType } from '@/lib/social-store';
@@ -48,6 +49,7 @@ const NOTIF_CONFIG: Record<NotificationType, {
   post_from_followed: { icon: Newspaper, color: 'text-civic-light bg-civic/10', label: 'published a new post' },
   debate_invite: { icon: Scale, color: 'text-warning-light bg-warning/10', label: 'invited you to a debate' },
   civility_boost: { icon: Shield, color: 'text-positive-light bg-positive/10', label: 'Civic milestone' },
+  post_removed: { icon: AlertTriangle, color: 'text-danger-light bg-danger/10', label: 'Your post was removed' },
   system: { icon: Bell, color: 'text-text-muted bg-surface-active', label: 'System update' },
 };
 

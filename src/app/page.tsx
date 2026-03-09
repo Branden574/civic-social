@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { FeedView } from '@/components/feed/feed-view';
 import { ComposeModal } from '@/components/compose/compose-modal';
@@ -44,13 +44,39 @@ export default function HomePage() {
 }
 
 function TrendingPanel() {
-  const trendingTopics = [
-    { tag: 'healthcare', posts: '2.4k posts', trend: 'up' },
-    { tag: 'infrastructure-bill', posts: '1.8k posts', trend: 'up' },
-    { tag: 'climate-policy', posts: '1.2k posts', trend: 'up' },
-    { tag: 'education-reform', posts: '890 posts', trend: 'stable' },
-    { tag: 'criminal-justice', posts: '756 posts', trend: 'up' },
+  const defaultTopics = [
+    { tag: 'healthcare', posts: '', trend: 'up' },
+    { tag: 'infrastructure-bill', posts: '', trend: 'up' },
+    { tag: 'climate-policy', posts: '', trend: 'up' },
+    { tag: 'education-reform', posts: '', trend: 'stable' },
+    { tag: 'criminal-justice', posts: '', trend: 'up' },
   ];
+  const [trendingTopics, setTrendingTopics] = useState(defaultTopics);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchCounts() {
+      try {
+        const results = await Promise.all(
+          defaultTopics.map(async (t) => {
+            try {
+              const res = await fetch(`/api/hashtag/${encodeURIComponent(t.tag)}`);
+              if (!res.ok) return { ...t, posts: '0 posts' };
+              const data = await res.json();
+              const count = (data.meta?.postCount ?? 0) + (data.meta?.newsCount ?? 0);
+              return { ...t, posts: count === 1 ? '1 post' : `${count} posts` };
+            } catch {
+              return { ...t, posts: '0 posts' };
+            }
+          }),
+        );
+        if (!cancelled) setTrendingTopics(results);
+      } catch { /* keep defaults */ }
+    }
+    fetchCounts();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const suggestedFollows = [
     {
@@ -87,7 +113,7 @@ function TrendingPanel() {
               <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
                 #{topic.tag}
               </p>
-              <p className="text-xs text-text-muted">{topic.posts}</p>
+              {topic.posts && <p className="text-xs text-text-muted">{topic.posts}</p>}
             </a>
           ))}
         </div>

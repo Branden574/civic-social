@@ -728,9 +728,11 @@ export default function UserProfilePage() {
             )}
 
             {/* Bio */}
-            <p className="text-sm text-text-secondary leading-relaxed mb-3">
-              {profile.bio}
-            </p>
+            {profile.bio && (
+              <p className="text-sm text-text-secondary leading-relaxed mb-3">
+                {profile.bio}
+              </p>
+            )}
 
             {/* Meta */}
             <div className="flex items-center gap-4 text-xs text-text-muted mb-4 flex-wrap">

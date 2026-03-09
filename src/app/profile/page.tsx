@@ -287,9 +287,9 @@ export default function ProfilePage() {
               <p className="text-sm text-text-muted">{username}</p>
             </div>
 
-            {userCountry && (
+            {(user?.onboarding?.bio) && (
               <p className="text-sm text-text-secondary leading-relaxed mb-3">
-                {user?.onboarding?.bio || ''}
+                {user.onboarding.bio}
               </p>
             )}
 

@@ -20,6 +20,7 @@ export type NotificationType =
   | 'post_from_followed'
   | 'debate_invite'
   | 'civility_boost'
+  | 'post_removed'
   | 'system';
 
 export interface Notification {

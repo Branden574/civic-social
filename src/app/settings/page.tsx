@@ -1,13 +1,14 @@
 'use client';
 
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
-import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, Volume2, X, Plus, Check, Camera, Loader2, ImageIcon } from 'lucide-react';
+import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, Volume2, X, Plus, Check, Camera, Loader2, ImageIcon, PenLine } from 'lucide-react';
 import clsx from 'clsx';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTheme } from '@/lib/theme-context';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/lib/notification-context';
 import { AuthGate } from '@/components/auth/auth-gate';
+import { ImageCropModal } from '@/components/ui/image-crop-modal';
 
 export default function SettingsPage() {
   return (
@@ -26,6 +27,9 @@ export default function SettingsPage() {
           <div className="px-4 sm:px-6 py-6 space-y-6">
             {/* Profile Photo & Banner */}
             <ProfileMediaSection />
+
+            {/* Bio */}
+            <BioSection />
 
             {/* Privacy & Security */}
             <SettingsSection icon={Shield} title="Privacy & Security">
@@ -260,6 +264,7 @@ function ProfileMediaSection() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [bannerUploading, setBannerUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<{ file: File; type: 'avatar' | 'banner' } | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -276,67 +281,76 @@ function ProfileMediaSection() {
     .slice(0, 2)
     .toUpperCase();
 
-  const handleAvatarChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Open crop modal instead of directly uploading
+  const handleAvatarChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
+    setCropFile({ file, type: 'avatar' });
+    // Reset input so the same file can be re-selected
+    e.target.value = '';
+  }, []);
 
-    try {
-      const resized = await resizeImage(file, 256, 256);
-      setAvatarPreview(resized);
+  const handleBannerChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setCropFile({ file, type: 'banner' });
+    e.target.value = '';
+  }, []);
+
+  // Handle crop result — upload the cropped image
+  const handleCropResult = useCallback(async (croppedDataUrl: string) => {
+    const type = cropFile?.type;
+    setCropFile(null);
+    if (!type) return;
+
+    if (type === 'avatar') {
+      setAvatarPreview(croppedDataUrl);
       setAvatarUploading(true);
-
-      const res = await fetch('/api/me/avatar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatar: resized }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Failed to upload avatar.');
+      try {
+        const res = await fetch('/api/me/avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ avatar: croppedDataUrl }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || 'Failed to upload avatar.');
+          setAvatarPreview(null);
+        } else {
+          refreshMe();
+        }
+      } catch {
+        setError('Failed to upload avatar.');
         setAvatarPreview(null);
-      } else {
-        refreshMe();
+      } finally {
+        setAvatarUploading(false);
       }
-    } catch {
-      setError('Failed to process image.');
-      setAvatarPreview(null);
-    } finally {
-      setAvatarUploading(false);
-    }
-  }, [refreshMe]);
-
-  const handleBannerChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError(null);
-
-    try {
-      const resized = await resizeImage(file, 1200, 400, 0.8);
-      setBannerPreview(resized);
+    } else {
+      setBannerPreview(croppedDataUrl);
       setBannerUploading(true);
-
-      const res = await fetch('/api/me/banner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ banner: resized }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Failed to upload banner.');
+      try {
+        const res = await fetch('/api/me/banner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ banner: croppedDataUrl }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || 'Failed to upload banner.');
+          setBannerPreview(null);
+        } else {
+          refreshMe();
+        }
+      } catch {
+        setError('Failed to upload banner.');
         setBannerPreview(null);
-      } else {
-        refreshMe();
+      } finally {
+        setBannerUploading(false);
       }
-    } catch {
-      setError('Failed to process image.');
-      setBannerPreview(null);
-    } finally {
-      setBannerUploading(false);
     }
-  }, [refreshMe]);
+  }, [cropFile, refreshMe]);
 
   return (
     <div className="bg-surface-elevated rounded-xl border border-border-subtle overflow-hidden">
@@ -419,6 +433,101 @@ function ProfileMediaSection() {
           {error}
         </div>
       )}
+
+      {/* Crop Modal */}
+      {cropFile && (
+        <ImageCropModal
+          imageFile={cropFile.file}
+          aspectRatio={cropFile.type === 'avatar' ? 1 : 3}
+          outputWidth={cropFile.type === 'avatar' ? 256 : 1200}
+          outputHeight={cropFile.type === 'avatar' ? 256 : 400}
+          quality={cropFile.type === 'avatar' ? 0.85 : 0.8}
+          title={cropFile.type === 'avatar' ? 'Crop Profile Photo' : 'Crop Banner'}
+          onCrop={handleCropResult}
+          onCancel={() => setCropFile(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function BioSection() {
+  const { user, refreshMe } = useAuth();
+  const [bio, setBio] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Initialize bio from user's onboarding data
+  useEffect(() => {
+    setBio(user?.onboarding?.bio || '');
+  }, [user?.onboarding?.bio]);
+
+  const handleSave = useCallback(async () => {
+    setError(null);
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bio: bio.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to save bio.');
+      } else {
+        setSaved(true);
+        refreshMe();
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [bio, refreshMe]);
+
+  const hasChanged = bio.trim() !== (user?.onboarding?.bio || '');
+
+  return (
+    <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <PenLine className="w-4 h-4 text-civic-light" />
+        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+          Bio
+        </h3>
+      </div>
+      <textarea
+        value={bio}
+        onChange={(e) => setBio(e.target.value.slice(0, 300))}
+        placeholder="Tell others about yourself, your interests, and what topics you care about..."
+        rows={3}
+        className="w-full bg-surface border border-border text-text-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted resize-none"
+      />
+      <div className="flex items-center justify-between mt-2">
+        <span className="text-xs text-text-muted">{bio.length}/300</span>
+        <div className="flex items-center gap-2">
+          {saved && (
+            <span className="text-xs text-positive-light flex items-center gap-1">
+              <Check className="w-3 h-3" /> Saved
+            </span>
+          )}
+          {error && <span className="text-xs text-danger-light">{error}</span>}
+          <button
+            onClick={handleSave}
+            disabled={saving || !hasChanged}
+            className={clsx(
+              'px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors',
+              hasChanged
+                ? 'bg-civic text-white hover:bg-civic-dark'
+                : 'bg-surface-active text-text-muted cursor-not-allowed',
+            )}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

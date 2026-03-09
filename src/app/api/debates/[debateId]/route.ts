@@ -16,7 +16,7 @@ import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/
 import { readLimiter } from '@/lib/security/rate-limiter';
 import { isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
-import { createNotification } from '@/lib/social-store';
+import { dbCreateNotification } from '@/lib/social-store';
 
 // GET /api/debates/:debateId — get debate details
 export async function GET(
@@ -102,7 +102,7 @@ export async function PATCH(
       if (!ok) return NextResponse.json({ error: 'Cannot invite user.' }, { status: 403 });
       // Create notification for the invited user
       const debate = getDebateById(debateId);
-      createNotification({
+      dbCreateNotification({
         recipientUserId: targetUserId,
         actorUserId: userId,
         type: 'debate_invite',

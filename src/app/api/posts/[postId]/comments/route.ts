@@ -10,7 +10,7 @@ import {
   canComment,
   canCommentMockPost,
 } from '@/lib/post-data-store';
-import { isFollowing, createNotification } from '@/lib/social-store';
+import { isFollowing, dbCreateNotification } from '@/lib/social-store';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest, internalError } from '@/lib/security/api-guard';
 import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, clampInt, isValidId } from '@/lib/security/sanitize';
@@ -171,7 +171,7 @@ export async function POST(
       || mockCandidates.find((c) => c.post.id === postId)?.author.id;
     if (postAuthorId && postAuthorId !== userId) {
       const authorMeta = await getAuthorMeta(userId);
-      createNotification({
+      dbCreateNotification({
         recipientUserId: postAuthorId,
         actorUserId: userId,
         type: 'reply',
@@ -189,7 +189,7 @@ export async function POST(
       const parentComment = await getCommentById(parentCommentId);
       if (parentComment && parentComment.authorId !== userId && parentComment.authorId !== postAuthorId) {
         const authorMeta = await getAuthorMeta(userId);
-        createNotification({
+        dbCreateNotification({
           recipientUserId: parentComment.authorId,
           actorUserId: userId,
           type: 'reply',

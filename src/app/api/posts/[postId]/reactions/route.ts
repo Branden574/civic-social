@@ -16,7 +16,7 @@ import {
   hasFeedbackForPost,
   type ReactionType,
 } from '@/lib/reaction-store';
-import { createNotification } from '@/lib/social-store';
+import { dbCreateNotification } from '@/lib/social-store';
 import { getPostById } from '@/lib/post-data-store';
 
 const VALID_REACTIONS: ReactionType[] = ['agree', 'disagree', 'insightful', 'nuance'];
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (result) {
     const post = await getPostById(postId);
     if (post && post.authorId !== user.id) {
-      createNotification({
+      dbCreateNotification({
         recipientUserId: post.authorId,
         actorUserId: user.id,
         type: 'like',

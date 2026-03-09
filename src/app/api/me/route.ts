@@ -4,8 +4,8 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser, getClientIp, tooManyRequests } from '@/lib/security/api-guard';
-import { readLimiter } from '@/lib/security/rate-limiter';
+import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
+import { readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
 import {
   getUserState,
   upsertUserState,
@@ -49,6 +49,7 @@ interface MeResponse {
     role: string;
     avatar: string | null;
     bannerUrl: string | null;
+    bio: string | null;
   };
   onboarding: OnboardingState;
   profileCompletion: ProfileCompletion;
@@ -69,15 +70,17 @@ async function buildResponse(
   let username = sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
   let avatar: string | null = null;
   let bannerUrl: string | null = null;
+  let bio: string | null = null;
   if (isDbAvailable()) {
     try {
       const dbUser = await prisma.user.findUnique({
         where: { id: sessionUser.id },
-        select: { username: true, avatar: true, bannerUrl: true },
+        select: { username: true, avatar: true, bannerUrl: true, bio: true },
       });
       if (dbUser?.username) username = dbUser.username;
       if (dbUser?.avatar) avatar = dbUser.avatar;
       if (dbUser?.bannerUrl) bannerUrl = dbUser.bannerUrl;
+      if (dbUser?.bio) bio = dbUser.bio;
     } catch { /* fallback to derived username */ }
   }
 
@@ -90,6 +93,7 @@ async function buildResponse(
       role: sessionUser.role,
       avatar,
       bannerUrl,
+      bio,
     },
     onboarding,
     profileCompletion,
@@ -285,4 +289,56 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
   );
+}
+
+// ─── PATCH /api/me — Update profile fields ──────────────────
+
+export async function PATCH(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = socialLimiter.check(ip);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
+  const sessionUser = getSessionUser(request);
+  if (!sessionUser) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('Invalid JSON.');
+  }
+
+  const bio = typeof body.bio === 'string' ? body.bio.slice(0, 300) : undefined;
+
+  if (bio === undefined) {
+    return badRequest('No updatable fields provided.');
+  }
+
+  // Update in-memory profile state
+  upsertUserState(sessionUser.id, {
+    profile: { bio },
+  });
+
+  // Persist bio to DB (SearchableUser + User tables)
+  if (isDbAvailable()) {
+    try {
+      await prisma.searchableUser.update({
+        where: { id: sessionUser.id },
+        data: { bio },
+      });
+    } catch { /* SearchableUser update failed */ }
+    try {
+      await prisma.user.update({
+        where: { id: sessionUser.id },
+        data: { bio },
+      });
+    } catch { /* User update failed */ }
+  }
+
+  return NextResponse.json({
+    success: true,
+    bio,
+  });
 }

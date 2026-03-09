@@ -328,7 +328,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         // Step 2b: No local data — try recovering session from HttpOnly cookie
+        // Skip if user just logged out (avoids ~2s flash while /api/me returns 401)
+        let justLoggedOut = false;
         try {
+          if (sessionStorage.getItem('civic-just-logged-out')) {
+            justLoggedOut = true;
+            sessionStorage.removeItem('civic-just-logged-out');
+          }
+        } catch { /* noop */ }
+
+        if (!justLoggedOut) try {
           const res = await fetch('/api/me');
           if (res.ok) {
             const data = await res.json();
@@ -396,13 +405,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profileCompletion: data.profileCompletion,
           stats: data.stats,
         });
-        // Update avatar/banner on the user object if returned
-        if (data.user?.avatar || data.user?.bannerUrl) {
-          setUser((prev) => prev ? {
-            ...prev,
-            avatar: data.user.avatar ?? prev.avatar,
-            bannerUrl: data.user.bannerUrl ?? prev.bannerUrl,
-          } : prev);
+        // Update avatar/banner/bio on the user object if returned
+        if (data.user?.avatar || data.user?.bannerUrl || data.user?.bio !== undefined) {
+          setUser((prev) => {
+            if (!prev) return prev;
+            const updated = {
+              ...prev,
+              avatar: data.user.avatar ?? prev.avatar,
+              bannerUrl: data.user.bannerUrl ?? prev.bannerUrl,
+            };
+            // Sync bio into onboarding so profile page picks it up
+            if (data.user.bio !== undefined && updated.onboarding) {
+              updated.onboarding = { ...updated.onboarding, bio: data.user.bio || '' };
+            }
+            return updated;
+          });
         }
       }
     } catch {
@@ -558,13 +575,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearLoginAttempts();
     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
     try { localStorage.removeItem('profile_card_dismissed'); } catch { /* noop */ }
+    // Set a flag so the next page load skips the /api/me recovery attempt
+    // (avoids a ~2s network roundtrip that causes the "flash" on logout)
+    try { sessionStorage.setItem('civic-just-logged-out', '1'); } catch { /* noop */ }
     // Clear the HttpOnly session cookie BEFORE redirecting — otherwise the
     // page reload recovers the session from the still-valid cookie.
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch { /* noop — redirect anyway */ }
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   }, []);
 
