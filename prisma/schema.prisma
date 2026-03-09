@@ -495,6 +495,41 @@ model Notification {
 }
 
 // ─────────────────────────────────────────────
+// DEBATES (DB-persisted for serverless reliability)
+// ─────────────────────────────────────────────
+
+model Debate {
+  id                   String    @id
+  title                String
+  description          String    @default("")
+  creatorId            String
+  creatorName          String
+  sideALabel           String
+  sideAIdeology        String    @default("center")
+  sideBLabel           String
+  sideBIdeology        String    @default("center")
+  topics               String[]
+  status               String    @default("waiting")  // waiting | live | paused | completed
+  durationMinutes      Int       @default(30)
+  startedAt            DateTime?
+  pausedAt             DateTime?
+  elapsedBeforePauseMs Int       @default(0)
+  completedAt          DateTime?
+  stages               String[]
+  currentStageIndex    Int       @default(0)
+  participantsJson     String    @default("[]")       // JSON array of DebateParticipant
+  spectatorCount       Int       @default(0)
+  invitedUserIds       String[]
+  kickedUserIds        String[]
+  civilityScore        Float     @default(0)
+  createdAt            DateTime  @default(now())
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
 // FEEDBACK / BUG REPORTS
 // ─────────────────────────────────────────────
 

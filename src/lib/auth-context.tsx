@@ -353,9 +353,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 createdAt: new Date(),
                 sessionStartedAt: new Date().toISOString(),
                 onboarding: {
-                  country: '',
-                  affiliation: '',
-                  topics: [],
+                  country: data.profile?.country || '',
+                  affiliation: data.profile?.affiliation || '',
+                  topics: data.profile?.topics || [],
                   bio: data.user.bio || '',
                   completedAt: data.onboarding?.isDone ? new Date().toISOString() : undefined,
                 },
@@ -417,9 +417,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               avatarUrl: data.user.avatar ?? prev.avatarUrl ?? prev.avatar,
               bannerUrl: data.user.bannerUrl ?? prev.bannerUrl,
             };
-            // Sync bio into onboarding so profile page picks it up
-            if (data.user.bio !== undefined && updated.onboarding) {
-              updated.onboarding = { ...updated.onboarding, bio: data.user.bio || '' };
+            // Sync bio + profile data into onboarding so profile page picks it up
+            if (updated.onboarding) {
+              updated.onboarding = {
+                ...updated.onboarding,
+                ...(data.user.bio !== undefined && { bio: data.user.bio || '' }),
+                ...(data.profile?.topics?.length && { topics: data.profile.topics }),
+                ...(data.profile?.country && { country: data.profile.country }),
+                ...(data.profile?.affiliation && { affiliation: data.profile.affiliation }),
+              };
             }
             persistUser(updated);
             return updated;

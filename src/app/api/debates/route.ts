@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
   const filter = searchParams.get('filter');
 
   if (filter === 'popular') {
-    return NextResponse.json({ debates: getPopularDebates(10) });
+    return NextResponse.json({ debates: await getPopularDebates(10) });
   }
 
-  let debates = getAllDebates();
+  let debates = await getAllDebates();
   if (filter && ['live', 'waiting', 'completed'].includes(filter)) {
     debates = debates.filter((d) => d.status === filter);
   }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Clamp duration
     const safeDuration = clampInt(durationMinutes, 5, 180, 30);
 
-    const debate = createDebate({
+    const debate = await createDebate({
       title: safeTitle,
       description: safeDescription,
       creatorId: userId,

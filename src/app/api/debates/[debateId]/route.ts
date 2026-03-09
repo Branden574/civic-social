@@ -30,7 +30,7 @@ export async function GET(
   const rl = readLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }
@@ -59,21 +59,21 @@ export async function PATCH(
 
   switch (action) {
     case 'start': {
-      const result = startDebate(debateId, userId);
+      const result = await startDebate(debateId, userId);
       if (!result) return NextResponse.json({ error: 'Cannot start debate.' }, { status: 403 });
       postSystemMessage(debateId, result.status === 'live' ? 'The debate is now LIVE!' : 'Debate resumed.');
       secureLog.audit('debate_started', userId, { debateId });
       return NextResponse.json({ success: true, debate: result });
     }
     case 'pause': {
-      const result = pauseDebate(debateId, userId);
+      const result = await pauseDebate(debateId, userId);
       if (!result) return NextResponse.json({ error: 'Cannot pause debate.' }, { status: 403 });
       postSystemMessage(debateId, 'Debate paused by host.');
       secureLog.audit('debate_paused', userId, { debateId });
       return NextResponse.json({ success: true, debate: result });
     }
     case 'stop': {
-      const result = stopDebate(debateId, userId);
+      const result = await stopDebate(debateId, userId);
       if (!result) return NextResponse.json({ error: 'Cannot stop debate.' }, { status: 403 });
 
       postSystemMessage(debateId, 'The debate has ended. Thank you for participating!');
@@ -90,7 +90,7 @@ export async function PATCH(
       return NextResponse.json({ success: true, debate: result, chatCleared });
     }
     case 'advance_stage': {
-      const result = advanceStage(debateId, userId);
+      const result = await advanceStage(debateId, userId);
       if (!result) return NextResponse.json({ error: 'Cannot advance stage.' }, { status: 403 });
       postSystemMessage(debateId, `Stage changed to: ${result.stages[result.currentStageIndex]}`);
       return NextResponse.json({ success: true, debate: result });
@@ -98,10 +98,10 @@ export async function PATCH(
     case 'invite': {
       const { targetUserId } = body;
       if (!targetUserId || !isValidId(targetUserId)) return badRequest('Valid targetUserId required.');
-      const ok = inviteToDebate(debateId, userId, targetUserId);
+      const ok = await inviteToDebate(debateId, userId, targetUserId);
       if (!ok) return NextResponse.json({ error: 'Cannot invite user.' }, { status: 403 });
       // Create notification for the invited user
-      const debate = getDebateById(debateId);
+      const debate = await getDebateById(debateId);
       dbCreateNotification({
         recipientUserId: targetUserId,
         actorUserId: userId,
@@ -119,23 +119,23 @@ export async function PATCH(
     case 'kick': {
       const { targetUserId: kickTarget } = body;
       if (!kickTarget || !isValidId(kickTarget)) return badRequest('Valid targetUserId required.');
-      const ok = kickFromDebate(debateId, userId, kickTarget);
+      const ok = await kickFromDebate(debateId, userId, kickTarget);
       if (!ok) return NextResponse.json({ error: 'Cannot kick user.' }, { status: 403 });
       secureLog.audit('user_kicked', userId, { debateId, targetUserId: kickTarget });
-      const debate = getDebateById(debateId);
+      const debate = await getDebateById(debateId);
       return NextResponse.json({ success: true, debate });
     }
     case 'join': {
       const { side } = body;
       if (side !== 'A' && side !== 'B') return badRequest('Side must be A or B.');
-      const ok = joinDebate(debateId, userId, userName, side);
+      const ok = await joinDebate(debateId, userId, userName, side);
       if (!ok) return NextResponse.json({ error: 'Cannot join debate.' }, { status: 403 });
-      const debate = getDebateById(debateId);
+      const debate = await getDebateById(debateId);
       return NextResponse.json({ success: true, debate });
     }
     case 'spectate': {
-      incrementSpectators(debateId);
-      const debate = getDebateById(debateId);
+      await incrementSpectators(debateId);
+      const debate = await getDebateById(debateId);
       return NextResponse.json({ success: true, debate });
     }
     default:

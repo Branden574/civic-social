@@ -1,7 +1,7 @@
 'use client';
 
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
-import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, Volume2, X, Plus, Check, Camera, Loader2, ImageIcon, PenLine } from 'lucide-react';
+import { Settings, Shield, Bell, Eye, Palette, Globe, Trash2, Download, Sun, Moon, Monitor, VolumeX, Volume2, X, Plus, Check, Camera, Loader2, ImageIcon, PenLine, Hash } from 'lucide-react';
 import clsx from 'clsx';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTheme } from '@/lib/theme-context';
@@ -30,6 +30,9 @@ export default function SettingsPage() {
 
             {/* Bio */}
             <BioSection />
+
+            {/* Topics / Interests */}
+            <TopicsSection />
 
             {/* Privacy & Security */}
             <SettingsSection icon={Shield} title="Privacy & Security">
@@ -525,6 +528,158 @@ function BioSection() {
             )}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const AVAILABLE_TOPICS = [
+  'healthcare', 'economy', 'climate', 'education', 'immigration',
+  'gun-control', 'criminal-justice', 'housing', 'technology', 'foreign-policy',
+  'civil-rights', 'energy', 'taxation', 'defense', 'environment',
+  'voting-rights', 'infrastructure', 'social-security', 'trade', 'labor',
+];
+
+function TopicsSection() {
+  const { user, refreshMe } = useAuth();
+  const [topics, setTopics] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [customTopic, setCustomTopic] = useState('');
+
+  useEffect(() => {
+    setTopics(user?.onboarding?.topics ?? []);
+  }, [user?.onboarding?.topics]);
+
+  const toggleTopic = useCallback((topic: string) => {
+    setTopics((prev) =>
+      prev.includes(topic)
+        ? prev.filter((t) => t !== topic)
+        : prev.length < 20 ? [...prev, topic] : prev,
+    );
+  }, []);
+
+  const addCustomTopic = useCallback(() => {
+    const t = customTopic.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    if (t && !topics.includes(t) && topics.length < 20) {
+      setTopics((prev) => [...prev, t]);
+      setCustomTopic('');
+    }
+  }, [customTopic, topics]);
+
+  const originalTopics = user?.onboarding?.topics ?? [];
+  const hasChanged = JSON.stringify([...topics].sort()) !== JSON.stringify([...originalTopics].sort());
+
+  const handleSave = useCallback(async () => {
+    setError(null);
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topics }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to save topics.');
+      } else {
+        setSaved(true);
+        refreshMe();
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [topics, refreshMe]);
+
+  return (
+    <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <Hash className="w-4 h-4 text-civic-light" />
+        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+          Topics & Interests
+        </h3>
+      </div>
+      <p className="text-xs text-text-muted mb-4">
+        Select topics you care about. These appear on your profile and help personalize your feed.
+      </p>
+
+      {/* Chips */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {AVAILABLE_TOPICS.map((topic) => {
+          const selected = topics.includes(topic);
+          return (
+            <button
+              key={topic}
+              onClick={() => toggleTopic(topic)}
+              className={clsx(
+                'text-xs font-medium px-2.5 py-1 rounded-full border transition-colors',
+                selected
+                  ? 'bg-civic/15 text-civic-light border-civic/30'
+                  : 'bg-surface text-text-muted border-border-subtle hover:text-text-secondary hover:border-border',
+              )}
+            >
+              #{topic}
+            </button>
+          );
+        })}
+        {/* Custom topics the user added that aren't in the preset list */}
+        {topics.filter((t) => !AVAILABLE_TOPICS.includes(t)).map((topic) => (
+          <button
+            key={topic}
+            onClick={() => toggleTopic(topic)}
+            className="text-xs font-medium px-2.5 py-1 rounded-full border bg-civic/15 text-civic-light border-civic/30 transition-colors flex items-center gap-1"
+          >
+            #{topic}
+            <X className="w-3 h-3" />
+          </button>
+        ))}
+      </div>
+
+      {/* Custom topic input */}
+      <div className="flex gap-2 mb-3">
+        <input
+          value={customTopic}
+          onChange={(e) => setCustomTopic(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addCustomTopic()}
+          placeholder="Add custom topic..."
+          className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
+        />
+        <button
+          onClick={addCustomTopic}
+          className="p-1.5 bg-surface border border-border-subtle rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-primary"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Save */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-text-muted">{topics.length}/20 selected</span>
+        <div className="flex items-center gap-2">
+          {saved && (
+            <span className="text-xs text-positive-light flex items-center gap-1">
+              <Check className="w-3 h-3" /> Saved
+            </span>
+          )}
+          {error && <span className="text-xs text-danger-light">{error}</span>}
+          <button
+            onClick={handleSave}
+            disabled={saving || !hasChanged}
+            className={clsx(
+              'px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors',
+              hasChanged
+                ? 'bg-civic text-white hover:bg-civic-dark'
+                : 'bg-surface-active text-text-muted cursor-not-allowed',
+            )}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Topics'}
           </button>
         </div>
       </div>

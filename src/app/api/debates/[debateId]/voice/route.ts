@@ -38,7 +38,7 @@ export async function GET(
   const rl = readLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }
@@ -81,7 +81,7 @@ export async function POST(
   }
   const { action } = body;
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }
@@ -148,7 +148,7 @@ export async function PATCH(
   }
   const { action } = body;
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }
@@ -236,7 +236,7 @@ export async function DELETE(
   const { searchParams } = new URL(request.url);
   const leaveOnly = searchParams.get('leave') === '1';
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }

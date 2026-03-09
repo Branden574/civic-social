@@ -42,7 +42,7 @@ export async function GET(
   const since = searchParams.get('since') || undefined;
   const limit = clampInt(searchParams.get('limit'), 1, 200, 200);
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }
@@ -92,7 +92,7 @@ export async function POST(
   }
   const { content, replyToId } = body;
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }
@@ -140,7 +140,7 @@ export async function DELETE(
   const user = getSessionUser(request);
   const userId = user?.id || 'user-current';
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }
@@ -179,7 +179,7 @@ export async function PATCH(
   }
   const { action } = body;
 
-  const debate = getDebateById(debateId);
+  const debate = await getDebateById(debateId);
   if (!debate) {
     return NextResponse.json({ error: 'Debate not found.' }, { status: 404 });
   }

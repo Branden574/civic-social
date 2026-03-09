@@ -52,6 +52,11 @@ interface MeResponse {
     bio: string | null;
   };
   onboarding: OnboardingState;
+  profile: {
+    topics: string[];
+    country: string;
+    affiliation: string;
+  };
   profileCompletion: ProfileCompletion;
   stats: {
     followersCount: number;
@@ -65,6 +70,7 @@ async function buildResponse(
   sessionUser: { id: string; email: string; displayName: string; role: string },
   onboarding: OnboardingState,
   profileCompletion: ProfileCompletion,
+  profileData?: { topics?: string[]; countryCode?: string; partyAffiliation?: string },
 ): Promise<MeResponse> {
   // Look up username, avatar, banner from DB
   let username = sessionUser.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
@@ -96,6 +102,11 @@ async function buildResponse(
       bio,
     },
     onboarding,
+    profile: {
+      topics: profileData?.topics || [],
+      country: profileData?.countryCode || '',
+      affiliation: profileData?.partyAffiliation || '',
+    },
     profileCompletion,
     stats: {
       followersCount: await dbGetFollowerCount(sessionUser.id),
@@ -171,12 +182,12 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
+      await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state), state.profile),
     );
   }
 
   return NextResponse.json(
-    await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
+    await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state), state.profile),
   );
 }
 
@@ -287,7 +298,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(
-    await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state)),
+    await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state), state.profile),
   );
 }
 
@@ -311,18 +322,22 @@ export async function PATCH(request: NextRequest) {
   }
 
   const bio = typeof body.bio === 'string' ? body.bio.slice(0, 300) : undefined;
+  const topics = Array.isArray(body.topics)
+    ? (body.topics as string[]).filter((t) => typeof t === 'string' && t.length > 0).slice(0, 20).map((t) => t.slice(0, 50).toLowerCase().trim())
+    : undefined;
 
-  if (bio === undefined) {
+  if (bio === undefined && topics === undefined) {
     return badRequest('No updatable fields provided.');
   }
 
   // Update in-memory profile state
-  upsertUserState(sessionUser.id, {
-    profile: { bio },
-  });
+  const profileUpdate: Record<string, unknown> = {};
+  if (bio !== undefined) profileUpdate.bio = bio;
+  if (topics !== undefined) profileUpdate.topics = topics;
+  upsertUserState(sessionUser.id, { profile: profileUpdate });
 
-  // Persist bio to DB (SearchableUser + User tables)
-  if (isDbAvailable()) {
+  // Persist to DB
+  if (isDbAvailable() && bio !== undefined) {
     try {
       await prisma.searchableUser.update({
         where: { id: sessionUser.id },
@@ -339,6 +354,7 @@ export async function PATCH(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    bio,
+    ...(bio !== undefined && { bio }),
+    ...(topics !== undefined && { topics }),
   });
 }

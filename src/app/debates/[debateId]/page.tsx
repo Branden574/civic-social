@@ -134,26 +134,22 @@ export default function DebateDetailPage() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showMobilePanel, setShowMobilePanel] = useState<'chat' | 'voice' | null>(null);
+  const [joinLoading, setJoinLoading] = useState<'A' | 'B' | null>(null);
 
   const { elapsed, remaining, totalMs } = useLiveTimer(debate);
   const isCreator = !!currentUserId && debate?.creatorId === currentUserId;
   const isDebater = !!currentUserId && (debate?.participants.some((p) => p.userId === currentUserId) ?? false);
+  const isInvited = !!currentUserId && (debate?.invitedUserIds.includes(currentUserId) ?? false);
+  const isKicked = !!currentUserId && (debate?.kickedUserIds.includes(currentUserId) ?? false);
+  const canJoin = !!currentUserId && !isDebater && !isKicked && debate?.status !== 'completed';
   const progressPct = totalMs > 0 ? Math.min(100, (elapsed / totalMs) * 100) : 0;
   const hasSpectatedRef = useRef(false);
 
-  // ── Fetch debate (with retry for cold-start race conditions) ──
-  const fetchDebate = useCallback(async (retries = 2) => {
+  // ── Fetch debate ──
+  const fetchDebate = useCallback(async () => {
     try {
       const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}?_t=${Date.now()}`);
-      if (!res.ok) {
-        if (res.status === 404 && retries > 0) {
-          // Serverless cold start may not have re-seeded yet — retry
-          await new Promise((r) => setTimeout(r, 800));
-          return fetchDebate(retries - 1);
-        }
-        setLoading(false);
-        return;
-      }
+      if (!res.ok) { setLoading(false); return; }
       const data = await res.json();
       setDebate(data.debate);
     } catch { /* ignore */ } finally { setLoading(false); }
@@ -259,6 +255,27 @@ export default function DebateDetailPage() {
     } finally { setActionLoading(null); }
   }, [debateId]);
 
+  // ── Join debate (side selection) ────────────────────────────
+  const handleJoin = useCallback(async (side: 'A' | 'B') => {
+    setJoinLoading(side);
+    try {
+      const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'join', side }),
+      });
+      const data = await res.json();
+      if (res.ok && data.debate) {
+        setDebate(data.debate);
+        setToast({ message: `Joined as ${side === 'A' ? debate?.sideA.label : debate?.sideB.label}!`, type: 'success' });
+      } else {
+        setToast({ message: data.error || 'Could not join debate.', type: 'error' });
+      }
+    } catch {
+      setToast({ message: 'Network error.', type: 'error' });
+    } finally { setJoinLoading(null); }
+  }, [debateId, debate?.sideA.label, debate?.sideB.label]);
+
   // Auto-dismiss toast
   useEffect(() => {
     if (toast) { const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); }
@@ -277,6 +294,9 @@ export default function DebateDetailPage() {
     );
   }
 
+  const sideAParticipants = debate?.participants.filter((p) => p.side === 'A') ?? [];
+  const sideBParticipants = debate?.participants.filter((p) => p.side === 'B') ?? [];
+
   if (!debate) {
     return (
       <div className="flex min-h-screen bg-bg">
@@ -292,9 +312,6 @@ export default function DebateDetailPage() {
       </div>
     );
   }
-
-  const sideAParticipants = debate.participants.filter((p) => p.side === 'A');
-  const sideBParticipants = debate.participants.filter((p) => p.side === 'B');
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -512,6 +529,70 @@ export default function DebateDetailPage() {
                 {debate.topics.map((topic) => (
                   <span key={topic} className="text-[11px] font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full">#{topic}</span>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Join Debate CTA ── */}
+          {canJoin && debate && (
+            <div className={clsx(
+              'px-4 sm:px-6 py-4 border-b border-border-subtle',
+              isInvited ? 'bg-civic/5' : '',
+            )}>
+              <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
+                {isInvited && (
+                  <p className="text-xs font-semibold text-civic-light mb-2 flex items-center gap-1.5">
+                    <UserPlus className="w-3.5 h-3.5" />
+                    You&apos;ve been invited to this debate!
+                  </p>
+                )}
+                <p className="text-sm font-semibold text-text-primary mb-3">
+                  {isInvited ? 'Choose your side to join:' : 'Join this debate — pick a side:'}
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleJoin('A')}
+                    disabled={!!joinLoading}
+                    className={clsx(
+                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all',
+                      'hover:border-civic/40 hover:bg-civic/5',
+                      joinLoading === 'A' ? 'border-civic/40 bg-civic/5' : 'border-border-subtle',
+                    )}
+                  >
+                    {joinLoading === 'A' ? (
+                      <Loader2 className="w-5 h-5 text-civic animate-spin" />
+                    ) : (
+                      <>
+                        <span className="text-sm font-bold text-text-primary">{debate.sideA.label}</span>
+                        <span className={clsx('text-[10px] font-medium px-2 py-0.5 rounded-full', getAffStyle(debate.sideA.ideology))}>
+                          {debate.sideA.ideology}
+                        </span>
+                        <span className="text-[10px] text-text-muted">{sideAParticipants.length} debater{sideAParticipants.length !== 1 ? 's' : ''}</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleJoin('B')}
+                    disabled={!!joinLoading}
+                    className={clsx(
+                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all',
+                      'hover:border-civic/40 hover:bg-civic/5',
+                      joinLoading === 'B' ? 'border-civic/40 bg-civic/5' : 'border-border-subtle',
+                    )}
+                  >
+                    {joinLoading === 'B' ? (
+                      <Loader2 className="w-5 h-5 text-civic animate-spin" />
+                    ) : (
+                      <>
+                        <span className="text-sm font-bold text-text-primary">{debate.sideB.label}</span>
+                        <span className={clsx('text-[10px] font-medium px-2 py-0.5 rounded-full', getAffStyle(debate.sideB.ideology))}>
+                          {debate.sideB.ideology}
+                        </span>
+                        <span className="text-[10px] text-text-muted">{sideBParticipants.length} debater{sideBParticipants.length !== 1 ? 's' : ''}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}

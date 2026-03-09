@@ -1,13 +1,15 @@
 // ═══════════════════════════════════════════════════════════════
-// Civic Social — Debate Store (Server-Side Persistence)
+// Civic Social — Debate Store (DB-Persisted + In-Memory Cache)
 // ═══════════════════════════════════════════════════════════════
 //
-// Manages debate rooms: creation, timer state, participants,
-// invites, kicks, and stage progression.
+// Debates are persisted to PostgreSQL so they survive Vercel
+// cold starts and are visible across all serverless instances.
 //
-// Uses Symbol.for on global for HMR persistence in dev.
-// In production: Replace with DB operations.
+// In-memory cache (per-instance) provides fast reads within the
+// same process. Cache misses fall through to DB.
 // ═══════════════════════════════════════════════════════════════
+
+import { isDbAvailable, prisma } from '@/lib/db';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -37,10 +39,10 @@ export interface Debate {
   status: DebateStatus;
 
   // Timer
-  durationMinutes: number;        // total allowed duration
-  startedAt: string | null;       // ISO — when debate went live
-  pausedAt: string | null;        // ISO — when paused (null if running)
-  elapsedBeforePauseMs: number;   // accumulated ms from previous live segments
+  durationMinutes: number;
+  startedAt: string | null;
+  pausedAt: string | null;
+  elapsedBeforePauseMs: number;
   completedAt: string | null;
 
   // Stage progression
@@ -61,54 +63,161 @@ export interface Debate {
   createdAt: string;
 }
 
-// ─── Global store ───────────────────────────────────────────────
+// ─── In-memory cache (per serverless instance) ──────────────────
 
-const STORE_KEY = Symbol.for('civic.debate.store');
+const CACHE_KEY = Symbol.for('civic.debate.cache');
 
-interface DebateStore {
-  debates: Debate[];
-  initialized: boolean;
+interface DebateCache {
+  debates: Map<string, Debate>;
 }
 
-interface GlobalWithStore {
-  [key: symbol]: DebateStore | undefined;
+function getCache(): DebateCache {
+  const g = global as unknown as Record<symbol, DebateCache | undefined>;
+  if (!g[CACHE_KEY]) {
+    g[CACHE_KEY] = { debates: new Map() };
+  }
+  return g[CACHE_KEY]!;
 }
 
 const DEFAULT_STAGES = ['Opening', 'Rebuttal', 'Cross-Examination', 'Closing', 'Sources'];
 
-function getStore(): DebateStore {
-  const g = global as unknown as GlobalWithStore;
-  if (!g[STORE_KEY] || !g[STORE_KEY]!.initialized) {
-    g[STORE_KEY] = { debates: seedDebates(), initialized: true };
+// ─── DB ↔ Debate conversion ─────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToDebate(row: any): Debate {
+  let participants: DebateParticipant[] = [];
+  try {
+    participants = typeof row.participantsJson === 'string'
+      ? JSON.parse(row.participantsJson)
+      : [];
+  } catch { /* fallback to empty */ }
+
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description || '',
+    creatorId: row.creatorId,
+    creatorName: row.creatorName,
+    sideA: { label: row.sideALabel, ideology: row.sideAIdeology || 'center' },
+    sideB: { label: row.sideBLabel, ideology: row.sideBIdeology || 'center' },
+    topics: row.topics || [],
+    status: row.status as DebateStatus,
+    durationMinutes: row.durationMinutes,
+    startedAt: row.startedAt ? new Date(row.startedAt).toISOString() : null,
+    pausedAt: row.pausedAt ? new Date(row.pausedAt).toISOString() : null,
+    elapsedBeforePauseMs: row.elapsedBeforePauseMs || 0,
+    completedAt: row.completedAt ? new Date(row.completedAt).toISOString() : null,
+    stages: row.stages?.length ? row.stages : DEFAULT_STAGES,
+    currentStageIndex: row.currentStageIndex || 0,
+    participants,
+    spectatorCount: row.spectatorCount || 0,
+    invitedUserIds: row.invitedUserIds || [],
+    kickedUserIds: row.kickedUserIds || [],
+    civilityScore: row.civilityScore || 0,
+    createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : new Date().toISOString(),
+  };
+}
+
+function debateToDbData(d: Debate) {
+  return {
+    id: d.id,
+    title: d.title,
+    description: d.description,
+    creatorId: d.creatorId,
+    creatorName: d.creatorName,
+    sideALabel: d.sideA.label,
+    sideAIdeology: d.sideA.ideology,
+    sideBLabel: d.sideB.label,
+    sideBIdeology: d.sideB.ideology,
+    topics: d.topics,
+    status: d.status,
+    durationMinutes: d.durationMinutes,
+    startedAt: d.startedAt ? new Date(d.startedAt) : null,
+    pausedAt: d.pausedAt ? new Date(d.pausedAt) : null,
+    elapsedBeforePauseMs: d.elapsedBeforePauseMs,
+    completedAt: d.completedAt ? new Date(d.completedAt) : null,
+    stages: d.stages,
+    currentStageIndex: d.currentStageIndex,
+    participantsJson: JSON.stringify(d.participants),
+    spectatorCount: d.spectatorCount,
+    invitedUserIds: d.invitedUserIds,
+    kickedUserIds: d.kickedUserIds,
+    civilityScore: d.civilityScore,
+  };
+}
+
+/** Persist debate state to DB (best-effort, non-blocking) */
+function persistDebate(debate: Debate): void {
+  getCache().debates.set(debate.id, debate);
+  if (isDbAvailable()) {
+    const data = debateToDbData(debate);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, ...updateData } = data;
+    prisma.debate.upsert({
+      where: { id: debate.id },
+      create: data,
+      update: updateData,
+    }).catch(() => { /* best-effort */ });
   }
-  return g[STORE_KEY]!;
 }
 
-// ─── No seed/filler data — real debates only ────────────────────
-// Mock debates removed. Store starts empty; populated by createDebate().
+// ─── CRUD Operations (async, DB-backed) ─────────────────────────
 
-function seedDebates(): Debate[] {
-  return [];
+export async function getAllDebates(): Promise<Debate[]> {
+  if (isDbAvailable()) {
+    try {
+      const rows = await prisma.debate.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      });
+      const debates = rows.map(rowToDebate);
+      // Warm cache
+      const cache = getCache();
+      for (const d of debates) cache.debates.set(d.id, d);
+      return debates;
+    } catch { /* fall through to cache */ }
+  }
+  return Array.from(getCache().debates.values());
 }
 
-// ─── CRUD Operations ────────────────────────────────────────────
+export async function getDebateById(id: string): Promise<Debate | null> {
+  // 1. Check in-memory cache first (fast path)
+  const cached = getCache().debates.get(id);
+  if (cached) return cached;
 
-export function getAllDebates(): Debate[] {
-  return getStore().debates;
+  // 2. Check DB (handles cold starts / cross-instance lookups)
+  if (isDbAvailable()) {
+    try {
+      const row = await prisma.debate.findUnique({ where: { id } });
+      if (row) {
+        const debate = rowToDebate(row);
+        getCache().debates.set(id, debate);
+        return debate;
+      }
+    } catch { /* DB unavailable */ }
+  }
+
+  return null;
 }
 
-export function getDebateById(id: string): Debate | null {
-  return getStore().debates.find((d) => d.id === id) ?? null;
-}
-
-export function getPopularDebates(limit = 5): Debate[] {
-  return [...getStore().debates]
+export async function getPopularDebates(limit = 5): Promise<Debate[]> {
+  if (isDbAvailable()) {
+    try {
+      const rows = await prisma.debate.findMany({
+        where: { status: { in: ['live', 'paused'] } },
+        orderBy: { spectatorCount: 'desc' },
+        take: limit,
+      });
+      return rows.map(rowToDebate);
+    } catch { /* fall through */ }
+  }
+  return Array.from(getCache().debates.values())
     .filter((d) => d.status === 'live' || d.status === 'paused')
     .sort((a, b) => b.spectatorCount - a.spectatorCount)
     .slice(0, limit);
 }
 
-export function createDebate(input: {
+export async function createDebate(input: {
   title: string;
   description: string;
   creatorId: string;
@@ -118,8 +227,7 @@ export function createDebate(input: {
   topics: string[];
   durationMinutes: number;
   creatorSide: 'A' | 'B';
-}): Debate {
-  const store = getStore();
+}): Promise<Debate> {
   const debate: Debate = {
     id: `debate-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     title: input.title,
@@ -151,97 +259,101 @@ export function createDebate(input: {
     civilityScore: 0,
     createdAt: new Date().toISOString(),
   };
-  store.debates.unshift(debate);
+
+  // Cache immediately
+  getCache().debates.set(debate.id, debate);
+
+  // Persist to DB (await to ensure it's queryable before returning)
+  if (isDbAvailable()) {
+    try {
+      await prisma.debate.create({ data: debateToDbData(debate) });
+    } catch { /* cache still has it */ }
+  }
+
   return debate;
 }
 
-// ─── Creator Actions ────────────────────────────────────────────
+// ─── Creator Actions (async, DB-synced) ─────────────────────────
 
-export function startDebate(debateId: string, userId: string): Debate | null {
-  const debate = getDebateById(debateId);
+export async function startDebate(debateId: string, userId: string): Promise<Debate | null> {
+  const debate = await getDebateById(debateId);
   if (!debate || debate.creatorId !== userId) return null;
   if (debate.status !== 'waiting' && debate.status !== 'paused') return null;
 
   if (debate.status === 'paused' && debate.pausedAt) {
-    // Resuming — accumulate time
-    const pausedMs = Date.now() - new Date(debate.pausedAt).getTime();
-    // Don't add paused time to elapsed (we're tracking live time only)
     debate.pausedAt = null;
   } else {
-    // Fresh start
     debate.startedAt = new Date().toISOString();
   }
   debate.status = 'live';
+  persistDebate(debate);
   return debate;
 }
 
-export function pauseDebate(debateId: string, userId: string): Debate | null {
-  const debate = getDebateById(debateId);
+export async function pauseDebate(debateId: string, userId: string): Promise<Debate | null> {
+  const debate = await getDebateById(debateId);
   if (!debate || debate.creatorId !== userId) return null;
   if (debate.status !== 'live') return null;
 
-  // Accumulate elapsed time from this live segment
   if (debate.startedAt && !debate.pausedAt) {
-    const liveSegmentMs = Date.now() - new Date(debate.startedAt).getTime() - debate.elapsedBeforePauseMs;
-    // Actually, let's track total elapsed differently
-    // elapsed = (now - startedAt) but we need to subtract paused intervals
-    // Simpler: elapsedBeforePauseMs accumulates all live time before this pause
     debate.elapsedBeforePauseMs = Date.now() - new Date(debate.startedAt).getTime();
   }
   debate.pausedAt = new Date().toISOString();
   debate.status = 'paused';
+  persistDebate(debate);
   return debate;
 }
 
-export function stopDebate(debateId: string, userId: string): Debate | null {
-  const debate = getDebateById(debateId);
+export async function stopDebate(debateId: string, userId: string): Promise<Debate | null> {
+  const debate = await getDebateById(debateId);
   if (!debate || debate.creatorId !== userId) return null;
   if (debate.status === 'completed') return null;
 
   debate.status = 'completed';
   debate.completedAt = new Date().toISOString();
   debate.currentStageIndex = debate.stages.length - 1;
+  persistDebate(debate);
   return debate;
 }
 
-export function advanceStage(debateId: string, userId: string): Debate | null {
-  const debate = getDebateById(debateId);
+export async function advanceStage(debateId: string, userId: string): Promise<Debate | null> {
+  const debate = await getDebateById(debateId);
   if (!debate || debate.creatorId !== userId) return null;
   if (debate.status !== 'live') return null;
   if (debate.currentStageIndex >= debate.stages.length - 1) return null;
 
   debate.currentStageIndex++;
+  persistDebate(debate);
   return debate;
 }
 
-export function inviteToDebate(debateId: string, creatorId: string, targetUserId: string): boolean {
-  const debate = getDebateById(debateId);
+export async function inviteToDebate(debateId: string, creatorId: string, targetUserId: string): Promise<boolean> {
+  const debate = await getDebateById(debateId);
   if (!debate || debate.creatorId !== creatorId) return false;
   if (debate.kickedUserIds.includes(targetUserId)) return false;
   if (!debate.invitedUserIds.includes(targetUserId)) {
     debate.invitedUserIds.push(targetUserId);
   }
+  persistDebate(debate);
   return true;
 }
 
-export function kickFromDebate(debateId: string, creatorId: string, targetUserId: string): boolean {
-  const debate = getDebateById(debateId);
+export async function kickFromDebate(debateId: string, creatorId: string, targetUserId: string): Promise<boolean> {
+  const debate = await getDebateById(debateId);
   if (!debate || debate.creatorId !== creatorId) return false;
-  if (targetUserId === creatorId) return false; // can't kick yourself
+  if (targetUserId === creatorId) return false;
 
-  // Remove from participants
   debate.participants = debate.participants.filter((p) => p.userId !== targetUserId);
-  // Add to kicked list
   if (!debate.kickedUserIds.includes(targetUserId)) {
     debate.kickedUserIds.push(targetUserId);
   }
-  // Remove from invited
   debate.invitedUserIds = debate.invitedUserIds.filter((id) => id !== targetUserId);
+  persistDebate(debate);
   return true;
 }
 
-export function joinDebate(debateId: string, userId: string, displayName: string, side: 'A' | 'B'): boolean {
-  const debate = getDebateById(debateId);
+export async function joinDebate(debateId: string, userId: string, displayName: string, side: 'A' | 'B'): Promise<boolean> {
+  const debate = await getDebateById(debateId);
   if (!debate) return false;
   if (debate.kickedUserIds.includes(userId)) return false;
   if (debate.participants.some((p) => p.userId === userId)) return false;
@@ -252,20 +364,20 @@ export function joinDebate(debateId: string, userId: string, displayName: string
     side,
     joinedAt: new Date().toISOString(),
   });
+  persistDebate(debate);
   return true;
 }
 
-export function incrementSpectators(debateId: string): void {
-  const debate = getDebateById(debateId);
-  if (debate) debate.spectatorCount++;
+export async function incrementSpectators(debateId: string): Promise<void> {
+  const debate = await getDebateById(debateId);
+  if (debate) {
+    debate.spectatorCount++;
+    persistDebate(debate);
+  }
 }
 
 // ─── Timer helpers (pure functions for client use) ──────────────
 
-/**
- * Calculate elapsed live time in milliseconds.
- * Excludes paused intervals.
- */
 export function getElapsedMs(debate: Debate): number {
   if (!debate.startedAt) return 0;
   if (debate.status === 'completed') {
@@ -277,14 +389,9 @@ export function getElapsedMs(debate: Debate): number {
   if (debate.status === 'paused') {
     return debate.elapsedBeforePauseMs;
   }
-  // Live — calculate from startedAt to now
   return Date.now() - new Date(debate.startedAt).getTime();
 }
 
-/**
- * Calculate remaining time in milliseconds.
- * Returns 0 if time is up.
- */
 export function getRemainingMs(debate: Debate): number {
   const totalMs = debate.durationMinutes * 60 * 1000;
   const elapsed = getElapsedMs(debate);
