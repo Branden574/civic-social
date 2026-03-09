@@ -348,13 +348,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 displayName: data.user.displayName,
                 username: data.user.username || data.user.displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, ''),
                 role: data.user.role ?? 'user',
+                avatarUrl: data.user.avatar || undefined,
+                avatar: data.user.avatar || null,
                 createdAt: new Date(),
                 sessionStartedAt: new Date().toISOString(),
                 onboarding: {
                   country: '',
                   affiliation: '',
                   topics: [],
-                  bio: '',
+                  bio: data.user.bio || '',
                   completedAt: data.onboarding?.isDone ? new Date().toISOString() : undefined,
                 },
               };
@@ -406,18 +408,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           stats: data.stats,
         });
         // Update avatar/banner/bio on the user object if returned
-        if (data.user?.avatar || data.user?.bannerUrl || data.user?.bio !== undefined) {
+        if (data.user) {
           setUser((prev) => {
             if (!prev) return prev;
             const updated = {
               ...prev,
               avatar: data.user.avatar ?? prev.avatar,
+              avatarUrl: data.user.avatar ?? prev.avatarUrl ?? prev.avatar,
               bannerUrl: data.user.bannerUrl ?? prev.bannerUrl,
             };
             // Sync bio into onboarding so profile page picks it up
             if (data.user.bio !== undefined && updated.onboarding) {
               updated.onboarding = { ...updated.onboarding, bio: data.user.bio || '' };
             }
+            persistUser(updated);
             return updated;
           });
         }
@@ -465,6 +469,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: data.user.displayName,
         username: data.user.username,
         role: data.user.role ?? 'user',
+        avatarUrl: data.user.avatarUrl || undefined,
         createdAt: new Date(data.user.createdAt),
         isNewUser: false,
         sessionStartedAt: new Date().toISOString(),
@@ -473,7 +478,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           affiliation: '',
           topics: [],
           bio: '',
-          completedAt: new Date().toISOString(),
+          // Use server's actual onboarding state — never hardcode
+          completedAt: data.user.onboardingCompletedAt || new Date().toISOString(),
         },
       };
 

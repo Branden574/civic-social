@@ -53,7 +53,7 @@ export default function ProfilePage() {
   const [connectionsList, setConnectionsList] = useState<ConnectionUser[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
   const [connectionsSearch, setConnectionsSearch] = useState('');
-  const { getPostsForProfile, postCount, hydrated, refresh: refreshPosts } = usePostStore();
+  const { getPostsForProfile, postCount, hydrated, refresh: refreshPosts, removePost } = usePostStore();
   const { user, isAuthenticated, isLoading: authLoading, onboardingDone, profileCompletion, stats, refreshMe } = useAuth();
   const router = useRouter();
 
@@ -180,7 +180,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -402,7 +402,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'posts' && <PostsTab posts={getPostsForProfile()} hydrated={hydrated} />}
+          {activeTab === 'posts' && <PostsTab posts={getPostsForProfile()} hydrated={hydrated} onDelete={removePost} />}
           {activeTab === 'overview' && <OverviewTab topics={userTopics} />}
           {activeTab === 'credibility' && <CredibilityTab score={stats?.credibilityScore ?? 50} />}
           {activeTab === 'debates' && <DebatesTab />}
@@ -534,7 +534,7 @@ export default function ProfilePage() {
 
 // ─── Posts Tab ───────────────────────────────────────────────
 
-function PostsTab({ posts, hydrated }: { posts: UserPost[]; hydrated: boolean }) {
+function PostsTab({ posts, hydrated, onDelete }: { posts: UserPost[]; hydrated: boolean; onDelete?: (postId: string) => void }) {
   if (!hydrated) {
     return (
       <div className="px-4 sm:px-6 py-16 text-center">
@@ -573,7 +573,7 @@ function PostsTab({ posts, hydrated }: { posts: UserPost[]; hydrated: boolean })
           _optimistic: post._optimistic,
           _failed: post._failed,
         };
-        return <PostCard key={post.id} post={postData} index={i} />;
+        return <PostCard key={post.id} post={postData} index={i} onDelete={onDelete} />;
       })}
     </div>
   );

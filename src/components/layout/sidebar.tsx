@@ -202,9 +202,28 @@ export function Sidebar({ onCompose }: SidebarProps) {
             href="/profile"
             className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-hover transition-all duration-150 cursor-pointer active:scale-[0.97]"
           >
-            <div className="w-9 h-9 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold ring-2 ring-civic/10">
-              {user.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-            </div>
+            {(user.avatarUrl || user.avatar) ? (
+              <img
+                src={(user.avatarUrl || user.avatar) as string}
+                alt={user.displayName}
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-civic/10"
+                onError={(e) => {
+                  // Fallback to initials on broken image
+                  const el = e.currentTarget;
+                  const parent = el.parentElement;
+                  if (parent) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'w-9 h-9 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold ring-2 ring-civic/10';
+                    fallback.textContent = user.displayName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
+                    parent.replaceChild(fallback, el);
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold ring-2 ring-civic/10">
+                {user.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary truncate">{user.displayName}</p>
               <p className="text-[11px] text-text-muted truncate">{user.email}</p>

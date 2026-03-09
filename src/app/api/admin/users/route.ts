@@ -3,6 +3,13 @@ import { requireAdmin, getClientIp, tooManyRequests } from '@/lib/security/api-g
 import { readLimiter } from '@/lib/security/rate-limiter';
 import { isDbAvailable, prisma } from '@/lib/db';
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!domain) return '***';
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}***@${domain}`;
+}
+
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
   const rl = readLimiter.check(ip);
@@ -54,8 +61,14 @@ export async function GET(request: NextRequest) {
     prisma.searchableUser.count({ where }),
   ]);
 
+  // Mask emails for security — show first 2 chars + *** + @domain
+  const maskedUsers = users.map((u) => ({
+    ...u,
+    email: maskEmail(u.email),
+  }));
+
   return NextResponse.json({
-    users,
+    users: maskedUsers,
     total,
     page,
     hasMore: skip + limit < total,

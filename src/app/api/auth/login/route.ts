@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       select: {
         id: true, email: true, displayName: true, username: true,
         passwordHash: true, createdAt: true, onboardingCompletedAt: true,
-        role: true, suspendedUntil: true,
+        role: true, suspendedUntil: true, avatarUrl: true,
       },
     });
 
@@ -111,6 +111,8 @@ export async function POST(request: NextRequest) {
       username: row.username,
       role,
       createdAt: row.createdAt.toISOString(),
+      avatarUrl: row.avatarUrl || null,
+      onboardingCompletedAt: row.onboardingCompletedAt ? row.onboardingCompletedAt.toISOString() : null,
     };
 
     // Sign the session token server-side and set as HttpOnly cookie
