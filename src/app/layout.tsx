@@ -5,6 +5,7 @@ import { ThemeProvider, ThemeScript } from '@/lib/theme-context';
 import { AuthProvider } from '@/lib/auth-context';
 import { PostStoreProvider } from '@/lib/post-store';
 import { NotificationProvider } from '@/lib/notification-context';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppShell } from './app-shell';
 
 const inter = Inter({
@@ -84,6 +85,7 @@ export default function RootLayout({
             <NotificationProvider>
               <PostStoreProvider>
                 <AppShell>{children}</AppShell>
+                <SpeedInsights />
               </PostStoreProvider>
             </NotificationProvider>
           </AuthProvider>
