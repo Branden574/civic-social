@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import {
   ExternalLink,
@@ -23,6 +22,7 @@ import {
 import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
 import { AuthGate } from '@/components/auth/auth-gate';
+import { ComposeModal } from '@/components/compose/compose-modal';
 
 const factCheckStyles: Record<string, { icon: typeof CheckCircle2; label: string; color: string }> = {
   VERIFIED: { icon: CheckCircle2, label: 'Fact-Checked', color: 'text-positive bg-positive/10' },
@@ -81,6 +81,7 @@ export default function NewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [discussArticle, setDiscussArticle] = useState<NewsArticle | null>(null);
 
   const fetchNews = useCallback(async (refresh = false) => {
     try {
@@ -179,7 +180,7 @@ export default function NewsPage() {
             /* News Feed */
             <div className="divide-y divide-border-subtle">
               {articles.map((article, i) => (
-                <NewsArticleCard key={article.id} article={article} index={i} />
+                <NewsArticleCard key={article.id} article={article} index={i} onDiscuss={() => setDiscussArticle(article)} />
               ))}
             </div>
           )}
@@ -188,6 +189,14 @@ export default function NewsPage() {
         </div>
       </main>
       <MobileNav />
+
+      {/* Compose modal for news discussion */}
+      <ComposeModal
+        isOpen={!!discussArticle}
+        onClose={() => setDiscussArticle(null)}
+        initialArticleUrl={discussArticle?.url}
+        initialContent={discussArticle ? `Discussing: ${discussArticle.title}\n\n` : undefined}
+      />
     </div>
     </AuthGate>
   );
@@ -195,8 +204,7 @@ export default function NewsPage() {
 
 // ─── Article Card ────────────────────────────────────────────
 
-function NewsArticleCard({ article, index }: { article: NewsArticle; index: number }) {
-  const router = useRouter();
+function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; index: number; onDiscuss: () => void }) {
   const [showPerspectives, setShowPerspectives] = useState(false);
   const [saved, setSaved] = useState(false);
   const factCheck = factCheckStyles[article.factCheckStatus] || factCheckStyles.UNCHECKED;
@@ -320,10 +328,7 @@ function NewsArticleCard({ article, index }: { article: NewsArticle; index: numb
           {/* Actions */}
           <div className="flex items-center gap-3 sm:gap-4 mt-3 flex-wrap">
             <button
-              onClick={() => {
-                const query = article.topics[0] || article.title.split(' ').slice(0, 3).join(' ');
-                router.push(`/search?q=${encodeURIComponent(query)}`);
-              }}
+              onClick={onDiscuss}
               className="flex items-center gap-1.5 text-xs text-text-muted hover:text-civic-light transition-colors"
             >
               <MessageCircle className="w-3.5 h-3.5" />

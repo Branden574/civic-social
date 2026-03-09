@@ -24,6 +24,8 @@ interface ComposeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPostCreated?: () => void;
+  initialArticleUrl?: string;
+  initialContent?: string;
 }
 
 const POST_TYPE_OPTIONS = [
@@ -42,12 +44,25 @@ const SUGGESTED_TOPICS = [
 ];
 
 
-export function ComposeModal({ isOpen, onClose, onPostCreated }: ComposeModalProps) {
+export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl, initialContent }: ComposeModalProps) {
   const { addPost, confirmPost, removePost } = usePostStore();
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [articleUrl, setArticleUrl] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
+
+  // Seed initial values when modal opens with pre-filled data
+  useEffect(() => {
+    if (isOpen) {
+      if (initialArticleUrl) {
+        setArticleUrl(initialArticleUrl);
+        setShowUrlInput(true);
+      }
+      if (initialContent) {
+        setContent(initialContent);
+      }
+    }
+  }, [isOpen, initialArticleUrl, initialContent]);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [showTopics, setShowTopics] = useState(false);
   const [hashtagInput, setHashtagInput] = useState('');
