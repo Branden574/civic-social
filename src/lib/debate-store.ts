@@ -159,9 +159,9 @@ async function persistDebate(debate: Debate, awaitDb = false): Promise<void> {
       update: updateData,
     });
     if (awaitDb) {
-      await op.catch(() => { /* DB write failed, cache is still correct */ });
+      await op.catch((err) => { console.error('[debate-store] persistDebate failed:', err); });
     } else {
-      op.catch(() => { /* best-effort */ });
+      op.catch((err) => { console.error('[debate-store] persistDebate (bg) failed:', err); });
     }
   }
 }
@@ -272,7 +272,22 @@ export async function createDebate(input: {
   if (isDbAvailable()) {
     try {
       await prisma.debate.create({ data: debateToDbData(debate) });
-    } catch { /* cache still has it */ }
+    } catch (err) {
+      console.error('[debate-store] createDebate DB write failed:', err);
+      // Retry once with upsert in case of transient error
+      try {
+        const data = debateToDbData(debate);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...updateData } = data;
+        await prisma.debate.upsert({
+          where: { id: debate.id },
+          create: data,
+          update: updateData,
+        });
+      } catch (retryErr) {
+        console.error('[debate-store] createDebate retry also failed:', retryErr);
+      }
+    }
   }
 
   return debate;

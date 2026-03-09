@@ -530,6 +530,37 @@ model Debate {
 }
 
 // ─────────────────────────────────────────────
+// VOICE CHAT (DB-persisted for serverless reliability)
+// ─────────────────────────────────────────────
+
+model VoiceRoom {
+  id               String   @id              // same as debateId
+  enabled          Boolean  @default(true)
+  creatorId        String
+  maxSpeakers      Int      @default(8)
+  participantsJson String   @default("[]")   // JSON array of VoiceParticipant
+  speakRequests    String[]                  // userId array in order
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([creatorId])
+}
+
+model VoiceSignal {
+  id         String   @id @default(cuid())
+  debateId   String
+  fromUserId String
+  toUserId   String
+  type       String                          // offer | answer | ice-candidate | hangup
+  payload    String                          // JSON-serialized SDP or ICE candidate
+  consumed   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([debateId, toUserId, consumed])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
 // FEEDBACK / BUG REPORTS
 // ─────────────────────────────────────────────
 

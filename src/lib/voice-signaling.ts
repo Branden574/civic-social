@@ -1,24 +1,18 @@
 // ═══════════════════════════════════════════════════════════════
-// Civic Social — Voice Chat Signaling Store
+// Civic Social — Voice Chat Signaling Store (DB-Backed)
 // ═══════════════════════════════════════════════════════════════
 //
 // Server-side signaling layer for debate voice chat.
-// In production, this would be backed by a WebSocket server
-// and an SFU (Selective Forwarding Unit) like LiveKit, mediasoup,
-// or Janus. For this implementation, we use a polling-based
-// signaling approach that works with Next.js API routes.
+// All state is persisted to PostgreSQL so it works correctly
+// across Vercel serverless instances (no in-memory state loss).
 //
 // Architecture:
-//   Client ↔ API Route (signaling) ↔ Voice Store
-//   Client ↔ Client (WebRTC peer-to-peer for audio)
-//
-// The server manages:
-//   - Voice room state (who's connected, who's muted)
-//   - Request-to-speak queue
-//   - Host controls (grant/revoke speaking, mute all)
-//   - WebRTC signaling relay (offer/answer/ICE candidates)
+//   Client ↔ API Route (signaling) ↔ DB (VoiceRoom + VoiceSignal)
+//   Client ↔ Client (WebRTC peer-to-peer for audio/video)
 //
 // ═══════════════════════════════════════════════════════════════
+
+import { isDbAvailable, prisma } from '@/lib/db';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -55,46 +49,88 @@ export interface SignalingMessage {
   consumed: boolean;
 }
 
-// ─── Global store ───────────────────────────────────────────────
+// ─── DB ↔ VoiceRoom conversion ─────────────────────────────────
 
-const STORE_KEY = Symbol.for('civic.voice.store');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToVoiceRoom(row: any): VoiceRoom {
+  let participants: VoiceParticipant[] = [];
+  try {
+    participants = typeof row.participantsJson === 'string'
+      ? JSON.parse(row.participantsJson)
+      : [];
+  } catch { /* fallback to empty */ }
 
-interface VoiceStore {
+  return {
+    debateId: row.id,
+    enabled: row.enabled,
+    creatorId: row.creatorId,
+    maxSpeakers: row.maxSpeakers,
+    participants,
+    speakRequests: row.speakRequests || [],
+    createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : new Date().toISOString(),
+  };
+}
+
+// ─── In-memory fallback (only when DB is unavailable) ──────────
+
+const FALLBACK_KEY = Symbol.for('civic.voice.fallback');
+
+interface FallbackStore {
   rooms: Map<string, VoiceRoom>;
-  signals: Map<string, SignalingMessage[]>; // debateId → signals
-  initialized: boolean;
+  signals: Map<string, SignalingMessage[]>;
 }
 
-interface GlobalWithStore {
-  [key: symbol]: VoiceStore | undefined;
-}
-
-function getStore(): VoiceStore {
-  const g = global as unknown as GlobalWithStore;
-  if (!g[STORE_KEY] || !g[STORE_KEY]!.initialized) {
-    g[STORE_KEY] = {
-      rooms: new Map(),
-      signals: new Map(),
-      initialized: true,
-    };
+function getFallback(): FallbackStore {
+  const g = global as unknown as Record<symbol, FallbackStore | undefined>;
+  if (!g[FALLBACK_KEY]) {
+    g[FALLBACK_KEY] = { rooms: new Map(), signals: new Map() };
   }
-  return g[STORE_KEY]!;
+  return g[FALLBACK_KEY]!;
 }
 
 // ─── Room management ────────────────────────────────────────────
 
-export function getVoiceRoom(debateId: string): VoiceRoom | null {
-  return getStore().rooms.get(debateId) ?? null;
+export async function getVoiceRoom(debateId: string): Promise<VoiceRoom | null> {
+  if (isDbAvailable()) {
+    try {
+      const row = await prisma.voiceRoom.findUnique({ where: { id: debateId } });
+      if (row) return rowToVoiceRoom(row);
+      return null;
+    } catch { /* fall through to fallback */ }
+  }
+  return getFallback().rooms.get(debateId) ?? null;
 }
 
-export function enableVoiceChat(
+export async function enableVoiceChat(
   debateId: string,
   creatorId: string,
   maxSpeakers: number = 8,
-): VoiceRoom {
-  const store = getStore();
-  let room = store.rooms.get(debateId);
+): Promise<VoiceRoom> {
+  if (isDbAvailable()) {
+    try {
+      const row = await prisma.voiceRoom.upsert({
+        where: { id: debateId },
+        create: {
+          id: debateId,
+          enabled: true,
+          creatorId,
+          maxSpeakers,
+          participantsJson: '[]',
+          speakRequests: [],
+        },
+        update: {
+          enabled: true,
+        },
+      });
+      return rowToVoiceRoom(row);
+    } catch (err) {
+      console.error('[voice] enableVoiceChat DB error:', err);
+    }
+  }
 
+  // Fallback
+  const fb = getFallback();
+  let room = fb.rooms.get(debateId);
   if (!room) {
     room = {
       debateId,
@@ -105,32 +141,62 @@ export function enableVoiceChat(
       speakRequests: [],
       createdAt: new Date().toISOString(),
     };
-    store.rooms.set(debateId, room);
+    fb.rooms.set(debateId, room);
   } else {
     room.enabled = true;
   }
-
   return room;
 }
 
-export function disableVoiceChat(debateId: string, userId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function disableVoiceChat(debateId: string, userId: string): Promise<boolean> {
+  if (isDbAvailable()) {
+    try {
+      const row = await prisma.voiceRoom.findUnique({ where: { id: debateId } });
+      if (!row || row.creatorId !== userId) return false;
+      await prisma.voiceRoom.update({
+        where: { id: debateId },
+        data: { enabled: false },
+      });
+      return true;
+    } catch { /* fall through */ }
+  }
+
+  const room = getFallback().rooms.get(debateId);
   if (!room || room.creatorId !== userId) return false;
   room.enabled = false;
   return true;
 }
 
+// ─── Persist room helper ────────────────────────────────────────
+
+async function persistRoom(room: VoiceRoom): Promise<void> {
+  if (isDbAvailable()) {
+    try {
+      await prisma.voiceRoom.update({
+        where: { id: room.debateId },
+        data: {
+          participantsJson: JSON.stringify(room.participants),
+          speakRequests: room.speakRequests,
+          enabled: room.enabled,
+        },
+      });
+    } catch (err) {
+      console.error('[voice] persistRoom DB error:', err);
+    }
+  }
+  // Also update fallback cache
+  getFallback().rooms.set(room.debateId, room);
+}
+
 // ─── Participant management ─────────────────────────────────────
 
-export function joinVoiceRoom(
+export async function joinVoiceRoom(
   debateId: string,
   userId: string,
   displayName: string,
   asListener: boolean = true,
-): VoiceParticipant | null {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+): Promise<VoiceParticipant | null> {
+  const room = await getVoiceRoom(debateId);
   if (!room || !room.enabled) return null;
 
   // Already in room?
@@ -141,7 +207,7 @@ export function joinVoiceRoom(
     userId,
     displayName,
     role: asListener ? 'listener' : 'speaker',
-    isMuted: true,              // start muted
+    isMuted: true,
     isServerMuted: false,
     joinedAt: new Date().toISOString(),
   };
@@ -155,61 +221,59 @@ export function joinVoiceRoom(
   }
 
   room.participants.push(participant);
+  await persistRoom(room);
   return participant;
 }
 
-export function leaveVoiceRoom(debateId: string, userId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function leaveVoiceRoom(debateId: string, userId: string): Promise<boolean> {
+  const room = await getVoiceRoom(debateId);
   if (!room) return false;
 
   room.participants = room.participants.filter((p) => p.userId !== userId);
   room.speakRequests = room.speakRequests.filter((id) => id !== userId);
+  await persistRoom(room);
   return true;
 }
 
 // ─── Speaking controls ──────────────────────────────────────────
 
-export function requestToSpeak(debateId: string, userId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function requestToSpeak(debateId: string, userId: string): Promise<boolean> {
+  const room = await getVoiceRoom(debateId);
   if (!room || !room.enabled) return false;
 
   const participant = room.participants.find((p) => p.userId === userId);
   if (!participant) return false;
-  if (participant.role === 'speaker') return true; // already speaking
+  if (participant.role === 'speaker') return true;
 
-  // Add to queue if not already there
   if (!room.speakRequests.includes(userId)) {
     room.speakRequests.push(userId);
     participant.requestedSpeakAt = new Date().toISOString();
   }
 
   participant.role = 'pending';
+  await persistRoom(room);
   return true;
 }
 
-export function grantSpeaking(debateId: string, hostUserId: string, targetUserId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function grantSpeaking(debateId: string, hostUserId: string, targetUserId: string): Promise<boolean> {
+  const room = await getVoiceRoom(debateId);
   if (!room || room.creatorId !== hostUserId) return false;
 
   const participant = room.participants.find((p) => p.userId === targetUserId);
   if (!participant) return false;
 
-  // Check speaker capacity
   const speakerCount = room.participants.filter((p) => p.role === 'speaker').length;
   if (speakerCount >= room.maxSpeakers) return false;
 
   participant.role = 'speaker';
   participant.isMuted = false;
   room.speakRequests = room.speakRequests.filter((id) => id !== targetUserId);
+  await persistRoom(room);
   return true;
 }
 
-export function revokeSpeaking(debateId: string, hostUserId: string, targetUserId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function revokeSpeaking(debateId: string, hostUserId: string, targetUserId: string): Promise<boolean> {
+  const room = await getVoiceRoom(debateId);
   if (!room || room.creatorId !== hostUserId) return false;
 
   const participant = room.participants.find((p) => p.userId === targetUserId);
@@ -217,36 +281,36 @@ export function revokeSpeaking(debateId: string, hostUserId: string, targetUserI
 
   participant.role = 'listener';
   participant.isMuted = true;
+  await persistRoom(room);
   return true;
 }
 
-export function toggleSelfMute(debateId: string, userId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function toggleSelfMute(debateId: string, userId: string): Promise<boolean> {
+  const room = await getVoiceRoom(debateId);
   if (!room) return false;
 
   const participant = room.participants.find((p) => p.userId === userId);
   if (!participant) return false;
 
   participant.isMuted = !participant.isMuted;
+  await persistRoom(room);
   return true;
 }
 
-export function serverMuteUser(debateId: string, hostUserId: string, targetUserId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function serverMuteUser(debateId: string, hostUserId: string, targetUserId: string): Promise<boolean> {
+  const room = await getVoiceRoom(debateId);
   if (!room || room.creatorId !== hostUserId) return false;
 
   const participant = room.participants.find((p) => p.userId === targetUserId);
   if (!participant) return false;
 
   participant.isServerMuted = !participant.isServerMuted;
+  await persistRoom(room);
   return true;
 }
 
-export function muteAll(debateId: string, hostUserId: string): boolean {
-  const store = getStore();
-  const room = store.rooms.get(debateId);
+export async function muteAll(debateId: string, hostUserId: string): Promise<boolean> {
+  const room = await getVoiceRoom(debateId);
   if (!room || room.creatorId !== hostUserId) return false;
 
   for (const p of room.participants) {
@@ -254,23 +318,19 @@ export function muteAll(debateId: string, hostUserId: string): boolean {
       p.isServerMuted = true;
     }
   }
+  await persistRoom(room);
   return true;
 }
 
 // ─── Signaling relay ────────────────────────────────────────────
 
-export function postSignal(
+export async function postSignal(
   debateId: string,
   fromUserId: string,
   toUserId: string,
   type: SignalingMessage['type'],
   payload: string,
-): SignalingMessage {
-  const store = getStore();
-  if (!store.signals.has(debateId)) {
-    store.signals.set(debateId, []);
-  }
-
+): Promise<SignalingMessage> {
   const signal: SignalingMessage = {
     id: `sig-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     debateId,
@@ -282,38 +342,114 @@ export function postSignal(
     consumed: false,
   };
 
-  store.signals.get(debateId)!.push(signal);
+  if (isDbAvailable()) {
+    try {
+      const row = await prisma.voiceSignal.create({
+        data: {
+          debateId,
+          fromUserId,
+          toUserId,
+          type,
+          payload,
+          consumed: false,
+        },
+      });
+      signal.id = row.id;
 
-  // Cap signals at 1000 per debate
-  const sigs = store.signals.get(debateId)!;
-  if (sigs.length > 1000) {
-    store.signals.set(debateId, sigs.slice(-500));
+      // Cleanup: delete consumed signals older than 30 seconds
+      // Fire-and-forget to keep the table small
+      const cutoff = new Date(Date.now() - 30_000);
+      prisma.voiceSignal.deleteMany({
+        where: {
+          debateId,
+          consumed: true,
+          createdAt: { lt: cutoff },
+        },
+      }).catch(() => {});
+
+      return signal;
+    } catch (err) {
+      console.error('[voice] postSignal DB error:', err);
+    }
   }
 
+  // Fallback: in-memory
+  const fb = getFallback();
+  if (!fb.signals.has(debateId)) {
+    fb.signals.set(debateId, []);
+  }
+  fb.signals.get(debateId)!.push(signal);
+  const sigs = fb.signals.get(debateId)!;
+  if (sigs.length > 1000) {
+    fb.signals.set(debateId, sigs.slice(-500));
+  }
   return signal;
 }
 
-export function getSignals(debateId: string, forUserId: string): SignalingMessage[] {
-  const store = getStore();
-  const sigs = store.signals.get(debateId) || [];
+export async function getSignals(debateId: string, forUserId: string): Promise<SignalingMessage[]> {
+  if (isDbAvailable()) {
+    try {
+      // Get unconsumed signals for this user
+      const rows = await prisma.voiceSignal.findMany({
+        where: {
+          debateId,
+          consumed: false,
+          toUserId: { in: [forUserId, 'all'] },
+          NOT: { fromUserId: forUserId },
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 50,
+      });
 
-  // Get unconsumed signals for this user
+      if (rows.length > 0) {
+        // Mark as consumed
+        await prisma.voiceSignal.updateMany({
+          where: {
+            id: { in: rows.map((r) => r.id) },
+          },
+          data: { consumed: true },
+        });
+      }
+
+      return rows.map((r) => ({
+        id: r.id,
+        debateId: r.debateId,
+        fromUserId: r.fromUserId,
+        toUserId: r.toUserId,
+        type: r.type as SignalingMessage['type'],
+        payload: r.payload,
+        createdAt: r.createdAt.toISOString(),
+        consumed: true,
+      }));
+    } catch (err) {
+      console.error('[voice] getSignals DB error:', err);
+    }
+  }
+
+  // Fallback: in-memory
+  const fb = getFallback();
+  const sigs = fb.signals.get(debateId) || [];
   const pending = sigs.filter(
     (s) => !s.consumed && (s.toUserId === forUserId || s.toUserId === 'all') && s.fromUserId !== forUserId,
   );
-
-  // Mark as consumed
   for (const s of pending) {
     s.consumed = true;
   }
-
   return pending;
 }
 
 // ─── Cleanup ────────────────────────────────────────────────────
 
-export function clearVoiceRoom(debateId: string): void {
-  const store = getStore();
-  store.rooms.delete(debateId);
-  store.signals.delete(debateId);
+export async function clearVoiceRoom(debateId: string): Promise<void> {
+  if (isDbAvailable()) {
+    try {
+      await Promise.all([
+        prisma.voiceRoom.delete({ where: { id: debateId } }).catch(() => {}),
+        prisma.voiceSignal.deleteMany({ where: { debateId } }),
+      ]);
+    } catch { /* ignore */ }
+  }
+  const fb = getFallback();
+  fb.rooms.delete(debateId);
+  fb.signals.delete(debateId);
 }

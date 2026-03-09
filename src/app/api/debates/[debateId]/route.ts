@@ -85,7 +85,7 @@ export async function PATCH(
         chatCleared = true;
       }
 
-      clearVoiceRoom(debateId);
+      await clearVoiceRoom(debateId);
       secureLog.audit('debate_stopped', userId, { debateId, chatCleared });
       return NextResponse.json({ success: true, debate: result, chatCleared });
     }

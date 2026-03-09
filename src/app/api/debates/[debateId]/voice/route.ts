@@ -46,8 +46,8 @@ export async function GET(
   const user = getSessionUser(request);
   const userId = user?.id || 'user-current';
 
-  const room = getVoiceRoom(debateId);
-  const signals = room ? getSignals(debateId, userId) : [];
+  const room = await getVoiceRoom(debateId);
+  const signals = room ? await getSignals(debateId, userId) : [];
 
   return NextResponse.json({
     room,
@@ -92,14 +92,16 @@ export async function POST(
         return NextResponse.json({ error: 'Only the host can enable voice chat.' }, { status: 403 });
       }
       const maxSpeakers = Math.min(Math.max(body.maxSpeakers || 8, 2), 16);
-      const room = enableVoiceChat(debateId, userId, maxSpeakers);
-      joinVoiceRoom(debateId, userId, userName, false);
+      const room = await enableVoiceChat(debateId, userId, maxSpeakers);
+      await joinVoiceRoom(debateId, userId, userName, false);
       secureLog.audit('voice_enabled', userId, { debateId });
-      return NextResponse.json({ success: true, room });
+      // Re-fetch room to include the host as participant
+      const updatedRoom = await getVoiceRoom(debateId);
+      return NextResponse.json({ success: true, room: updatedRoom || room });
     }
 
     case 'join': {
-      const room = getVoiceRoom(debateId);
+      const room = await getVoiceRoom(debateId);
       if (!room || !room.enabled) {
         return NextResponse.json({ error: 'Voice chat is not enabled for this debate.' }, { status: 400 });
       }
@@ -113,13 +115,13 @@ export async function POST(
       }
 
       const asListener = body.asListener !== false;
-      const participant = joinVoiceRoom(debateId, userId, userName, asListener);
+      const participant = await joinVoiceRoom(debateId, userId, userName, asListener);
 
       if (!participant) {
         return NextResponse.json({ error: 'Could not join voice room.' }, { status: 400 });
       }
 
-      return NextResponse.json({ success: true, participant, room: getVoiceRoom(debateId) });
+      return NextResponse.json({ success: true, participant, room: await getVoiceRoom(debateId) });
     }
 
     default:
@@ -157,48 +159,48 @@ export async function PATCH(
 
   switch (action) {
     case 'request_speak': {
-      const ok = requestToSpeak(debateId, userId);
+      const ok = await requestToSpeak(debateId, userId);
       if (!ok) return NextResponse.json({ error: 'Could not request to speak.' }, { status: 400 });
-      return NextResponse.json({ success: true, room: getVoiceRoom(debateId) });
+      return NextResponse.json({ success: true, room: await getVoiceRoom(debateId) });
     }
 
     case 'grant_speak': {
       if (!isCreator) return NextResponse.json({ error: 'Only host can grant speaking.' }, { status: 403 });
       const { targetUserId } = body;
       if (!targetUserId || !isValidId(targetUserId)) return badRequest('Valid targetUserId required.');
-      const ok = grantSpeaking(debateId, userId, targetUserId);
+      const ok = await grantSpeaking(debateId, userId, targetUserId);
       if (!ok) return NextResponse.json({ error: 'Could not grant speaking.' }, { status: 400 });
-      return NextResponse.json({ success: true, room: getVoiceRoom(debateId) });
+      return NextResponse.json({ success: true, room: await getVoiceRoom(debateId) });
     }
 
     case 'revoke_speak': {
       if (!isCreator) return NextResponse.json({ error: 'Only host can revoke speaking.' }, { status: 403 });
       const { targetUserId: revokeTarget } = body;
       if (!revokeTarget || !isValidId(revokeTarget)) return badRequest('Valid targetUserId required.');
-      const ok = revokeSpeaking(debateId, userId, revokeTarget);
+      const ok = await revokeSpeaking(debateId, userId, revokeTarget);
       if (!ok) return NextResponse.json({ error: 'Could not revoke speaking.' }, { status: 400 });
-      return NextResponse.json({ success: true, room: getVoiceRoom(debateId) });
+      return NextResponse.json({ success: true, room: await getVoiceRoom(debateId) });
     }
 
     case 'toggle_mute': {
-      toggleSelfMute(debateId, userId);
-      return NextResponse.json({ success: true, room: getVoiceRoom(debateId) });
+      await toggleSelfMute(debateId, userId);
+      return NextResponse.json({ success: true, room: await getVoiceRoom(debateId) });
     }
 
     case 'server_mute': {
       if (!isCreator) return NextResponse.json({ error: 'Only host can server-mute.' }, { status: 403 });
       const { targetUserId: muteTarget } = body;
       if (!muteTarget || !isValidId(muteTarget)) return badRequest('Valid targetUserId required.');
-      serverMuteUser(debateId, userId, muteTarget);
+      await serverMuteUser(debateId, userId, muteTarget);
       secureLog.audit('voice_server_mute', userId, { debateId, targetUserId: muteTarget });
-      return NextResponse.json({ success: true, room: getVoiceRoom(debateId) });
+      return NextResponse.json({ success: true, room: await getVoiceRoom(debateId) });
     }
 
     case 'mute_all': {
       if (!isCreator) return NextResponse.json({ error: 'Only host can mute all.' }, { status: 403 });
-      muteAll(debateId, userId);
+      await muteAll(debateId, userId);
       secureLog.audit('voice_mute_all', userId, { debateId });
-      return NextResponse.json({ success: true, room: getVoiceRoom(debateId) });
+      return NextResponse.json({ success: true, room: await getVoiceRoom(debateId) });
     }
 
     case 'signal': {
@@ -209,10 +211,9 @@ export async function PATCH(
         return badRequest('signalType must be one of: offer, answer, ice-candidate, hangup.');
       }
       if (!payload) return badRequest('payload required.');
-      // Serialize payload to string and limit size
       const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
       if (payloadStr.length > 10_000) return badRequest('Payload too large.');
-      const signal = postSignal(debateId, userId, toUserId, signalType, payloadStr);
+      const signal = await postSignal(debateId, userId, toUserId, signalType, payloadStr);
       return NextResponse.json({ success: true, signal });
     }
 
@@ -242,7 +243,7 @@ export async function DELETE(
   }
 
   if (leaveOnly) {
-    leaveVoiceRoom(debateId, userId);
+    await leaveVoiceRoom(debateId, userId);
     return NextResponse.json({ success: true, action: 'left' });
   }
 
@@ -250,8 +251,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Only the host can disable voice chat.' }, { status: 403 });
   }
 
-  disableVoiceChat(debateId, userId);
-  clearVoiceRoom(debateId);
+  await disableVoiceChat(debateId, userId);
+  await clearVoiceRoom(debateId);
   secureLog.audit('voice_disabled', userId, { debateId });
   return NextResponse.json({ success: true, action: 'disabled' });
 }
