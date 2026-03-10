@@ -437,6 +437,11 @@ html *:not([class*="animate-"]) {
   border-radius: var(--radius-sm);
 }
 
+/* Textarea in compose modals should not show focus ring */
+textarea:focus-visible {
+  outline: none;
+}
+
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--color-civic);
