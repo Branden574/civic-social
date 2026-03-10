@@ -60,7 +60,7 @@ interface ComposeState {
   showTopics: boolean;
   hashtagInput: string;
   customHashtags: string[];
-  civility: { score: number; issues: string[] };
+  civility: { score: number; issues: string[]; severity?: string };
   showCivilityCheck: boolean;
   posting: boolean;
   commentPolicy: 'everyone' | 'followers_only' | 'off';
@@ -81,7 +81,7 @@ type ComposeAction =
   | { type: 'SET_HASHTAG_INPUT'; payload: string }
   | { type: 'ADD_HASHTAG'; payload: string }
   | { type: 'REMOVE_HASHTAG'; payload: string }
-  | { type: 'SET_CIVILITY'; payload: { score: number; issues: string[] } }
+  | { type: 'SET_CIVILITY'; payload: { score: number; issues: string[]; severity?: string } }
   | { type: 'TOGGLE_CIVILITY_CHECK' }
   | { type: 'SET_POSTING'; payload: boolean }
   | { type: 'SET_COMMENT_POLICY'; payload: 'everyone' | 'followers_only' | 'off' }
@@ -217,15 +217,18 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
   }, [content]);
 
   // ── Civility check (debounced) ────────────────────────────
+  // Runs on ANY non-empty content — severe violations (slurs, hate speech)
+  // must be caught immediately even on very short text.
   useEffect(() => {
-    if (content.length < 10) {
+    if (!content.trim()) {
       dispatch({ type: 'SET_CIVILITY', payload: { score: 1, issues: [] } });
       return;
     }
+    // Short debounce — fast enough for real-time feedback
     const timer = setTimeout(() => {
       const result = analyzeCivility(content);
       dispatch({ type: 'SET_CIVILITY', payload: result });
-    }, 500);
+    }, 300);
     return () => clearTimeout(timer);
   }, [content]);
 
@@ -591,7 +594,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
           </div> {/* end flex row (avatar + content) */}
 
           {/* Civility check — full width, below the avatar+text row */}
-          {showCivilityCheck && content.length > 10 && (
+          {showCivilityCheck && content.trim().length > 0 && (
             <div className="mt-4 animate-fade-in">
               <div
                 className={clsx(
@@ -751,7 +754,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                 <ChevronDown className="w-3 h-3" />
               </button>
               {showTypeMenu && (
-                <div className="absolute bottom-full left-0 mb-2 w-52 bg-bg-alt border border-border-subtle rounded-xl shadow-lg z-50 py-1 animate-fade-in">
+                <div className="absolute bottom-full right-0 mb-2 w-48 bg-bg-alt border border-border-subtle rounded-xl shadow-lg z-50 py-1 animate-fade-in">
                   {POST_TYPE_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
@@ -772,7 +775,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
 
           {/* Right: civility + char count */}
           <div className="flex items-center gap-2">
-            {content.length > 10 && (
+            {content.trim().length > 0 && (
               <button
                 onClick={() => dispatch({ type: 'TOGGLE_CIVILITY_CHECK' })}
                 className={clsx(

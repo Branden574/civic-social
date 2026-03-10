@@ -3,17 +3,20 @@
 // ═══════════════════════════════════════════════════════════════
 //
 // Recomputes a user's credibility score (0–100) based on 6 weighted factors:
-//   1. Civil Engagement (25%) — average civility of posts
+//   1. Civil Engagement (25%) — uses durable CivilityEvents (not just visible posts)
 //   2. Citation Quality  (25%) — % of posts that include source URLs
 //   3. Report Accuracy   (15%) — ratio of dismissed reports vs actioned
 //   4. Cross-Party Engagement (15%) — interactions with different affiliations
 //   5. Verified Identity  (10%) — verification level bonus
-//   6. Behavioral Consistency (10%) — posting regularity & low flag rate
+//   6. Behavioral Consistency (10%) — posting regularity & low violation rate
 //
-// Called after post creation, and can be called on-demand from /api/me.
+// KEY DESIGN: CivilityEvents persist even if posts are deleted.
+// Deleting a racist post does NOT erase the credibility penalty.
+// Recovery requires sustained positive contributions over time.
 // ═══════════════════════════════════════════════════════════════
 
 import { isDbAvailable, prisma } from '@/lib/db';
+import { getCivilityHistory } from '@/lib/civility-events';
 
 // ─── Weights ───────────────────────────────────────────────────
 
@@ -29,32 +32,56 @@ const WEIGHTS = {
 // Minimum posts before score moves from default 50
 const MIN_POSTS_FOR_RECOMPUTE = 3;
 
+// Recovery: how many consecutive positive events needed to start rebuilding
+const MIN_POSITIVE_STREAK_FOR_RECOVERY = 5;
+
 // ─── Factor computations ──────────────────────────────────────
 
 /**
  * Factor 1: Civil Engagement (0–100)
- * Average civilityScore across all published posts.
- * Posts with score >= 0.8 are considered "civil".
+ * Uses DURABLE CivilityEvents — not just currently visible posts.
+ * This means deleted posts' violation events still count.
+ * Critical violations impose a hard ceiling until recovery.
  */
 async function computeCivilEngagement(userId: string): Promise<number> {
-  const result = await prisma.storedPost.aggregate({
-    where: { authorId: userId, status: 'published', deletedAt: null },
-    _avg: { civilityScore: true },
-    _count: true,
-  });
+  const history = await getCivilityHistory(userId);
 
-  if (!result._count || result._count === 0) return 50; // neutral default
-  const avg = result._avg.civilityScore ?? 0.5;
+  if (!history || history.totalEvents === 0) return 50; // neutral default
 
-  // Map 0–1 civility average to 0–100 score
-  // 0.5 avg → 50, 0.8 avg → 80, 1.0 avg → 100
-  return Math.round(Math.min(100, Math.max(0, avg * 100)));
+  // Base score from average civility across ALL events
+  let baseScore = Math.round(Math.min(100, Math.max(0, history.averageScore * 100)));
+
+  // Hard penalties for violations that cannot be erased by deletion
+  if (history.criticalViolations > 0) {
+    // Each critical violation reduces ceiling by 20, minimum ceiling of 10
+    const ceiling = Math.max(10, 60 - history.criticalViolations * 20);
+
+    // Recovery: if user has enough consecutive positive events, slowly raise ceiling
+    if (history.positiveStreak >= MIN_POSITIVE_STREAK_FOR_RECOVERY) {
+      // Each positive event beyond the threshold adds 2 points to ceiling, max 80
+      const recoveryBonus = Math.min(20, (history.positiveStreak - MIN_POSITIVE_STREAK_FOR_RECOVERY) * 2);
+      const recoveredCeiling = Math.min(80, ceiling + recoveryBonus);
+      baseScore = Math.min(baseScore, recoveredCeiling);
+    } else {
+      baseScore = Math.min(baseScore, ceiling);
+    }
+  } else if (history.violations > 0) {
+    // Non-critical violations: ceiling of 70, recoverable with positive streak
+    const ceiling = Math.max(30, 70 - history.violations * 10);
+    if (history.positiveStreak >= MIN_POSITIVE_STREAK_FOR_RECOVERY) {
+      const recoveryBonus = Math.min(20, (history.positiveStreak - MIN_POSITIVE_STREAK_FOR_RECOVERY) * 2);
+      baseScore = Math.min(baseScore, Math.min(90, ceiling + recoveryBonus));
+    } else {
+      baseScore = Math.min(baseScore, ceiling);
+    }
+  }
+
+  return baseScore;
 }
 
 /**
  * Factor 2: Citation Quality (0–100)
  * Percentage of posts that include an articleUrl (source citation).
- * Users who cite sources regularly score higher.
  */
 async function computeCitationQuality(userId: string): Promise<number> {
   const [total, withUrl] = await Promise.all([
@@ -71,75 +98,59 @@ async function computeCitationQuality(userId: string): Promise<number> {
     }),
   ]);
 
-  if (total === 0) return 50; // neutral default
-
+  if (total === 0) return 50;
   const ratio = withUrl / total;
-  // 0% cited → 30, 50% cited → 65, 100% cited → 100
   return Math.round(30 + ratio * 70);
 }
 
 /**
  * Factor 3: Report Accuracy (0–100)
- * Measures whether a user's posts get flagged and actioned (bad)
- * vs. reports against them being dismissed (good).
- * Also penalizes users who file false reports.
  */
 async function computeReportAccuracy(userId: string): Promise<number> {
-  // Reports AGAINST this user's posts
   const postsIds = await prisma.storedPost.findMany({
     where: { authorId: userId, status: 'published' },
     select: { id: true },
   });
 
-  if (postsIds.length === 0) return 60; // neutral-positive default
+  if (postsIds.length === 0) return 60;
 
-  // Check User model for reports against their posts (via Post model)
-  // Since StoredPost doesn't have reports relation, we check if any
-  // moderation actions exist against this user
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { civicReputation: true },
     });
 
-    // If the user record exists and has cached reputation, use it as a signal
     if (user) {
-      // civicReputation 0–1 maps to 0–100
       return Math.round(Math.max(30, Math.min(100, (user.civicReputation || 0.6) * 100)));
     }
   } catch {
-    // User record may not exist in the full User model
+    // User record may not exist
   }
 
-  return 60; // neutral-positive default
+  return 60;
 }
 
 /**
  * Factor 4: Cross-Party Engagement (0–100)
- * Measures whether a user follows/interacts with people of
- * different political affiliations than their own.
  */
 async function computeCrossPartyEngagement(userId: string): Promise<number> {
   try {
-    // Get user's own affiliation
     const self = await prisma.searchableUser.findFirst({
       where: { id: userId },
       select: { affiliation: true },
     });
 
-    if (!self?.affiliation) return 50; // no affiliation set = neutral
+    if (!self?.affiliation) return 50;
 
-    // Get affiliations of people this user follows
     const followingEdges = await prisma.follow.findMany({
       where: { followerId: userId },
       select: { followingId: true },
-      take: 100, // limit for performance
+      take: 100,
     });
 
-    if (followingEdges.length === 0) return 40; // follows nobody = below neutral
+    if (followingEdges.length === 0) return 40;
 
     const followingIds = followingEdges.map(f => f.followingId);
-
     const followedUsers = await prisma.searchableUser.findMany({
       where: { id: { in: followingIds } },
       select: { affiliation: true },
@@ -153,23 +164,20 @@ async function computeCrossPartyEngagement(userId: string): Promise<number> {
     ).length;
 
     const crossPartyRatio = differentAffiliation / totalWithAffiliation;
-
-    // 0% cross-party → 20, 50% → 70, 100% → 100
     return Math.round(20 + crossPartyRatio * 80);
   } catch {
-    return 50; // fallback on any error
+    return 50;
   }
 }
 
 /**
  * Factor 5: Verified Identity (0–100)
- * Bonus based on verification level.
  */
 async function computeVerifiedIdentity(userId: string): Promise<number> {
   try {
     const user = await prisma.searchableUser.findFirst({
       where: { id: userId },
-      select: { verificationLevel: true, isVerified: true },
+      select: { verificationLevel: true },
     });
 
     if (!user) return 30;
@@ -179,7 +187,7 @@ async function computeVerifiedIdentity(userId: string): Promise<number> {
       case 'EXPERT_VERIFIED': return 95;
       case 'CITIZEN_VERIFIED': return 85;
       case 'EMAIL_VERIFIED': return 60;
-      default: return 30; // UNVERIFIED
+      default: return 30;
     }
   } catch {
     return 30;
@@ -188,35 +196,26 @@ async function computeVerifiedIdentity(userId: string): Promise<number> {
 
 /**
  * Factor 6: Behavioral Consistency (0–100)
- * Rewards consistent posting and low flag/removal rates.
- * Penalizes accounts with removed posts or erratic behavior.
+ * Now uses CivilityEvents for violation tracking (durable even after deletion).
  */
 async function computeBehavioralConsistency(userId: string): Promise<number> {
-  const [published, removed] = await Promise.all([
+  const [published, history] = await Promise.all([
     prisma.storedPost.count({
       where: { authorId: userId, status: 'published', deletedAt: null },
     }),
-    prisma.storedPost.count({
-      where: {
-        authorId: userId,
-        OR: [
-          { status: 'removed' },
-          { deletedAt: { not: null } },
-        ],
-      },
-    }),
+    getCivilityHistory(userId),
   ]);
 
-  const total = published + removed;
-  if (total === 0) return 50; // neutral default
+  if (published === 0 && (!history || history.totalEvents === 0)) return 50;
 
-  // High removal ratio = bad
-  const removalRatio = removed / total;
+  // Violation ratio from durable events (not just deleted posts)
+  const totalEvents = history?.totalEvents || 1;
+  const violationRatio = (history?.violations || 0) / totalEvents;
 
-  // 0% removed → 90, 10% removed → 70, 50% removed → 30
-  const baseScore = Math.round(90 - removalRatio * 120);
+  // 0% violations → 90, 10% → 78, 50% → 30
+  const baseScore = Math.round(90 - violationRatio * 120);
 
-  // Bonus for having more published posts (consistency)
+  // Volume bonus for consistent positive posting
   const volumeBonus = Math.min(10, Math.floor(published / 5));
 
   return Math.max(0, Math.min(100, baseScore + volumeBonus));
@@ -237,17 +236,12 @@ export interface CredibilityBreakdown {
   postCount: number;
 }
 
-/**
- * Recompute a user's credibility score and persist it.
- * Returns the breakdown of all factors.
- */
 export async function recomputeCredibilityScore(
   userId: string,
 ): Promise<CredibilityBreakdown | null> {
   if (!isDbAvailable()) return null;
 
   try {
-    // Check post count — don't recompute for very new users
     const postCount = await prisma.storedPost.count({
       where: { authorId: userId, status: 'published', deletedAt: null },
     });
@@ -267,7 +261,6 @@ export async function recomputeCredibilityScore(
       };
     }
 
-    // Compute all factors in parallel
     const [
       civilEngagement,
       citationQuality,
@@ -284,7 +277,6 @@ export async function recomputeCredibilityScore(
       computeBehavioralConsistency(userId),
     ]);
 
-    // Weighted sum
     const overall = Math.round(
       civilEngagement * WEIGHTS.civilEngagement +
       citationQuality * WEIGHTS.citationQuality +
@@ -294,18 +286,15 @@ export async function recomputeCredibilityScore(
       behavioralConsistency * WEIGHTS.behavioralConsistency,
     );
 
-    // Clamp to 0–100
     const clampedScore = Math.max(0, Math.min(100, overall));
 
-    // Persist to SearchableUser
     await prisma.searchableUser.updateMany({
       where: { id: userId },
       data: { credibilityScore: clampedScore },
     });
 
-    // Also update User model cached fields if the record exists
     try {
-      const avgCivility = civilEngagement / 100; // back to 0–1
+      const avgCivility = civilEngagement / 100;
       const crossParty = crossPartyEngagement / 100;
       await prisma.user.update({
         where: { id: userId },
@@ -316,7 +305,7 @@ export async function recomputeCredibilityScore(
         },
       });
     } catch {
-      // User record may not exist in full User model — that's OK
+      // User record may not exist
     }
 
     return {
@@ -339,13 +328,13 @@ export async function recomputeCredibilityScore(
 
 /**
  * Lightweight credibility bump — called after a single post creation.
- * Instead of full recompute (which queries many tables), this does an
- * incremental adjustment based on the new post's civility and citation.
+ * Uses the civility result's severity classification for aggressive penalties.
  */
 export async function incrementalCredibilityUpdate(
   userId: string,
   newPostCivilityScore: number,
   hasSourceUrl: boolean,
+  severity?: string,
 ): Promise<void> {
   if (!isDbAvailable()) return;
 
@@ -363,26 +352,25 @@ export async function incrementalCredibilityUpdate(
 
     if (postCount < MIN_POSTS_FOR_RECOMPUTE) return;
 
-    // Incremental adjustment — severity scales with how bad the post is
     let delta = 0;
 
-    // Civil post nudges score up, uncivil nudges down
-    if (newPostCivilityScore >= 0.8) {
-      delta += 1; // good post
+    // Use severity classification for sharper penalties
+    if (severity === 'critical') {
+      delta -= 30; // Massive immediate drop (slurs, hate speech, violence)
+    } else if (severity === 'high') {
+      delta -= 20; // Large drop (dehumanization, xenophobia)
+    } else if (newPostCivilityScore >= 0.8) {
+      delta += 1;  // Good post — slow recovery
     } else if (newPostCivilityScore >= 0.5) {
-      delta += 0; // mediocre post — no change
+      delta += 0;  // Mediocre — no change
     } else if (newPostCivilityScore >= 0.3) {
-      delta -= 3; // uncivil post
-    } else if (newPostCivilityScore >= 0.1) {
-      delta -= 8; // severely uncivil (hate speech, racism, etc.)
+      delta -= 5;  // Uncivil
     } else {
-      delta -= 15; // extreme violation (slurs, violent threats, etc.)
+      delta -= 10; // Severe
     }
 
     // Citation bonus
-    if (hasSourceUrl) {
-      delta += 1;
-    }
+    if (hasSourceUrl) delta += 1;
 
     if (delta === 0) return;
 

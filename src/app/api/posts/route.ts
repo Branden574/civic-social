@@ -20,6 +20,7 @@ import { secureLog } from '@/lib/security/logger';
 import { getUserById, getUserByUsername, registerUser } from '@/lib/user-registry';
 import { analyzeCivility } from '@/lib/civility';
 import { incrementalCredibilityUpdate } from '@/lib/credibility-recompute';
+import { recordCivilityEvent } from '@/lib/civility-events';
 import { dbCreateNotification } from '@/lib/social-store';
 
 // ─── Author profile (matches post-store.tsx) ─────────────────
@@ -166,7 +167,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Compute civility server-side — never trust client-provided scores
-    const { score: civilityScore } = analyzeCivility(sanitizedContent);
+    const civilityResult = analyzeCivility(sanitizedContent);
+    const civilityScore = civilityResult.score;
 
     // Sanitize topics
     const sanitizedTopics = sanitizeTopics(topics);
@@ -201,8 +203,11 @@ export async function POST(request: NextRequest) {
       `created post_id=${post.id} author_id=${userId} status=${post.status} visibility=${post.visibility} created_at=${post.createdAt}`,
     );
 
+    // Record durable civility event (persists even if post is later deleted)
+    recordCivilityEvent(userId, post.id, civilityResult).catch(() => {});
+
     // Fire-and-forget credibility update based on this post
-    incrementalCredibilityUpdate(userId, civilityScore, !!safeArticleUrl).catch(() => {});
+    incrementalCredibilityUpdate(userId, civilityScore, !!safeArticleUrl, civilityResult.severity).catch(() => {});
 
     // Extract @mentions and create notifications (fire-and-forget)
     extractAndNotifyMentions(sanitizedContent, post.id, userId, user.displayName).catch(() => {});

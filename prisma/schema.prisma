@@ -561,6 +561,29 @@ model VoiceSignal {
 }
 
 // ─────────────────────────────────────────────
+// CIVILITY EVENTS (durable behavioral history)
+// Persists even if the offending post is deleted.
+// Used by credibility engine, ranking, and recovery model.
+// ─────────────────────────────────────────────
+
+model CivilityEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  postId      String?  // references post at time of event (may be deleted later)
+  eventType   String   // violation | positive | neutral
+  severity    String   // critical | high | medium | low
+  category    String   // racism, hate_speech, harassment, profanity, constructive, civil, neutral
+  score       Float    // civility score at time of event (0-1)
+  details     String?  // JSON: matched patterns, issue descriptions
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, eventType])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
 // FEEDBACK / BUG REPORTS
 // ─────────────────────────────────────────────
 
