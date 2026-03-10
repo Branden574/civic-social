@@ -295,7 +295,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
       {/* Modal — full screen on mobile, centered card on desktop */}
       <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-xl bg-bg sm:bg-bg-alt sm:rounded-2xl sm:border sm:border-border-subtle overflow-hidden flex flex-col sm:animate-slide-up">
         {/* Header — Twitter-style: Cancel on left, Post on right */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle pt-[max(0.75rem,env(safe-area-inset-top,0.75rem))]">
           <button
             onClick={onClose}
             className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors py-1"
@@ -344,7 +344,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                   onChange={(e) => handleContentChange(e.target.value)}
                   onKeyDown={handleTextareaKeyDown}
                   placeholder="What's happening?"
-                  className="w-full bg-transparent text-text-primary text-lg leading-relaxed placeholder:text-text-muted/60 resize-none focus:outline-none min-h-[180px] sm:min-h-[120px]"
+                  className="w-full bg-transparent text-text-primary text-lg leading-relaxed placeholder:text-text-muted/60 resize-none border-none focus:outline-none focus:ring-0 focus:border-transparent min-h-[120px] sm:min-h-[120px]"
                   maxLength={maxChars}
                   autoFocus
                 />
@@ -628,7 +628,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
         </div>
 
         {/* Footer toolbar — icons on left, char count + civility on right */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border-subtle bg-bg sm:bg-bg-alt">
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border-subtle bg-bg sm:bg-bg-alt pb-[max(0.625rem,env(safe-area-inset-bottom,0.625rem))]">
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => setShowUrlInput(!showUrlInput)}

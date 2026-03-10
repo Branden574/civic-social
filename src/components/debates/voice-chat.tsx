@@ -289,11 +289,28 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     }
   }, [cameraEnabled, localVideoStream]);
 
-  // Wire video element to stream
+  // Wire video element to stream + handle track ended (filters, OS interruptions)
   useEffect(() => {
     if (localVideoRef.current && localVideoStream) {
       localVideoRef.current.srcObject = localVideoStream;
     }
+
+    if (!localVideoStream) return;
+
+    // If the video track ends (e.g. iOS filter processing, app backgrounding,
+    // or OS-level camera interruption), clean up gracefully
+    const videoTrack = localVideoStream.getVideoTracks()[0];
+    if (!videoTrack) return;
+
+    const handleEnded = () => {
+      setLocalVideoStream(null);
+      setCameraEnabled(false);
+    };
+
+    videoTrack.addEventListener('ended', handleEnded);
+    return () => {
+      videoTrack.removeEventListener('ended', handleEnded);
+    };
   }, [localVideoStream]);
 
   // ── Sync local tracks (mic + camera) to WebRTC ────────────
@@ -1081,14 +1098,41 @@ function VoiceAvatar({
 
 // ─── RemoteAudio ─────────────────────────────────────────────────
 // Hidden audio element that plays a remote peer's audio stream.
+// Explicitly calls play() to handle iOS autoplay restrictions.
 
 function RemoteAudio({ stream }: { stream: MediaStream }) {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.srcObject = stream;
-    }
+    const el = audioRef.current;
+    if (!el || !stream) return;
+
+    el.srcObject = stream;
+
+    // Explicitly call play() — iOS blocks autoPlay for streams arriving
+    // outside a user-gesture call stack (e.g. WebRTC ontrack events)
+    const tryPlay = () => {
+      el.play().catch(() => {
+        // Autoplay blocked — retry on next user interaction
+        const resume = () => {
+          el.play().catch(() => {});
+          document.removeEventListener('touchstart', resume);
+          document.removeEventListener('click', resume);
+        };
+        document.addEventListener('touchstart', resume, { once: true });
+        document.addEventListener('click', resume, { once: true });
+      });
+    };
+
+    tryPlay();
+
+    // If stream gets new tracks added later, re-trigger play
+    const onTrackAdded = () => tryPlay();
+    stream.addEventListener('addtrack', onTrackAdded);
+
+    return () => {
+      stream.removeEventListener('addtrack', onTrackAdded);
+    };
   }, [stream]);
 
   // eslint-disable-next-line jsx-a11y/media-has-caption

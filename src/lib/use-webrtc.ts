@@ -226,6 +226,10 @@ export function useWebRTC(
     }
   }, [debateId, handleSignal]);
 
+  // Keep a ref to the latest pollSignals so the interval never uses a stale closure
+  const pollSignalsRef = useRef(pollSignals);
+  pollSignalsRef.current = pollSignals;
+
   // ── Set local stream (called by VoiceChat when mic/camera changes) ──
   const setLocalStream = useCallback((stream: MediaStream | null) => {
     localStreamRef.current = stream;
@@ -269,10 +273,10 @@ export function useWebRTC(
     if (activeRef.current) return;
     activeRef.current = true;
 
-    // Start signal polling
-    pollSignals(); // immediate first poll
-    pollRef.current = setInterval(pollSignals, SIGNAL_POLL_MS);
-  }, [pollSignals]);
+    // Start signal polling — use ref so interval always calls latest version
+    pollSignalsRef.current();
+    pollRef.current = setInterval(() => pollSignalsRef.current(), SIGNAL_POLL_MS);
+  }, []);
 
   // ── Stop WebRTC (called when user leaves voice) ────────────
   const stop = useCallback(() => {
