@@ -141,7 +141,12 @@ function composeReducer(state: ComposeState, action: ComposeAction): ComposeStat
     case 'REMOVE_HASHTAG':
       return { ...state, customHashtags: state.customHashtags.filter((t) => t !== action.payload) };
     case 'SET_CIVILITY':
-      return { ...state, civility: action.payload };
+      return {
+        ...state,
+        civility: action.payload,
+        // Auto-show the detailed civility panel when issues are detected
+        showCivilityCheck: action.payload.issues.length > 0 ? true : state.showCivilityCheck,
+      };
     case 'TOGGLE_CIVILITY_CHECK':
       return { ...state, showCivilityCheck: !state.showCivilityCheck };
     case 'SET_POSTING':
@@ -220,7 +225,6 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
     const timer = setTimeout(() => {
       const result = analyzeCivility(content);
       dispatch({ type: 'SET_CIVILITY', payload: result });
-      if (result.issues.length > 0) dispatch({ type: 'SET_CIVILITY', payload: result });
     }, 500);
     return () => clearTimeout(timer);
   }, [content]);
