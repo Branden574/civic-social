@@ -345,14 +345,7 @@ export default function ProfilePage() {
           {/* Complete your profile card — shows only when profile is incomplete */}
           {showFinishProfile && (
             <div className="mx-4 sm:mx-6 mb-4">
-              <div className="bg-civic/5 border border-civic/20 rounded-xl p-4 flex items-center gap-3 relative">
-                <button
-                  onClick={dismissProfileCard}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-                  title="Dismiss"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+              <div className="bg-civic/5 border border-civic/20 rounded-xl p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-civic/15 flex items-center justify-center shrink-0">
                   <User className="w-5 h-5 text-civic-light" />
                 </div>
@@ -371,6 +364,13 @@ export default function ProfilePage() {
                 >
                   Finish
                 </Link>
+                <button
+                  onClick={dismissProfileCard}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors shrink-0 ml-1"
+                  title="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
           )}

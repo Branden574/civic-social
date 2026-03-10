@@ -167,6 +167,17 @@ export async function GET(request: NextRequest) {
         if (dbUser?.username) dbUsername = dbUser.username;
         if (dbUser?.bio) dbBio = dbUser.bio;
       } catch { /* DB read failed — use defaults */ }
+
+      // Fallback: bio may exist in User table but not SearchableUser
+      if (!dbBio) {
+        try {
+          const userRow = await prisma.user.findUnique({
+            where: { id: sessionUser.id },
+            select: { bio: true },
+          });
+          if (userRow?.bio) dbBio = userRow.bio;
+        } catch { /* fallback failed */ }
+      }
     }
 
     // Seed in-memory store from DB data so subsequent requests are fast

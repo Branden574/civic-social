@@ -586,70 +586,71 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                 </div>
               )}
 
-              {/* Civility check */}
-              {showCivilityCheck && content.length > 10 && (
-                <div className="mt-4 animate-fade-in">
-                  <div
-                    className={clsx(
-                      'p-3 rounded-lg border',
-                      civility.score >= 0.8
-                        ? 'bg-positive/5 border-positive/20'
-                        : civility.score >= 0.5
-                          ? 'bg-warning/5 border-warning/20'
-                          : 'bg-danger/5 border-danger/20',
-                    )}
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      {civility.score >= 0.8 ? (
-                        <CheckCircle2 className="w-4 h-4 text-positive-light" />
-                      ) : civility.score >= 0.5 ? (
-                        <Shield className="w-4 h-4 text-warning-light" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-danger-light" />
-                      )}
-                      <span className="text-xs font-semibold text-text-primary">
-                        Civility Check: {Math.round(civility.score * 100)}%
-                      </span>
-                      <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden ml-2">
-                        <div
-                          className={clsx(
-                            'h-full rounded-full transition-all duration-500',
-                            civility.score >= 0.8 ? 'bg-positive' : civility.score >= 0.5 ? 'bg-warning' : 'bg-danger',
-                          )}
-                          style={{ width: `${Math.round(civility.score * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                    {civility.issues.length > 0 && (
-                      <div className="space-y-1 mt-2">
-                        {civility.issues.map((issue, i) => (
-                          <p key={i} className="text-xs text-text-secondary flex items-start gap-1.5">
-                            <span className="text-warning-light mt-0.5">•</span>
-                            {issue}
-                          </p>
-                        ))}
-                        <p className="text-[11px] text-text-muted mt-1 italic">
-                          Would you like to rephrase for clarity and civility?
-                        </p>
-                      </div>
-                    )}
-                    {civility.issues.length === 0 && civility.score >= 0.8 && (
-                      <p className="text-xs text-positive-light">
-                        Great tone! This post promotes constructive discourse.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {submitError && (
-                <div className="mt-3 p-3 rounded-lg border border-danger/30 bg-danger/10 text-danger-light text-xs">
-                  {submitError}
-                </div>
-              )}
 
             </div> {/* end content column */}
           </div> {/* end flex row (avatar + content) */}
+
+          {/* Civility check — full width, below the avatar+text row */}
+          {showCivilityCheck && content.length > 10 && (
+            <div className="mt-4 animate-fade-in">
+              <div
+                className={clsx(
+                  'p-3 rounded-lg border',
+                  civility.score >= 0.8
+                    ? 'bg-positive/5 border-positive/20'
+                    : civility.score >= 0.5
+                      ? 'bg-warning/5 border-warning/20'
+                      : 'bg-danger/5 border-danger/20',
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  {civility.score >= 0.8 ? (
+                    <CheckCircle2 className="w-4 h-4 text-positive-light" />
+                  ) : civility.score >= 0.5 ? (
+                    <Shield className="w-4 h-4 text-warning-light" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-danger-light" />
+                  )}
+                  <span className="text-xs font-semibold text-text-primary">
+                    Civility Check: {Math.round(civility.score * 100)}%
+                  </span>
+                  <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden ml-2">
+                    <div
+                      className={clsx(
+                        'h-full rounded-full transition-all duration-500',
+                        civility.score >= 0.8 ? 'bg-positive' : civility.score >= 0.5 ? 'bg-warning' : 'bg-danger',
+                      )}
+                      style={{ width: `${Math.round(civility.score * 100)}%` }}
+                    />
+                  </div>
+                </div>
+                {civility.issues.length > 0 && (
+                  <div className="space-y-1 mt-2">
+                    {civility.issues.map((issue, i) => (
+                      <p key={i} className="text-xs text-text-secondary flex items-start gap-1.5">
+                        <span className="text-warning-light mt-0.5">•</span>
+                        {issue}
+                      </p>
+                    ))}
+                    <p className="text-[11px] text-text-muted mt-1 italic">
+                      Would you like to rephrase for clarity and civility?
+                    </p>
+                  </div>
+                )}
+                {civility.issues.length === 0 && civility.score >= 0.8 && (
+                  <p className="text-xs text-positive-light">
+                    Great tone! This post promotes constructive discourse.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {submitError && (
+            <div className="mt-3 p-3 rounded-lg border border-danger/30 bg-danger/10 text-danger-light text-xs">
+              {submitError}
+            </div>
+          )}
         </div> {/* end body */}
 
         {/* ── Toolbar: merged single bar ─────────────────────── */}
