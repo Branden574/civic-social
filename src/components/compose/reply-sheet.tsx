@@ -136,7 +136,7 @@ export function ReplySheet({ isOpen, onClose, onSubmit, replyingTo }: ReplySheet
             <div className="flex items-start gap-2 p-2.5 bg-surface rounded-lg border border-border-subtle">
               <div className="w-0.5 h-full bg-civic/30 rounded-full shrink-0 self-stretch" />
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-text-muted">
+                <p className="text-xs font-semibold text-text-muted">
                   Replying to {replyingTo.displayName}
                 </p>
                 <p className="text-xs text-text-secondary line-clamp-2 mt-0.5">
@@ -154,7 +154,7 @@ export function ReplySheet({ isOpen, onClose, onSubmit, replyingTo }: ReplySheet
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Share your thoughtful reply..."
-            className="w-full bg-transparent text-text-primary text-[15px] leading-relaxed placeholder:text-text-muted resize-none focus:outline-none min-h-[80px]"
+            className="w-full bg-transparent text-text-primary text-base leading-relaxed placeholder:text-text-muted resize-none focus:outline-none min-h-[80px]"
             maxLength={1000}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit();
@@ -168,7 +168,7 @@ export function ReplySheet({ isOpen, onClose, onSubmit, replyingTo }: ReplySheet
             {content.length > 5 && (
               <div
                 className={clsx(
-                  'flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md transition-colors duration-200',
+                  'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md transition-colors duration-200',
                   civility >= 0.8
                     ? 'bg-positive/10 text-positive-light'
                     : civility >= 0.5
@@ -190,7 +190,7 @@ export function ReplySheet({ isOpen, onClose, onSubmit, replyingTo }: ReplySheet
             >
               {content.length}/1000
             </span>
-            <span className="text-[10px] text-text-muted">
+            <span className="text-xs text-text-muted">
               ⌘+Enter to submit
             </span>
           </div>

@@ -311,7 +311,7 @@ export default function RegisterPage() {
               <div className="mt-4 p-3 bg-surface-elevated rounded-lg border border-border-subtle">
                 <div className="flex items-start gap-2">
                   <Lock className="w-4 h-4 text-positive mt-0.5 shrink-0" />
-                  <p className="text-[11px] text-text-muted leading-relaxed">
+                  <p className="text-xs text-text-muted leading-relaxed">
                     Zero third-party data selling. End-to-end encryption. GDPR &amp; CCPA compliant. You can delete all data anytime.
                   </p>
                 </div>
@@ -353,7 +353,7 @@ export default function RegisterPage() {
                       className={clsx(
                         'flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-sm transition-all',
                         selectedCountry === country.code
-                          ? 'bg-civic/10 border border-civic/30 text-text-primary font-medium'
+                          ? 'bg-civic-subtle border border-civic/30 text-text-primary font-medium'
                           : 'bg-surface-elevated border border-border-subtle hover:bg-surface-hover text-text-secondary',
                       )}
                     >
@@ -403,7 +403,7 @@ export default function RegisterPage() {
                           className={clsx(
                             'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all',
                             selectedParty === party.id
-                              ? 'bg-civic/10 border border-civic/30 text-text-primary ring-1 ring-civic/20'
+                              ? 'bg-civic-subtle border border-civic/30 text-text-primary ring-1 ring-civic/20'
                               : 'bg-surface-elevated border border-border-subtle hover:bg-surface-hover text-text-secondary',
                             party.isSpecial && 'border-dashed',
                           )}
@@ -414,7 +414,7 @@ export default function RegisterPage() {
                           />
                           <span>{party.name}</span>
                           {party.abbreviation && (
-                            <span className="text-[10px] text-text-muted">
+                            <span className="text-xs text-text-muted">
                               ({party.abbreviation})
                             </span>
                           )}
@@ -429,7 +429,7 @@ export default function RegisterPage() {
                   {/* Helper text */}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <HelpCircle className="w-3 h-3 text-text-muted shrink-0" />
-                    <p className="text-[10px] text-text-muted">
+                    <p className="text-xs text-text-muted">
                       You can hide this later in Settings. Not listed? Choose &quot;Independent&quot; or &quot;Undeclared&quot;.
                     </p>
                   </div>
@@ -451,7 +451,7 @@ export default function RegisterPage() {
                         className={clsx(
                           'flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-xs font-medium transition-all',
                           isSelected
-                            ? 'bg-civic/10 border border-civic/30 text-civic-light'
+                            ? 'bg-civic-subtle border border-civic/30 text-civic-light'
                             : 'bg-surface-elevated border border-border-subtle hover:bg-surface-hover text-text-secondary',
                         )}
                       >
@@ -463,7 +463,7 @@ export default function RegisterPage() {
                   })}
                 </div>
                 {topicCount > 0 && (
-                  <p className="text-[11px] text-text-muted mt-1.5">
+                  <p className="text-xs text-text-muted mt-1.5">
                     {topicCount} topic{topicCount !== 1 ? 's' : ''} selected
                     {topicCount < 3
                       ? ' — pick at least 3 for a great feed'
@@ -503,15 +503,15 @@ export default function RegisterPage() {
               <div className="flex justify-center gap-6 mb-8">
                 <div className="text-center">
                   <p className="text-lg font-bold text-civic-light">{selectedTopics.length || 4}</p>
-                  <p className="text-[10px] text-text-muted uppercase tracking-wider">Topics</p>
+                  <p className="text-xs text-text-muted uppercase tracking-wider">Topics</p>
                 </div>
                 <div className="text-center">
                   <p className="text-lg font-bold text-positive-light">100%</p>
-                  <p className="text-[10px] text-text-muted uppercase tracking-wider">Diverse</p>
+                  <p className="text-xs text-text-muted uppercase tracking-wider">Diverse</p>
                 </div>
                 <div className="text-center">
                   <p className="text-lg font-bold text-warning-light">0</p>
-                  <p className="text-[10px] text-text-muted uppercase tracking-wider">Ads</p>
+                  <p className="text-xs text-text-muted uppercase tracking-wider">Ads</p>
                 </div>
               </div>
 
@@ -523,7 +523,7 @@ export default function RegisterPage() {
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              <p className="text-[11px] text-text-muted mt-4">
+              <p className="text-xs text-text-muted mt-4">
                 You can update your preferences anytime in{' '}
                 <Link href="/settings" className="text-civic-light hover:underline">
                   Settings

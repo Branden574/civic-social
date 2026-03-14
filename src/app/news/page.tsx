@@ -152,7 +152,7 @@ export default function NewsPage() {
               </div>
             </div>
             {/* Source badges */}
-            <div className="flex items-center gap-2 mt-3 text-[10px] text-text-muted overflow-x-auto">
+            <div className="flex items-center gap-2 mt-3 text-xs text-text-muted overflow-x-auto">
               <span className="shrink-0 font-semibold uppercase tracking-wider">Sources:</span>
               {['AP', 'Reuters', 'NPR', 'PBS', 'BBC'].map((s) => (
                 <span key={s} className="shrink-0 px-2 py-0.5 rounded-full bg-surface-elevated border border-border-subtle font-medium">{s}</span>
@@ -232,14 +232,14 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
             <span className="text-text-muted text-xs">·</span>
             <span
               className={clsx(
-                'flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md',
+                'flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md',
                 factCheck.color,
               )}
             >
               <factCheck.icon className="w-3 h-3" />
               {factCheck.label}
             </span>
-            <span className="text-[10px] text-text-muted flex items-center gap-1 ml-auto">
+            <span className="text-xs text-text-muted flex items-center gap-1 ml-auto">
               Trust:{' '}
               <span className="font-semibold text-positive-light">
                 {Math.round(article.sourceTrustScore * 100)}%
@@ -263,7 +263,7 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
           <div className="bg-surface-elevated rounded-lg p-3 mb-3 border border-border-subtle">
             <div className="flex items-center gap-1.5 mb-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-civic animate-pulse" />
-              <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
                 AI Summary · Neutral Tone
               </span>
             </div>
@@ -281,7 +281,7 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
             <span className="text-xs font-semibold text-text-primary flex-1">
               Multiple Perspectives
             </span>
-            <span className="text-[10px] text-text-muted">{perspectives.length} viewpoints</span>
+            <span className="text-xs text-text-muted">{perspectives.length} viewpoints</span>
             {showPerspectives ? (
               <ChevronUp className="w-3.5 h-3.5 text-text-muted" />
             ) : (
@@ -299,14 +299,14 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
                   <div className={clsx('w-2 h-2 rounded-full mt-1.5 shrink-0', p.color)} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-[11px] font-semibold text-text-primary">{p.ideology}</span>
-                      <span className="text-[10px] text-text-muted">via {p.source}</span>
+                      <span className="text-xs font-semibold text-text-primary">{p.ideology}</span>
+                      <span className="text-xs text-text-muted">via {p.source}</span>
                     </div>
                     <p className="text-[12px] text-text-secondary leading-relaxed">{p.angle}</p>
                   </div>
                 </div>
               ))}
-              <p className="text-[10px] text-text-muted text-center pt-1">
+              <p className="text-xs text-text-muted text-center pt-1">
                 Perspectives generated from coverage by multiple verified outlets
               </p>
             </div>
@@ -318,7 +318,7 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
               <Link
                 key={topic}
                 href={`/hashtag/${encodeURIComponent(topic)}`}
-                className="text-[11px] font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full hover:bg-civic/15 transition-colors"
+                className="text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full hover:bg-civic-muted transition-colors"
               >
                 #{topic}
               </Link>

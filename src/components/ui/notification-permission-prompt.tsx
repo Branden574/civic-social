@@ -119,7 +119,7 @@ export function NotificationPermissionPrompt({ authenticated }: { authenticated:
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-civic/10 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-civic-subtle flex items-center justify-center">
               <Bell className="w-4 h-4 text-civic-light" />
             </div>
             <span className="text-sm font-semibold text-text-primary">Stay in the loop</span>
@@ -177,13 +177,13 @@ export function NotificationPermissionPrompt({ authenticated }: { authenticated:
                 Get notified when someone replies to your posts, invites you to a debate, or when important legislation updates drop.
               </p>
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <div className="flex items-center gap-1.5 text-xs text-text-muted">
                   <MessageSquare className="w-3 h-3" /> Replies
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <div className="flex items-center gap-1.5 text-xs text-text-muted">
                   <Shield className="w-3 h-3" /> Debates
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <div className="flex items-center gap-1.5 text-xs text-text-muted">
                   <Bell className="w-3 h-3" /> Updates
                 </div>
               </div>

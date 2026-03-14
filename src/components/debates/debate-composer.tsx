@@ -170,7 +170,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
               Structured Response
             </p>
             {debateTitle && (
-              <p className="text-[11px] text-text-muted truncate max-w-xs mx-auto">
+              <p className="text-xs text-text-muted truncate max-w-xs mx-auto">
                 {debateTitle}
               </p>
             )}
@@ -178,7 +178,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
           {/* Civility indicator */}
           <div
             className={clsx(
-              'flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-semibold',
+              'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold',
               civilityStyle.bg,
               civilityStyle.text,
             )}
@@ -198,7 +198,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                 <p className="text-xs font-semibold text-warning-light">
                   Take a moment
                 </p>
-                <p className="text-[11px] text-text-muted">
+                <p className="text-xs text-text-muted">
                   Heated discussions benefit from a pause
                 </p>
               </div>
@@ -212,24 +212,24 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-civic/10 flex items-center justify-center text-[10px] font-bold text-civic-light">
+                <span className="w-5 h-5 rounded-md bg-civic-subtle flex items-center justify-center text-xs font-bold text-civic-light">
                   1
                 </span>
                 <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
                   Claim
                 </span>
-                <span className="text-[10px] text-danger-light">*</span>
+                <span className="text-xs text-danger-light">*</span>
               </label>
               <span
                 className={clsx(
-                  'text-[11px] font-mono',
+                  'text-xs font-mono',
                   claim.length > 450 ? 'text-danger-light' : 'text-text-muted',
                 )}
               >
                 {claim.length}/500
               </span>
             </div>
-            <p className="text-[11px] text-text-muted mb-2">
+            <p className="text-xs text-text-muted mb-2">
               State your main argument clearly and concisely.
             </p>
             <textarea
@@ -248,24 +248,24 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-civic/10 flex items-center justify-center text-[10px] font-bold text-civic-light">
+                <span className="w-5 h-5 rounded-md bg-civic-subtle flex items-center justify-center text-xs font-bold text-civic-light">
                   2
                 </span>
                 <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
                   Evidence
                 </span>
-                <span className="text-[10px] text-danger-light">*</span>
+                <span className="text-xs text-danger-light">*</span>
               </label>
               <span
                 className={clsx(
-                  'text-[11px] font-mono',
+                  'text-xs font-mono',
                   evidence.length > 900 ? 'text-danger-light' : 'text-text-muted',
                 )}
               >
                 {evidence.length}/1000
               </span>
             </div>
-            <p className="text-[11px] text-text-muted mb-2">
+            <p className="text-xs text-text-muted mb-2">
               Provide data, statistics, or sources that support your claim.
             </p>
             <textarea
@@ -303,24 +303,24 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-civic/10 flex items-center justify-center text-[10px] font-bold text-civic-light">
+                <span className="w-5 h-5 rounded-md bg-civic-subtle flex items-center justify-center text-xs font-bold text-civic-light">
                   3
                 </span>
                 <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
                   Reasoning
                 </span>
-                <span className="text-[10px] text-danger-light">*</span>
+                <span className="text-xs text-danger-light">*</span>
               </label>
               <span
                 className={clsx(
-                  'text-[11px] font-mono',
+                  'text-xs font-mono',
                   reasoning.length > 900 ? 'text-danger-light' : 'text-text-muted',
                 )}
               >
                 {reasoning.length}/1000
               </span>
             </div>
-            <p className="text-[11px] text-text-muted mb-2">
+            <p className="text-xs text-text-muted mb-2">
               Explain how your evidence supports your claim. Connect the dots.
             </p>
             <textarea
@@ -346,7 +346,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                 <p className="text-xs font-semibold text-text-primary">
                   Steelman their position first
                 </p>
-                <p className="text-[11px] text-text-muted">
+                <p className="text-xs text-text-muted">
                   Demonstrating you understand the opposing view earns credibility
                 </p>
               </div>
@@ -376,11 +376,11 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                   className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[60px]"
                 />
                 <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-[10px] text-text-muted flex items-center gap-1">
+                  <p className="text-xs text-text-muted flex items-center gap-1">
                     <Shield className="w-3 h-3" />
                     Steelmanning boosts your credibility score
                   </p>
-                  <span className="text-[11px] font-mono text-text-muted">
+                  <span className="text-xs font-mono text-text-muted">
                     {steelmanText.length}/500
                   </span>
                 </div>
@@ -415,7 +415,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                     ? 'Tone may be confrontational'
                     : 'Hostile language detected'}
                 </p>
-                <p className="text-[11px] text-text-muted mt-0.5">
+                <p className="text-xs text-text-muted mt-0.5">
                   Structured debates reward clarity and respect. Consider rephrasing for maximum impact.
                 </p>
               </div>
@@ -436,7 +436,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
             {/* Civility dot */}
             <div className="flex items-center gap-1.5">
               <span className={clsx('w-2 h-2 rounded-full', civilityStyle.dot)} />
-              <span className={clsx('text-[10px] font-semibold', civilityStyle.text)}>
+              <span className={clsx('text-xs font-semibold', civilityStyle.text)}>
                 {civility.label}
               </span>
             </div>

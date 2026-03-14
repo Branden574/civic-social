@@ -296,7 +296,7 @@ export default function LegislativeTrackerPage() {
             <div className="px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-civic/15 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-civic-muted flex items-center justify-center">
                     <Landmark className="w-4.5 h-4.5 text-civic-light" />
                   </div>
                   <div>
@@ -323,7 +323,7 @@ export default function LegislativeTrackerPage() {
                       className={clsx(
                         'flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors',
                         showFilters
-                          ? 'bg-civic/10 text-civic-light'
+                          ? 'bg-civic-subtle text-civic-light'
                           : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
                       )}
                     >
@@ -347,7 +347,7 @@ export default function LegislativeTrackerPage() {
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Featured
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface-elevated text-text-muted ml-1">
+                  <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-surface-elevated text-text-muted ml-1">
                     {bills.length}
                   </span>
                 </button>
@@ -363,7 +363,7 @@ export default function LegislativeTrackerPage() {
                   <Library className="w-3.5 h-3.5" />
                   All Bills
                   {browseTotal > 0 && (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface-elevated text-text-muted ml-1">
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-surface-elevated text-text-muted ml-1">
                       {browseTotal.toLocaleString()}
                     </span>
                   )}
@@ -376,7 +376,7 @@ export default function LegislativeTrackerPage() {
                   {['Introduced', 'Committee', 'Reported', 'Passed Chamber', 'Conference', 'To President', 'Law'].map(
                     (step, i) => (
                       <div key={step} className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-medium px-2 py-1 rounded-md bg-surface-elevated text-text-muted whitespace-nowrap border border-border-subtle">
+                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-surface-elevated text-text-muted whitespace-nowrap border border-border-subtle">
                           {step}
                         </span>
                         {i < 6 && <ArrowRight className="w-3 h-3 text-text-muted shrink-0" />}
@@ -392,7 +392,7 @@ export default function LegislativeTrackerPage() {
               <div className="px-4 sm:px-6 pb-4 border-t border-border-subtle pt-3 animate-fade-in space-y-3">
                 {/* Status filter */}
                 <div>
-                  <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">
                     Status
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -401,7 +401,7 @@ export default function LegislativeTrackerPage() {
                         key={sf.key}
                         onClick={() => setSelectedStatus(sf.key)}
                         className={clsx(
-                          'text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors',
+                          'text-xs font-medium px-2.5 py-1 rounded-full transition-colors',
                           selectedStatus === sf.key
                             ? 'bg-civic text-white'
                             : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover',
@@ -415,7 +415,7 @@ export default function LegislativeTrackerPage() {
 
                 {/* Sort */}
                 <div>
-                  <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">
                     Sort By
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -427,7 +427,7 @@ export default function LegislativeTrackerPage() {
                         key={s.key}
                         onClick={() => setSortMode(s.key)}
                         className={clsx(
-                          'flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors',
+                          'flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors',
                           sortMode === s.key
                             ? 'bg-civic text-white'
                             : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover',
@@ -457,8 +457,8 @@ export default function LegislativeTrackerPage() {
                       <p className="text-xs text-info-light font-medium">
                         Demo Mode — Congress.gov API Key Not Configured
                       </p>
-                      <p className="text-[10px] text-text-muted">
-                        Set the <code className="font-mono text-[10px]">CONGRESS_API_KEY</code> environment
+                      <p className="text-xs text-text-muted">
+                        Set the <code className="font-mono text-xs">CONGRESS_API_KEY</code> environment
                         variable to enable live data. Bill information shown is placeholder only.
                       </p>
                     </div>
@@ -470,14 +470,14 @@ export default function LegislativeTrackerPage() {
                       <span className="text-xs font-medium text-warning-light">
                         Some data may be stale
                       </span>
-                      <span className="text-[11px] text-text-muted">
+                      <span className="text-xs text-text-muted">
                         {lastFetchedAt ? `Last refresh: ${lastFetchedAt.toLocaleTimeString()}` : ''}
                       </span>
                     </div>
                     <button
                       onClick={() => fetchBills(true)}
                       disabled={refreshing}
-                      className="text-[10px] text-warning-light hover:underline disabled:opacity-50"
+                      className="text-xs text-warning-light hover:underline disabled:opacity-50"
                     >
                       Retry
                     </button>
@@ -490,7 +490,7 @@ export default function LegislativeTrackerPage() {
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-positive" />
                       </span>
                       <span className="text-xs font-semibold text-positive-light">Live</span>
-                      <span className="text-[11px] text-text-muted">
+                      <span className="text-xs text-text-muted">
                         {minutesSinceRefresh !== null
                           ? `Last refresh: ${minutesSinceRefresh === 0 ? 'just now' : `${minutesSinceRefresh}m ago`}`
                           : 'Fetching...'}
@@ -498,11 +498,11 @@ export default function LegislativeTrackerPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {meta && (
-                        <span className="text-[10px] text-text-muted">
+                        <span className="text-xs text-text-muted">
                           API: {Math.round(meta.successRate * 100)}% success
                         </span>
                       )}
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-xs text-text-muted">
                         Auto-refresh every 5 min
                       </span>
                     </div>
@@ -638,12 +638,12 @@ export default function LegislativeTrackerPage() {
                   {/* Result count + source */}
                   <div className="flex items-center gap-2 text-text-muted">
                     {browseTotal > 0 && (
-                      <span className="text-[11px]">
+                      <span className="text-xs">
                         {browseTotal.toLocaleString()} bills total
                       </span>
                     )}
                     {browseSource === 'congress_api' && (
-                      <span className="flex items-center gap-1 text-[10px]">
+                      <span className="flex items-center gap-1 text-xs">
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-positive opacity-75" />
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-positive" />
@@ -652,7 +652,7 @@ export default function LegislativeTrackerPage() {
                       </span>
                     )}
                     {browseSource === 'cached' && (
-                      <span className="text-[10px] text-warning-light">Cached</span>
+                      <span className="text-xs text-warning-light">Cached</span>
                     )}
                   </div>
                 </div>
@@ -787,7 +787,7 @@ export default function LegislativeTrackerPage() {
                     </button>
                   </div>
 
-                  <p className="text-center text-[10px] text-text-muted mt-2">
+                  <p className="text-center text-xs text-text-muted mt-2">
                     Showing {browseOffset + 1}–{Math.min(browseOffset + PAGE_SIZE, browseTotal)} of {browseTotal.toLocaleString()} bills
                   </p>
                 </div>
@@ -802,7 +802,7 @@ export default function LegislativeTrackerPage() {
                 <Shield className="w-4 h-4 text-civic-light" />
                 <h3 className="text-xs font-semibold text-text-primary">Data Source & Integrity</h3>
               </div>
-              <p className="text-[11px] text-text-muted leading-relaxed">
+              <p className="text-xs text-text-muted leading-relaxed">
                 All legislative data is sourced from the{' '}
                 <a
                   href="https://api.congress.gov/"
@@ -816,8 +816,8 @@ export default function LegislativeTrackerPage() {
                 to prevent mismatches across congressional sessions. Every fetch is validated against
                 the requested canonical key before display.
               </p>
-              <p className="text-[10px] text-text-muted">
-                Canonical key format: <code className="font-mono text-[10px]">US:119:s:2103</code> ·
+              <p className="text-xs text-text-muted">
+                Canonical key format: <code className="font-mono text-xs">US:119:s:2103</code> ·
                 Validation: congress session + bill type + number must match
               </p>
             </div>
@@ -847,7 +847,7 @@ function StatCard({
     <div className="p-3 bg-surface-elevated rounded-lg border border-border-subtle">
       <Icon className="w-4 h-4 text-text-muted mb-1" />
       <p className="text-xl font-bold text-text-primary">{value}</p>
-      <p className="text-[10px] text-text-muted uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-text-muted uppercase tracking-wider">{label}</p>
     </div>
   );
 }

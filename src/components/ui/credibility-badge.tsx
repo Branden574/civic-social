@@ -46,7 +46,7 @@ export function CredibilityBadge({
       >
         <Award className={clsx(iconSize, 'text-amber-500')} />
         {showLabel && (
-          <span className="text-[10px] font-semibold text-amber-500">
+          <span className="text-xs font-semibold text-amber-500">
             {score}%
           </span>
         )}
@@ -68,7 +68,7 @@ export function CredibilityBadge({
       >
         <ShieldCheck className={clsx(iconSize, 'text-emerald-500')} />
         {showLabel && (
-          <span className="text-[10px] font-semibold text-emerald-500">
+          <span className="text-xs font-semibold text-emerald-500">
             {score}%
           </span>
         )}
@@ -89,7 +89,7 @@ export function CredibilityBadge({
         aria-label={`Credibility score ${score}%`}
       >
         {showLabel && (
-          <span className="text-[10px] font-semibold text-text-muted">
+          <span className="text-xs font-semibold text-text-muted">
             {score}%
           </span>
         )}

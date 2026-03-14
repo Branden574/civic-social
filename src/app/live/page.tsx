@@ -104,18 +104,18 @@ export default function LivePage() {
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span
                       className={clsx(
-                        'flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md border',
+                        'flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-md border',
                         status.style,
                       )}
                     >
                       <span className={clsx('w-1.5 h-1.5 rounded-full', status.dot)} />
                       {status.label}
                     </span>
-                    <span className="text-[10px] font-medium text-text-muted bg-surface-active px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-medium text-text-muted bg-surface-active px-2 py-0.5 rounded-md">
                       {event.type}
                     </span>
                     {event.status === 'live' && (
-                      <span className="text-[10px] text-text-muted flex items-center gap-1">
+                      <span className="text-xs text-text-muted flex items-center gap-1">
                         <Users className="w-3 h-3" />
                         {event.viewers.toLocaleString()} watching
                       </span>
@@ -137,7 +137,7 @@ export default function LivePage() {
                     {event.topics.map((topic) => (
                       <span
                         key={topic}
-                        className="text-[11px] font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full"
+                        className="text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full"
                       >
                         #{topic}
                       </span>

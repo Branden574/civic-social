@@ -88,7 +88,7 @@ export function ImpactAnalysis({ impacts }: ImpactAnalysisProps) {
                 className="flex w-full items-center justify-between px-4 py-3 text-left"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-civic/10">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-civic-subtle">
                     <CategoryIcon className="h-4 w-4 text-civic-light" />
                   </div>
                   <span className="text-sm font-semibold text-text-primary">

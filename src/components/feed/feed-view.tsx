@@ -287,20 +287,20 @@ export function FeedView() {
 
       {/* ── Sticky Header ── */}
       <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle">
-        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 pb-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-3 pb-0">
           <h2 className="text-lg font-bold text-text-primary lg:hidden">
             Civic Social
           </h2>
           <div className="hidden lg:block" />
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {/* Sort mode toggle */}
-            <div className="flex items-center bg-surface-elevated rounded-lg border border-border-subtle overflow-hidden">
+            <div className="flex items-center bg-surface-elevated rounded-lg overflow-hidden">
               <button
                 onClick={() => setSortMode('top')}
                 className={clsx(
-                  'flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 transition-colors',
+                  'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 transition-colors',
                   sortMode === 'top'
-                    ? 'bg-civic/15 text-civic-light'
+                    ? 'bg-civic-muted text-civic-light'
                     : 'text-text-muted hover:text-text-secondary',
                 )}
               >
@@ -310,9 +310,9 @@ export function FeedView() {
               <button
                 onClick={() => setSortMode('latest')}
                 className={clsx(
-                  'flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 transition-colors',
+                  'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 transition-colors',
                   sortMode === 'latest'
-                    ? 'bg-civic/15 text-civic-light'
+                    ? 'bg-civic-muted text-civic-light'
                     : 'text-text-muted hover:text-text-secondary',
                 )}
               >
@@ -336,7 +336,7 @@ export function FeedView() {
               className={clsx(
                 'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors',
                 showDiversity
-                  ? 'bg-civic/10 text-civic-light'
+                  ? 'bg-civic-subtle text-civic-light'
                   : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
               )}
             >
@@ -380,10 +380,10 @@ export function FeedView() {
       {!loading && feed && (
         <div className="mx-4 sm:mx-6 mt-2.5 mb-0">
           <div className={clsx(
-            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border',
+            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
             sortMode === 'top'
-              ? 'bg-civic/8 text-civic-light border-civic/20'
-              : 'bg-surface-elevated text-text-muted border-border-subtle',
+              ? 'bg-civic-subtle text-civic-light'
+              : 'bg-surface-elevated text-text-muted',
           )}>
             {sortMode === 'top' ? (
               <>
@@ -428,7 +428,7 @@ export function FeedView() {
 
       {/* ── Feed Diversity Panel ── */}
       {showDiversity && feed?.diversity && (
-        <div className="mx-4 sm:mx-6 mt-4 p-4 bg-surface-elevated rounded-xl border border-border-subtle animate-slide-up">
+        <div className="mx-4 sm:mx-6 mt-4 p-5 bg-surface-elevated rounded-2xl animate-fade-in">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-4 h-4 text-civic-light" />
             <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">
@@ -465,7 +465,7 @@ export function FeedView() {
 
           {/* Affiliation distribution */}
           <div className="mt-3 pt-3 border-t border-border-subtle">
-            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
               Viewpoint Distribution
             </p>
             <div className="flex gap-1 h-3 rounded-full overflow-hidden">
@@ -483,7 +483,7 @@ export function FeedView() {
             <div className="flex flex-wrap gap-3 mt-2">
               {Object.entries(feed.diversity.affiliationDistribution).map(
                 ([aff, pct]) => (
-                  <span key={aff} className="flex items-center gap-1.5 text-[10px] text-text-muted">
+                  <span key={aff} className="flex items-center gap-1.5 text-xs text-text-muted">
                     <span className={clsx('w-2 h-2 rounded-full', getAffiliationBarColor(aff))} />
                     {aff}: {Math.round(pct * 100)}%
                   </span>
@@ -557,8 +557,8 @@ function MetricCard({
   good: boolean;
 }) {
   return (
-    <div className="p-2.5 bg-surface rounded-lg">
-      <p className="text-[10px] text-text-muted font-medium uppercase tracking-wider">
+    <div className="p-3 bg-surface rounded-xl">
+      <p className="text-xs text-text-muted font-medium uppercase tracking-wider">
         {label}
       </p>
       <p
@@ -569,7 +569,7 @@ function MetricCard({
       >
         {value}
       </p>
-      <p className="text-[10px] text-text-muted mt-0.5">{sublabel}</p>
+      <p className="text-xs text-text-muted mt-0.5">{sublabel}</p>
     </div>
   );
 }

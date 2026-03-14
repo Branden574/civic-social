@@ -85,7 +85,7 @@ export default function AdminGuidePage() {
             <div>
               <p className="text-sm font-semibold text-text-primary">Platform Creator (full admin)</p>
               <p className="text-xs text-text-muted mt-0.5">
-                Email: <code className="px-1.5 py-0.5 rounded bg-surface text-civic-light font-mono text-[11px]">admin@civicsocial.com</code>
+                Email: <code className="px-1.5 py-0.5 rounded bg-surface text-civic-light font-mono text-xs">admin@civicsocial.com</code>
                 {' '}— any password (min 8 characters). Use this for full platform control.
               </p>
             </div>
@@ -95,13 +95,13 @@ export default function AdminGuidePage() {
             <div>
               <p className="text-sm font-semibold text-text-primary">Other roles</p>
               <p className="text-xs text-text-muted mt-0.5">
-                Any email containing <code className="px-1 py-0.5 rounded bg-surface text-text-secondary font-mono text-[11px]">admin</code> → Administrator.
-                Any email containing <code className="px-1 py-0.5 rounded bg-surface text-text-secondary font-mono text-[11px]">mod</code> → Moderator.
+                Any email containing <code className="px-1 py-0.5 rounded bg-surface text-text-secondary font-mono text-xs">admin</code> → Administrator.
+                Any email containing <code className="px-1 py-0.5 rounded bg-surface text-text-secondary font-mono text-xs">mod</code> → Moderator.
               </p>
             </div>
           </div>
         </div>
-        <p className="text-[11px] text-text-muted">
+        <p className="text-xs text-text-muted">
           For production: replace mock auth with your IdP (e.g. Auth0, Clerk, NextAuth) and map roles from your user store or JWT claims.
         </p>
       </section>

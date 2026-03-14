@@ -93,7 +93,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
           className={clsx(
             'flex items-center justify-center w-9 h-9 rounded-full border transition-all',
             refreshing
-              ? 'bg-civic/15 border-civic/30'
+              ? 'bg-civic-muted border-civic/30'
               : progress >= 1
                 ? 'bg-positive/15 border-positive/30'
                 : 'bg-surface-elevated border-border-subtle',

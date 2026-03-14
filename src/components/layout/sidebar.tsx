@@ -60,9 +60,9 @@ export function Sidebar({ onCompose }: SidebarProps) {
   const { unreadCount } = useNotifications();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-border bg-bg-alt">
+    <aside className="hidden lg:flex flex-col w-60 h-screen sticky top-0 border-r border-border-subtle bg-bg-alt">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-border-subtle">
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-border-subtle">
         <div className="w-9 h-9 rounded-lg bg-civic flex items-center justify-center">
           <Shield className="w-5 h-5 text-white" />
         </div>
@@ -70,7 +70,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
           <h1 className="text-base font-semibold text-text-primary tracking-tight">
             Civic Social
           </h1>
-          <p className="text-[11px] text-text-muted tracking-wide uppercase">
+          <p className="text-xs text-text-muted tracking-wide uppercase">
             Discourse Platform
           </p>
         </div>
@@ -81,7 +81,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
         <div className="px-3 pt-4">
           <button
             onClick={onCompose}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-all duration-150 hover:shadow-glow active:scale-[0.97]"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors duration-150"
           >
             <PenSquare className="w-4 h-4" />
             New Post
@@ -90,7 +90,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
       )}
 
       {/* Main nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -100,23 +100,18 @@ export function Sidebar({ onCompose }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
+                'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150',
                 isActive
-                  ? 'bg-civic/10 text-civic-light font-semibold'
+                  ? 'bg-civic-subtle text-civic-light font-semibold'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
               )}
             >
-              <div className="relative">
-                <item.icon
-                  className={clsx(
-                    'w-[18px] h-[18px] transition-transform duration-150',
-                    isActive ? 'text-civic-light scale-110' : 'group-hover:scale-105',
-                  )}
-                />
-                {isActive && (
-                  <span className="absolute -right-0.5 -top-0.5 w-1.5 h-1.5 rounded-full bg-civic animate-scale-in" />
+              <item.icon
+                className={clsx(
+                  'w-[18px] h-[18px]',
+                  isActive ? 'text-civic-light' : '',
                 )}
-              </div>
+              />
               <span>{item.label}</span>
               {(() => {
                 const badgeValue = item.badge === '__NOTIF__'
@@ -125,12 +120,12 @@ export function Sidebar({ onCompose }: SidebarProps) {
                 return badgeValue ? (
                   <span
                     className={clsx(
-                      'ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center transition-all',
+                      'ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center',
                       item.badge === '__NOTIF__'
-                        ? 'bg-danger/20 text-danger-light'
+                        ? 'bg-danger/15 text-danger-light'
                         : badgeValue === 'LIVE'
-                          ? 'bg-danger/20 text-danger-light animate-pulse'
-                          : 'bg-civic/20 text-civic-light',
+                          ? 'bg-danger/15 text-danger-light'
+                          : 'bg-civic-muted text-civic-light',
                     )}
                   >
                     {badgeValue}
@@ -142,7 +137,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
         })}
 
         <div className="pt-4 pb-2 px-3">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-widest">
             Account
           </p>
         </div>
@@ -154,9 +149,9 @@ export function Sidebar({ onCompose }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+                'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150',
                 isActive
-                  ? 'bg-civic/10 text-civic-light font-semibold'
+                  ? 'bg-civic-subtle text-civic-light font-semibold'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
               )}
             >
@@ -169,7 +164,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
         {(isAdmin || isCreator) && (
           <>
             <div className="pt-4 pb-2 px-3">
-              <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-widest">
                 Admin
               </p>
             </div>
@@ -180,9 +175,9 @@ export function Sidebar({ onCompose }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+                    'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150',
                     isActive
-                      ? 'bg-civic/10 text-civic-light font-semibold'
+                      ? 'bg-civic-subtle text-civic-light font-semibold'
                       : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
                   )}
                 >
@@ -200,37 +195,36 @@ export function Sidebar({ onCompose }: SidebarProps) {
         {isAuthenticated && user ? (
           <Link
             href="/profile"
-            className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-hover transition-all duration-150 cursor-pointer active:scale-[0.97]"
+            className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
           >
             {(user.avatarUrl || user.avatar) ? (
               <img
                 src={(user.avatarUrl || user.avatar) as string}
                 alt={user.displayName}
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-civic/10"
+                className="w-9 h-9 rounded-full object-cover"
                 onError={(e) => {
-                  // Fallback to initials on broken image
                   const el = e.currentTarget;
                   const parent = el.parentElement;
                   if (parent) {
                     const fallback = document.createElement('div');
-                    fallback.className = 'w-9 h-9 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold ring-2 ring-civic/10';
+                    fallback.className = 'w-9 h-9 rounded-full bg-civic-muted flex items-center justify-center text-civic-light text-sm font-semibold';
                     fallback.textContent = user.displayName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
                     parent.replaceChild(fallback, el);
                   }
                 }}
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold ring-2 ring-civic/10">
+              <div className="w-9 h-9 rounded-full bg-civic-muted flex items-center justify-center text-civic-light text-sm font-semibold">
                 {user.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
               </div>
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary truncate">{user.displayName}</p>
-              <p className="text-[11px] text-text-muted truncate">{user.email}</p>
+              <p className="text-xs text-text-muted truncate">{user.email}</p>
             </div>
           </Link>
         ) : (
-          <Link href="/login" className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-hover transition-all active:scale-[0.97]">
+          <Link href="/login" className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-hover transition-colors">
             <div className="w-9 h-9 rounded-full bg-surface-active flex items-center justify-center text-text-muted"><User className="w-4 h-4" /></div>
             <span className="text-sm font-medium text-civic-light">Sign In</span>
           </Link>
@@ -239,7 +233,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
         {isAuthenticated && (
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-danger-light hover:bg-danger/5 transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-danger-light hover:bg-danger/5 transition-colors duration-150"
           >
             <LogOut className="w-[18px] h-[18px]" />
             <span>Sign Out</span>
@@ -326,7 +320,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
       {onCompose && (
         <button
           onClick={onCompose}
-          className="lg:hidden fixed right-4 z-[60] w-14 h-14 bg-civic text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-civic-dark transition-all duration-200 active:scale-90 animate-pulse-glow"
+          className="lg:hidden fixed right-4 z-[60] w-14 h-14 bg-civic text-white rounded-2xl flex items-center justify-center shadow-md hover:bg-civic-dark transition-colors duration-150"
           style={{ bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))' }}
           aria-label="New Post"
         >
@@ -377,15 +371,15 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                     href={item.href}
                     onClick={handleCloseMore}
                     className={clsx(
-                      'flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-150 active:scale-[0.98]',
+                      'flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-150',
                       isActive
-                        ? 'bg-civic/10 text-civic-light'
-                        : 'text-text-secondary hover:bg-surface-hover active:bg-surface-active',
+                        ? 'bg-civic-subtle text-civic-light'
+                        : 'text-text-secondary hover:bg-surface-hover',
                     )}
                   >
                     <div className={clsx(
                       'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-                      isActive ? 'bg-civic/15' : 'bg-surface-elevated',
+                      isActive ? 'bg-civic-muted' : 'bg-surface-elevated',
                     )}>
                       <item.icon className={clsx(
                         'w-5 h-5',
@@ -413,7 +407,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
             {(isAdmin || isCreator) && (
               <div className="px-3 pb-3">
                 <div className="border-t border-border-subtle pt-2">
-                  <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest px-4 py-1.5">
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-widest px-4 py-1.5">
                     Admin
                   </p>
                   {adminItems.map((item) => (
@@ -465,28 +459,22 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                 key={item.label}
                 href={item.href}
                 className={clsx(
-                  'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all duration-150 relative min-w-[52px]',
-                  isActive ? 'text-civic-light' : 'text-text-muted active:text-text-secondary',
+                  'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-colors duration-150 relative min-w-[52px]',
+                  isActive ? 'text-civic-light' : 'text-text-muted',
                 )}
               >
                 <div className="relative">
                   <item.icon
-                    className={clsx(
-                      'w-[22px] h-[22px] transition-all duration-200',
-                      isActive && 'scale-110',
-                    )}
+                    className="w-[22px] h-[22px]"
                     strokeWidth={isActive ? 2.2 : 1.8}
                   />
-                  {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-civic animate-scale-in" />
-                  )}
                   {item.badge && mobileUnreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-0.5 bg-danger text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-0.5 bg-danger text-white text-xs font-bold rounded-full flex items-center justify-center">
                       {mobileUnreadCount > 99 ? '99+' : mobileUnreadCount}
                     </span>
                   )}
                 </div>
-                <span className={clsx('text-[10px] font-medium', isActive && 'font-semibold')}>
+                <span className={clsx('text-xs font-medium', isActive && 'font-semibold')}>
                   {item.label}
                 </span>
               </Link>
@@ -497,25 +485,19 @@ export function MobileNav({ onCompose }: MobileNavProps) {
           <button
             onClick={handleToggleMore}
             className={clsx(
-              'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all duration-150 relative min-w-[52px]',
+              'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-colors duration-150 relative min-w-[52px]',
               moreOpen || isMoreRouteActive
                 ? 'text-civic-light'
-                : 'text-text-muted active:text-text-secondary',
+                : 'text-text-muted',
             )}
           >
             <div className="relative">
               <MoreHorizontal
-                className={clsx(
-                  'w-[22px] h-[22px] transition-all duration-200',
-                  (moreOpen || isMoreRouteActive) && 'scale-110',
-                )}
+                className="w-[22px] h-[22px]"
                 strokeWidth={moreOpen || isMoreRouteActive ? 2.2 : 1.8}
               />
-              {isMoreRouteActive && !moreOpen && (
-                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-civic animate-scale-in" />
-              )}
             </div>
-            <span className={clsx('text-[10px] font-medium', (moreOpen || isMoreRouteActive) && 'font-semibold')}>
+            <span className={clsx('text-xs font-medium', (moreOpen || isMoreRouteActive) && 'font-semibold')}>
               More
             </span>
           </button>

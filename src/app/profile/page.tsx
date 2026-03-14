@@ -305,7 +305,7 @@ export default function ProfilePage() {
                 Joined {joinedDate}
               </span>
               {userAffiliation && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-civic/10 text-civic-light">
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-civic-subtle text-civic-light">
                   {userAffiliation}
                 </span>
               )}
@@ -345,8 +345,8 @@ export default function ProfilePage() {
           {/* Complete your profile card — shows only when profile is incomplete */}
           {showFinishProfile && (
             <div className="mx-4 sm:mx-6 mb-4">
-              <div className="bg-civic/5 border border-civic/20 rounded-xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-civic/15 flex items-center justify-center shrink-0">
+              <div className="bg-civic-subtle border border-civic/20 rounded-xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-civic-muted flex items-center justify-center shrink-0">
                   <User className="w-5 h-5 text-civic-light" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -503,7 +503,7 @@ export default function ProfilePage() {
                     {u.avatarUrl ? (
                       <img src={u.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-civic/15 flex items-center justify-center text-sm font-bold text-civic-light shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-civic-muted flex items-center justify-center text-sm font-bold text-civic-light shrink-0">
                         {u.displayName.slice(0, 2).toUpperCase()}
                       </div>
                     )}
@@ -596,7 +596,7 @@ function OverviewTab({ topics }: { topics: string[] }) {
                 <Link
                   key={topic}
                   href={`/hashtag/${encodeURIComponent(topic)}`}
-                  className="text-sm font-medium text-civic-light bg-civic/8 px-3 py-1 rounded-full hover:bg-civic/15 transition-colors cursor-pointer"
+                  className="text-sm font-medium text-civic-light bg-civic-subtle px-3 py-1 rounded-full hover:bg-civic-muted transition-colors cursor-pointer"
                 >
                   #{topic}
                 </Link>
@@ -649,7 +649,7 @@ function CredibilityTab({ score }: { score: number }) {
   const isGold = score >= 95;
   const isGreen = score >= 90;
   const scoreColor = isGold ? 'text-amber-500' : isGreen ? 'text-emerald-500' : 'text-civic-light';
-  const scoreBg = isGold ? 'bg-amber-500/15' : isGreen ? 'bg-emerald-500/15' : 'bg-civic/15';
+  const scoreBg = isGold ? 'bg-amber-500/15' : isGreen ? 'bg-emerald-500/15' : 'bg-civic-muted';
   const tierLabel = isGold ? 'Gold Tier' : isGreen ? 'Green Tier' : 'Neutral';
 
   return (
@@ -697,7 +697,7 @@ function ImprovementTip({ tip, impact }: { tip: string; impact: string }) {
       <div className="flex-1">
         <p className="text-sm text-text-secondary">{tip}</p>
       </div>
-      <span className="text-[10px] font-medium text-positive-light bg-positive/10 px-2 py-0.5 rounded-full shrink-0">
+      <span className="text-xs font-medium text-positive-light bg-positive/10 px-2 py-0.5 rounded-full shrink-0">
         {impact}
       </span>
     </div>
@@ -719,15 +719,15 @@ function DebatesTab() {
         <div className="grid grid-cols-3 gap-3">
           <div className="p-3 bg-surface rounded-lg text-center">
             <p className="text-2xl font-bold text-text-primary">0</p>
-            <p className="text-[10px] text-text-muted uppercase tracking-wider">Total Debates</p>
+            <p className="text-xs text-text-muted uppercase tracking-wider">Total Debates</p>
           </div>
           <div className="p-3 bg-surface rounded-lg text-center">
             <p className="text-2xl font-bold text-text-muted">—</p>
-            <p className="text-[10px] text-text-muted uppercase tracking-wider">Avg Civility</p>
+            <p className="text-xs text-text-muted uppercase tracking-wider">Avg Civility</p>
           </div>
           <div className="p-3 bg-surface rounded-lg text-center">
             <p className="text-2xl font-bold text-text-muted">0</p>
-            <p className="text-[10px] text-text-muted uppercase tracking-wider">Common Ground</p>
+            <p className="text-xs text-text-muted uppercase tracking-wider">Common Ground</p>
           </div>
         </div>
       </div>

@@ -260,7 +260,7 @@ function BellDropdown({
         className={clsx(
           'flex items-center gap-1 p-2 rounded-lg border transition-all duration-150',
           isNotifyEnabled
-            ? 'border-civic/40 bg-civic/10 text-civic-light hover:bg-civic/20'
+            ? 'border-civic/40 bg-civic-subtle text-civic-light hover:bg-civic-muted'
             : 'border-border-subtle bg-surface-elevated text-text-muted hover:bg-surface-hover hover:text-text-secondary',
         )}
         aria-label={isNotifyEnabled ? 'Notification preferences' : 'Enable post notifications'}
@@ -279,7 +279,7 @@ function BellDropdown({
         <div className="absolute right-0 top-full mt-2 w-64 bg-surface-elevated border border-border-subtle rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
           <div className="px-3 py-2 border-b border-border-subtle">
             <p className="text-xs font-semibold text-text-primary">Post Notifications</p>
-            <p className="text-[10px] text-text-muted mt-0.5">Choose what to be notified about</p>
+            <p className="text-xs text-text-muted mt-0.5">Choose what to be notified about</p>
           </div>
           {levels.map((l) => (
             <button
@@ -290,7 +290,7 @@ function BellDropdown({
               }}
               className={clsx(
                 'w-full text-left px-3 py-2.5 hover:bg-surface-hover transition-colors flex items-center gap-2',
-                isNotifyEnabled && notifyLevel === l.value && 'bg-civic/5',
+                isNotifyEnabled && notifyLevel === l.value && 'bg-civic-subtle',
               )}
             >
               <div
@@ -307,7 +307,7 @@ function BellDropdown({
               </div>
               <div>
                 <p className="text-xs font-medium text-text-primary">{l.label}</p>
-                <p className="text-[10px] text-text-muted">{l.desc}</p>
+                <p className="text-xs text-text-muted">{l.desc}</p>
               </div>
             </button>
           ))}
@@ -747,7 +747,7 @@ export default function UserProfilePage() {
               {profile.affiliation && (
                 <span
                   className={clsx(
-                    'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+                    'text-xs font-medium px-1.5 py-0.5 rounded-full',
                     getIdeologyColor(profile.affiliation.ideology),
                   )}
                 >
@@ -826,7 +826,7 @@ export default function UserProfilePage() {
                   <Link
                     key={topic}
                     href={`/hashtag/${encodeURIComponent(topic)}`}
-                    className="text-sm font-medium text-civic-light bg-civic/8 px-3 py-1 rounded-full hover:bg-civic/15 transition-colors cursor-pointer"
+                    className="text-sm font-medium text-civic-light bg-civic-subtle px-3 py-1 rounded-full hover:bg-civic-muted transition-colors cursor-pointer"
                   >
                     #{topic}
                   </Link>

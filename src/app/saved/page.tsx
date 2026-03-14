@@ -116,7 +116,7 @@ export default function SavedPage() {
           <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle">
             <div className="px-4 sm:px-6 pt-4 pb-0">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-lg bg-civic/10 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
                   <Bookmark className="w-5 h-5 text-civic-light" />
                 </div>
                 <div>
@@ -153,9 +153,9 @@ export default function SavedPage() {
                     {count > 0 && (
                       <span
                         className={clsx(
-                          'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+                          'text-xs font-bold px-1.5 py-0.5 rounded-full',
                           activeTab === tab.id
-                            ? 'bg-civic/20 text-civic-light'
+                            ? 'bg-civic-muted text-civic-light'
                             : 'bg-surface-active text-text-muted',
                         )}
                       >
@@ -219,7 +219,7 @@ export default function SavedPage() {
                         </span>
                         <span
                           className={clsx(
-                            'text-[10px] font-medium px-1.5 py-0.5 rounded-md ml-auto',
+                            'text-xs font-medium px-1.5 py-0.5 rounded-md ml-auto',
                             item.category === 'articles'
                               ? 'bg-info/10 text-info-light'
                               : item.category === 'discussions'
@@ -232,7 +232,7 @@ export default function SavedPage() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-[15px] font-semibold text-text-primary leading-snug mb-1.5 hover:text-civic-light transition-colors cursor-pointer">
+                      <h3 className="text-base font-semibold text-text-primary leading-snug mb-1.5 hover:text-civic-light transition-colors cursor-pointer">
                         {item.title}
                       </h3>
 
@@ -246,7 +246,7 @@ export default function SavedPage() {
                         {item.topics.map((topic) => (
                           <span
                             key={topic}
-                            className="text-[11px] font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full"
+                            className="text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full"
                           >
                             #{topic}
                           </span>

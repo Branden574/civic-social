@@ -213,7 +213,7 @@ export default function SearchPage() {
                     className={clsx(
                       'text-xs font-medium px-3 py-1.5 rounded-lg transition-all min-h-[36px]',
                       searchScope === s
-                        ? 'bg-civic/10 text-civic-light font-semibold'
+                        ? 'bg-civic-subtle text-civic-light font-semibold'
                         : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
                     )}
                   >
@@ -239,7 +239,7 @@ export default function SearchPage() {
                   <button
                     key={topic}
                     onClick={() => toggleTopic(topic)}
-                    className="text-xs font-medium text-civic-light bg-civic/10 px-3 py-1.5 rounded-full hover:bg-civic/20 transition-colors"
+                    className="text-xs font-medium text-civic-light bg-civic-subtle px-3 py-1.5 rounded-full hover:bg-civic-muted transition-colors"
                   >
                     #{topic}
                   </button>
@@ -312,7 +312,7 @@ export default function SearchPage() {
                           <span className="text-xs font-semibold text-civic-light">{article.source}</span>
                           <span className="text-text-muted text-xs">·</span>
                           <span className="text-xs text-text-muted">{article.time}</span>
-                          <span className="text-[10px] font-semibold bg-positive/10 text-positive-light px-1.5 py-0.5 rounded-md ml-auto">Trust: {article.trust}%</span>
+                          <span className="text-xs font-semibold bg-positive/10 text-positive-light px-1.5 py-0.5 rounded-md ml-auto">Trust: {article.trust}%</span>
                         </div>
                         <h4 className="text-sm font-semibold text-text-primary hover:text-civic-light transition-colors cursor-pointer">{article.title}</h4>
                       </div>
@@ -334,12 +334,12 @@ export default function SearchPage() {
                       <div key={debate.id} className="feed-item animate-fade-in opacity-0 px-4 sm:px-6 py-4 hover:bg-surface/40 transition-colors" style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'forwards' }}>
                         <div className="flex items-center gap-2 mb-1.5">
                           <MessageSquare className="w-3.5 h-3.5 text-warning-light" />
-                          <span className="text-[10px] font-medium bg-warning/10 text-warning-light px-1.5 py-0.5 rounded-md">{debate.type}</span>
+                          <span className="text-xs font-medium bg-warning/10 text-warning-light px-1.5 py-0.5 rounded-md">{debate.type}</span>
                         </div>
                         <h4 className="text-sm font-semibold text-text-primary hover:text-civic-light transition-colors cursor-pointer">{debate.title}</h4>
                         <div className="flex items-center gap-3 mt-2">
-                          <span className="text-[11px] text-text-muted flex items-center gap-1"><Users className="w-3 h-3" />{debate.participants} participants</span>
-                          <span className="text-[11px] text-text-muted">Civility: <span className="font-semibold text-positive-light">{debate.civility}%</span></span>
+                          <span className="text-xs text-text-muted flex items-center gap-1"><Users className="w-3 h-3" />{debate.participants} participants</span>
+                          <span className="text-xs text-text-muted">Civility: <span className="font-semibold text-positive-light">{debate.civility}%</span></span>
                         </div>
                       </div>
                     ))}
@@ -459,14 +459,14 @@ function PersonCard({ person, index, onFollowChange }: { person: SearchUser; ind
           <p className="text-sm text-text-secondary mt-0.5 leading-relaxed line-clamp-2">{person.bio}</p>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             {person.affiliation && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface-active text-text-secondary">
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-surface-active text-text-secondary">
                 {person.affiliation}
               </span>
             )}
-            <span className="text-[11px] text-text-muted">
+            <span className="text-xs text-text-muted">
               {person.followerCount.toLocaleString()} followers
             </span>
-            <span className="text-[11px] text-text-muted">
+            <span className="text-xs text-text-muted">
               {person.postCount} posts
             </span>
           </div>
@@ -479,7 +479,7 @@ function PersonCard({ person, index, onFollowChange }: { person: SearchUser; ind
             'text-xs font-semibold px-3 py-2 rounded-lg transition-colors shrink-0 min-h-[44px] flex items-center',
             following
               ? 'text-text-secondary bg-surface-elevated border border-border-subtle hover:border-danger/40 hover:text-danger-light'
-              : 'text-civic-light bg-civic/10 hover:bg-civic/20',
+              : 'text-civic-light bg-civic-subtle hover:bg-civic-muted',
             followLoading && 'opacity-60',
           )}
         >

@@ -153,7 +153,7 @@ function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-positive" />
         </span>
         <span className="text-xs text-positive-light font-medium">Live from Congress.gov</span>
-        <span className="text-[10px] text-text-muted ml-auto">
+        <span className="text-xs text-text-muted ml-auto">
           Updated {new Date(bill.lastSyncedAt).toLocaleTimeString()}
         </span>
       </div>
@@ -165,7 +165,7 @@ function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
         <AlertCircle className="w-4 h-4 text-warning-light shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-warning-light font-medium">Live updates temporarily unavailable</p>
-          <p className="text-[10px] text-text-muted">
+          <p className="text-xs text-text-muted">
             Showing last synced data from {new Date(bill.lastSyncedAt).toLocaleString()}.
             {bill.syncError && ` Reason: ${bill.syncError}`}
           </p>
@@ -179,7 +179,7 @@ function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
         <AlertTriangle className="w-4 h-4 text-danger-light shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-danger-light font-medium">Data issue detected</p>
-          <p className="text-[10px] text-text-muted">{bill.syncError || 'Mismatch detected.'}</p>
+          <p className="text-xs text-text-muted">{bill.syncError || 'Mismatch detected.'}</p>
         </div>
       </div>
     );
@@ -190,7 +190,7 @@ function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
         <Info className="w-4 h-4 text-info-light shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-info-light font-medium">Demo Mode — Not Official Data</p>
-          <p className="text-[10px] text-text-muted">
+          <p className="text-xs text-text-muted">
             Congress.gov API key not configured. Visit{' '}
             <a href={bill.congressGovUrl} target="_blank" rel="noopener noreferrer" className="text-civic-light hover:underline">Congress.gov</a> for official data.
           </p>
@@ -277,7 +277,7 @@ export default function CanonicalBillDetailPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
             <Loader2 className="w-8 h-8 text-civic-light mx-auto mb-4 animate-spin" />
             <p className="text-sm text-text-muted">Fetching official data for {toDisplayCode(canonicalKey)}...</p>
-            <p className="text-[10px] text-text-muted mt-1">Source: Congress.gov API · Key: {canonicalStr}</p>
+            <p className="text-xs text-text-muted mt-1">Source: Congress.gov API · Key: {canonicalStr}</p>
           </div>
         </main>
         <MobileNav />
@@ -339,9 +339,9 @@ export default function CanonicalBillDetailPage() {
               <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold', chamberColor)}>
                 <Landmark className="w-3 h-3" /> {bill.billCode}
               </span>
-              <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">{chamberInfo.chamber === 'senate' ? 'Senate' : 'House'}</span>
-              <span className="text-[10px] text-text-muted">·</span>
-              <span className="text-[10px] text-text-muted">{bill.congress}th Congress</span>
+              <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{chamberInfo.chamber === 'senate' ? 'Senate' : 'House'}</span>
+              <span className="text-xs text-text-muted">·</span>
+              <span className="text-xs text-text-muted">{bill.congress}th Congress</span>
             </div>
 
             <div className="space-y-2">
@@ -354,16 +354,16 @@ export default function CanonicalBillDetailPage() {
             {/* Tags */}
             <div className="flex items-center gap-2 flex-wrap">
               {bill.policyArea && (
-                <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-civic/10 text-civic-light border border-civic/20">{bill.policyArea}</span>
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-civic-subtle text-civic-light border border-civic/20">{bill.policyArea}</span>
               )}
               {bill.subjects.slice(0, 5).map((s) => (
-                <span key={s} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-surface-elevated text-text-secondary border border-border-subtle">{s}</span>
+                <span key={s} className="text-xs font-medium px-2.5 py-1 rounded-full bg-surface-elevated text-text-secondary border border-border-subtle">{s}</span>
               ))}
             </div>
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => setIsFollowing(!isFollowing)} className={clsx('inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all', isFollowing ? 'bg-civic/10 text-civic-light border border-civic/30' : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover')}>
+              <button onClick={() => setIsFollowing(!isFollowing)} className={clsx('inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all', isFollowing ? 'bg-civic-subtle text-civic-light border border-civic/30' : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover')}>
                 {isFollowing ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
@@ -388,7 +388,7 @@ export default function CanonicalBillDetailPage() {
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="w-4 h-4 text-civic-light" />
                 <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Legislative Progress</h3>
-                <span className="ml-auto text-[10px] text-text-muted">{STATUS_LABELS[bill.status] || bill.status}</span>
+                <span className="ml-auto text-xs text-text-muted">{STATUS_LABELS[bill.status] || bill.status}</span>
               </div>
               <BillProgress currentStatus={mapStatusForProgress(bill.status)} compact={false} />
               {bill.latestAction && (
@@ -409,7 +409,7 @@ export default function CanonicalBillDetailPage() {
                 {TABS.map((tab) => {
                   const TabIcon = tab.icon;
                   return (
-                    <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={clsx('flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap rounded-lg transition-all', activeTab === tab.key ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover')}>
+                    <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={clsx('flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap rounded-lg transition-all', activeTab === tab.key ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover')}>
                       <TabIcon className="w-3.5 h-3.5" /> {tab.label}
                     </button>
                   );
@@ -431,17 +431,17 @@ export default function CanonicalBillDetailPage() {
                 {bill.aiSummary && (
                   <div className="bg-gradient-to-br from-civic/5 via-surface-elevated to-surface-elevated rounded-xl border border-civic/20 p-5 space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-civic/15 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-civic-muted flex items-center justify-center shrink-0">
                         <Sparkles className="w-4 h-4 text-civic-light" />
                       </div>
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-semibold text-text-primary">AI Summary</h3>
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-civic/10 text-civic-light">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-civic-subtle text-civic-light">
                             {bill.aiSummary.source === 'ai' ? 'AI-Generated' : 'Auto-Extracted'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-text-muted leading-relaxed">
+                        <p className="text-xs text-text-muted leading-relaxed">
                           Plain-language explanation generated from the official CRS summary. Not a legal interpretation.
                         </p>
                       </div>
@@ -457,14 +457,14 @@ export default function CanonicalBillDetailPage() {
                     {/* Key Provisions */}
                     {bill.aiSummary.keyProvisions.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-[11px] font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                        <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                           <FileText className="w-3 h-3 text-civic-light" />
                           Key Provisions
                         </h4>
                         <ul className="space-y-1.5">
                           {bill.aiSummary.keyProvisions.map((provision, i) => (
                             <li key={i} className="flex items-start gap-2 text-xs text-text-secondary leading-relaxed">
-                              <span className="w-5 h-5 rounded-md bg-civic/10 text-civic-light text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                              <span className="w-5 h-5 rounded-md bg-civic-subtle text-civic-light text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                                 {i + 1}
                               </span>
                               <span>{provision}</span>
@@ -476,7 +476,7 @@ export default function CanonicalBillDetailPage() {
 
                     {/* Who is affected */}
                     <div className="space-y-2">
-                      <h4 className="text-[11px] font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                         <Users className="w-3 h-3 text-civic-light" />
                         Who is affected
                       </h4>
@@ -487,7 +487,7 @@ export default function CanonicalBillDetailPage() {
 
                     {/* Current Status explained */}
                     <div className="space-y-2">
-                      <h4 className="text-[11px] font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                         <Zap className="w-3 h-3 text-civic-light" />
                         Current Status
                       </h4>
@@ -499,7 +499,7 @@ export default function CanonicalBillDetailPage() {
                     {/* Footer disclaimer */}
                     <div className="flex items-start gap-2 pt-2 border-t border-civic/10">
                       <Info className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
-                      <p className="text-[10px] text-text-muted leading-relaxed">
+                      <p className="text-xs text-text-muted leading-relaxed">
                         This summary is auto-generated from the official Congressional Research Service analysis.
                         It is meant to help you understand the bill in plain language — it is not a legal interpretation.
                         Always refer to the{' '}
@@ -519,12 +519,12 @@ export default function CanonicalBillDetailPage() {
                 {bill.officialSummary ? (
                   <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-civic/10 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-civic-subtle flex items-center justify-center shrink-0">
                         <BookOpen className="w-4 h-4 text-civic-light" />
                       </div>
                       <div className="space-y-1">
                         <h3 className="text-sm font-semibold text-text-primary">Official CRS Summary</h3>
-                        <p className="text-[11px] text-text-muted leading-relaxed">
+                        <p className="text-xs text-text-muted leading-relaxed">
                           From the Congressional Research Service.
                           {bill.summaryDate && ` Last updated ${new Date(bill.summaryDate).toLocaleDateString()}.`}
                         </p>
@@ -542,7 +542,7 @@ export default function CanonicalBillDetailPage() {
                         </button>
                       )}
                     </div>
-                    <p className="text-[10px] text-text-muted leading-relaxed">
+                    <p className="text-xs text-text-muted leading-relaxed">
                       This summary is from official congressional sources and may not include late-breaking changes until the next sync.
                     </p>
                   </div>
@@ -576,7 +576,7 @@ export default function CanonicalBillDetailPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-text-primary">{bill.sponsor.fullName}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className={clsx('text-[10px] font-bold px-2 py-0.5 rounded-full', partyBadgeClasses(bill.sponsor.party))}>{partyLabel(bill.sponsor.party)}</span>
+                          <span className={clsx('text-xs font-bold px-2 py-0.5 rounded-full', partyBadgeClasses(bill.sponsor.party))}>{partyLabel(bill.sponsor.party)}</span>
                           <span className="text-xs text-text-muted">{bill.sponsor.state}{bill.sponsor.district ? `, District ${bill.sponsor.district}` : ''}</span>
                         </div>
                       </div>
@@ -585,18 +585,18 @@ export default function CanonicalBillDetailPage() {
                     {/* Cosponsors */}
                     {bill.cosponsors.length > 0 && (
                       <div className="border-t border-border-subtle pt-4 space-y-2">
-                        <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
                           Cosponsors ({bill.cosponsors.length})
                         </p>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {bill.cosponsors.map((cosponsor, i) => (
                             <div key={cosponsor.bioguideId || i} className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-surface-active flex items-center justify-center text-[10px] font-semibold text-text-secondary">
+                              <div className="w-7 h-7 rounded-full bg-surface-active flex items-center justify-center text-xs font-semibold text-text-secondary">
                                 {cosponsor.fullName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
                               </div>
                               <span className="text-sm text-text-secondary flex-1 min-w-0 truncate">{cosponsor.fullName}</span>
                               <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded-full', partyBadgeClasses(cosponsor.party))}>{cosponsor.party}</span>
-                              <span className="text-[11px] text-text-muted">{cosponsor.state}</span>
+                              <span className="text-xs text-text-muted">{cosponsor.state}</span>
                             </div>
                           ))}
                         </div>
@@ -661,10 +661,10 @@ export default function CanonicalBillDetailPage() {
                       <p className="text-xs text-text-muted leading-relaxed">
                         {bill.impactAnalysis.methodology}
                       </p>
-                      <p className="text-[10px] text-text-muted">
+                      <p className="text-xs text-text-muted">
                         Source: {bill.impactAnalysis.sourceDescription}
                       </p>
-                      <p className="text-[10px] text-text-muted">
+                      <p className="text-xs text-text-muted">
                         Generated: {new Date(bill.impactAnalysis.generatedAt).toLocaleString()}
                       </p>
                     </div>
@@ -708,7 +708,7 @@ export default function CanonicalBillDetailPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="w-4 h-4 text-civic-light" />
                   <h3 className="text-sm font-semibold text-text-primary">Legislative Timeline</h3>
-                  <span className="text-[10px] text-text-muted ml-auto">{bill.actions.length} actions</span>
+                  <span className="text-xs text-text-muted ml-auto">{bill.actions.length} actions</span>
                 </div>
 
                 {bill.actions.length === 0 ? (
@@ -730,7 +730,7 @@ export default function CanonicalBillDetailPage() {
                             action.type === 'BecameLaw' || action.type === 'President'
                               ? 'bg-positive/15 border-positive/30'
                               : action.type === 'Floor'
-                                ? 'bg-civic/15 border-civic/30'
+                                ? 'bg-civic-muted border-civic/30'
                                 : 'bg-surface-elevated border-border-subtle',
                           )}>
                             {action.type === 'BecameLaw' || action.text.toLowerCase().includes('signed') ? (
@@ -749,22 +749,22 @@ export default function CanonicalBillDetailPage() {
                         <div className="flex-1 min-w-0 pb-1">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <span className={clsx(
-                              'text-[10px] font-bold px-2 py-0.5 rounded-full uppercase',
+                              'text-xs font-bold px-2 py-0.5 rounded-full uppercase',
                               action.type === 'BecameLaw' ? 'bg-positive/15 text-positive-light' :
-                              action.type === 'Floor' ? 'bg-civic/10 text-civic-light' :
+                              action.type === 'Floor' ? 'bg-civic-subtle text-civic-light' :
                               action.type === 'President' ? 'bg-warning/10 text-warning-light' :
                               action.type === 'Committee' ? 'bg-info/10 text-info-light' :
                               'bg-surface-active text-text-muted',
                             )}>
                               {action.type || 'Action'}
                             </span>
-                            <span className="text-[11px] text-text-muted">
+                            <span className="text-xs text-text-muted">
                               {action.date}
                             </span>
                           </div>
                           <p className="text-sm text-text-secondary leading-relaxed">{action.text}</p>
                           {action.sourceSystem && (
-                            <p className="text-[10px] text-text-muted mt-0.5">Source: {action.sourceSystem}</p>
+                            <p className="text-xs text-text-muted mt-0.5">Source: {action.sourceSystem}</p>
                           )}
                         </div>
                       </div>
@@ -788,8 +788,8 @@ export default function CanonicalBillDetailPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-text-primary">{comment.author}</span>
                         <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded-full', partyBadgeClasses(comment.party))}>{comment.party}</span>
-                        <span className="text-[11px] text-text-muted">{formatDistanceToNow(comment.time, { addSuffix: true })}</span>
-                        <span className="ml-auto flex items-center gap-1 text-[10px] text-positive-light">
+                        <span className="text-xs text-text-muted">{formatDistanceToNow(comment.time, { addSuffix: true })}</span>
+                        <span className="ml-auto flex items-center gap-1 text-xs text-positive-light">
                           <CheckCircle2 className="w-3 h-3" /> Civility: {comment.civilityScore}%
                         </span>
                       </div>
@@ -909,7 +909,7 @@ export default function CanonicalBillDetailPage() {
                           rows={5}
                           className="w-full px-4 py-3 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-all"
                         />
-                        <p className="text-[10px] text-text-muted text-right">{discArgument.length}/2000 characters</p>
+                        <p className="text-xs text-text-muted text-right">{discArgument.length}/2000 characters</p>
                       </div>
 
                       {/* Evidence / Citation */}
@@ -925,15 +925,15 @@ export default function CanonicalBillDetailPage() {
                           placeholder="https://... link to a supporting source"
                           className="w-full px-4 py-2.5 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-all"
                         />
-                        <p className="text-[10px] text-text-muted">
+                        <p className="text-xs text-text-muted">
                           Comments with citations are ranked higher and earn credibility points.
                         </p>
                       </div>
 
                       {/* Civility guidelines */}
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-civic/5 border border-civic/15">
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-civic-subtle border border-civic/15">
                         <Sparkles className="w-4 h-4 text-civic-light shrink-0 mt-0.5" />
-                        <div className="text-[11px] text-text-muted leading-relaxed space-y-1">
+                        <div className="text-xs text-text-muted leading-relaxed space-y-1">
                           <p className="font-semibold text-text-secondary">Discussion Guidelines</p>
                           <ul className="space-y-0.5 list-disc list-inside">
                             <li>Address the policy, not the person</li>
@@ -993,7 +993,7 @@ export default function CanonicalBillDetailPage() {
                             setDiscArgument('');
                             setDiscEvidence('');
                           }}
-                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic/10 rounded-lg border border-civic/20 hover:bg-civic/15 transition-colors"
+                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic-subtle rounded-lg border border-civic/20 hover:bg-civic-muted transition-colors"
                         >
                           Start Another
                         </button>
@@ -1036,7 +1036,7 @@ export default function CanonicalBillDetailPage() {
                       </div>
 
                       {/* How it works */}
-                      <div className="bg-civic/5 rounded-xl border border-civic/15 p-4 space-y-2">
+                      <div className="bg-civic-subtle rounded-xl border border-civic/15 p-4 space-y-2">
                         <p className="text-xs font-semibold text-text-secondary">How it works</p>
                         <div className="grid grid-cols-3 gap-2 text-center">
                           {[
@@ -1045,8 +1045,8 @@ export default function CanonicalBillDetailPage() {
                             { step: '3', label: 'You get answers' },
                           ].map((s) => (
                             <div key={s.step} className="flex flex-col items-center gap-1">
-                              <div className="w-7 h-7 rounded-full bg-civic/15 text-civic-light text-xs font-bold flex items-center justify-center">{s.step}</div>
-                              <span className="text-[10px] text-text-muted">{s.label}</span>
+                              <div className="w-7 h-7 rounded-full bg-civic-muted text-civic-light text-xs font-bold flex items-center justify-center">{s.step}</div>
+                              <span className="text-xs text-text-muted">{s.label}</span>
                             </div>
                           ))}
                         </div>
@@ -1072,7 +1072,7 @@ export default function CanonicalBillDetailPage() {
                               className={clsx(
                                 'px-3 py-2 rounded-lg border text-xs font-medium transition-all text-left',
                                 expertCategory === cat
-                                  ? 'border-civic bg-civic/10 text-civic-light'
+                                  ? 'border-civic bg-civic-subtle text-civic-light'
                                   : 'border-border-subtle bg-surface text-text-muted hover:bg-surface-hover hover:border-border',
                               )}
                             >
@@ -1094,13 +1094,13 @@ export default function CanonicalBillDetailPage() {
                           rows={4}
                           className="w-full px-4 py-3 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-all"
                         />
-                        <p className="text-[10px] text-text-muted text-right">{expertQuestion.length}/1000 characters</p>
+                        <p className="text-xs text-text-muted text-right">{expertQuestion.length}/1000 characters</p>
                       </div>
 
                       {/* Expert info */}
                       <div className="flex items-start gap-2 p-3 rounded-lg bg-surface border border-border-subtle">
                         <Shield className="w-4 h-4 text-civic-light shrink-0 mt-0.5" />
-                        <div className="text-[11px] text-text-muted leading-relaxed">
+                        <div className="text-xs text-text-muted leading-relaxed">
                           <p>Questions are routed to verified policy professionals — lawyers, economists, former staffers, and academics — with expertise in <strong className="text-text-secondary">{bill.policyArea || 'this policy area'}</strong>. Expect a response within 24-48 hours.</p>
                         </div>
                       </div>
@@ -1136,7 +1136,7 @@ export default function CanonicalBillDetailPage() {
                         Your question about <strong className="text-text-secondary">{bill.billCode}</strong> has been routed to verified experts in <strong className="text-text-secondary">{expertCategory}</strong>. You&apos;ll be notified when an answer is posted.
                       </p>
                       <div className="bg-surface/50 rounded-lg border border-border-subtle p-3 text-left">
-                        <p className="text-[10px] text-text-muted mb-1 font-semibold uppercase tracking-wider">Your question</p>
+                        <p className="text-xs text-text-muted mb-1 font-semibold uppercase tracking-wider">Your question</p>
                         <p className="text-xs text-text-secondary leading-relaxed">{expertQuestion}</p>
                       </div>
                       <div className="flex items-center justify-center gap-2 pt-2">
@@ -1156,7 +1156,7 @@ export default function CanonicalBillDetailPage() {
                             setExpertQuestion('');
                             setExpertCategory('');
                           }}
-                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic/10 rounded-lg border border-civic/20 hover:bg-civic/15 transition-colors"
+                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic-subtle rounded-lg border border-civic/20 hover:bg-civic-muted transition-colors"
                         >
                           Ask Another
                         </button>
@@ -1194,7 +1194,7 @@ export default function CanonicalBillDetailPage() {
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                       <p className="text-text-muted mb-0.5">Canonical Key</p>
-                      <p className="text-text-primary font-mono text-[11px]">{bill.canonicalKey}</p>
+                      <p className="text-text-primary font-mono text-xs">{bill.canonicalKey}</p>
                     </div>
                     <div>
                       <p className="text-text-muted mb-0.5">Data Source</p>

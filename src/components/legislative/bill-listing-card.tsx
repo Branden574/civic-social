@@ -45,16 +45,16 @@ export function BillListingCard({ bill, index }: BillListingCardProps) {
       <div className="flex items-center gap-2 flex-wrap mb-2">
         <span
           className={clsx(
-            'inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider',
+            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider',
             chamberStyle,
           )}
         >
           {bill.displayCode}
         </span>
-        <span className="text-[10px] font-medium text-text-muted uppercase tracking-wide">
+        <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
           {bill.originChamber}
         </span>
-        <span className="text-[10px] text-text-muted">
+        <span className="text-xs text-text-muted">
           {bill.congress}th Congress
         </span>
         <div className="flex-1" />
@@ -77,7 +77,7 @@ export function BillListingCard({ bill, index }: BillListingCardProps) {
       <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
         <div className="flex items-center gap-2 text-text-muted">
           {bill.latestActionDate && (
-            <span className="flex items-center gap-1 text-[10px]">
+            <span className="flex items-center gap-1 text-xs">
               <Clock className="h-3 w-3" />
               Last action: {bill.latestActionDate}
             </span>
@@ -85,7 +85,7 @@ export function BillListingCard({ bill, index }: BillListingCardProps) {
         </div>
         <div className="flex items-center gap-2 text-text-muted">
           {formattedDate && (
-            <span className="text-[10px]">
+            <span className="text-xs">
               Updated {formattedDate}
             </span>
           )}

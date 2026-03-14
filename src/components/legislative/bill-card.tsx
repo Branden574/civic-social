@@ -56,9 +56,9 @@ export function BillCard({ bill, index }: BillCardProps) {
         {/* Chamber & bill number */}
         <span
           className={clsx(
-            'inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider',
+            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider',
             bill.chamber === 'senate'
-              ? 'bg-civic/15 text-civic-light'
+              ? 'bg-civic-muted text-civic-light'
               : 'bg-info/15 text-info-light'
           )}
         >
@@ -66,7 +66,7 @@ export function BillCard({ bill, index }: BillCardProps) {
         </span>
 
         {/* Chamber badge */}
-        <span className="text-[10px] font-medium text-text-muted uppercase tracking-wide">
+        <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
           {bill.chamber === 'senate' ? 'Senate' : 'House'}
         </span>
 
@@ -74,13 +74,13 @@ export function BillCard({ bill, index }: BillCardProps) {
 
         {/* Alert badges */}
         {bill.isControversial && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/15 text-warning-light text-[10px] font-semibold border border-warning/20">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/15 text-warning-light text-xs font-semibold border border-warning/20">
             <AlertTriangle className="h-3 w-3" />
             Controversial
           </span>
         )}
         {bill.isHighImpact && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-civic/15 text-civic-light text-[10px] font-semibold border border-civic/20">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-civic-muted text-civic-light text-xs font-semibold border border-civic/20">
             <Zap className="h-3 w-3" />
             High Impact
           </span>
@@ -108,13 +108,13 @@ export function BillCard({ bill, index }: BillCardProps) {
           {bill.topics.slice(0, 4).map((topic) => (
             <span
               key={topic}
-              className="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-active text-text-muted text-[10px] font-medium"
+              className="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-active text-text-muted text-xs font-medium"
             >
               {topic}
             </span>
           ))}
           {bill.topics.length > 4 && (
-            <span className="text-[10px] text-text-muted font-medium">
+            <span className="text-xs text-text-muted font-medium">
               +{bill.topics.length - 4} more
             </span>
           )}
@@ -136,7 +136,7 @@ export function BillCard({ bill, index }: BillCardProps) {
           </span>
           <span
             className={clsx(
-              'text-[10px] font-semibold uppercase',
+              'text-xs font-semibold uppercase',
               bill.votes.result === 'passed' ? 'text-positive-light' : 'text-danger-light'
             )}
           >
@@ -154,7 +154,7 @@ export function BillCard({ bill, index }: BillCardProps) {
           </span>
           <span
             className={clsx(
-              'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold',
+              'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold',
               partyColors.bg,
               partyColors.text
             )}
@@ -165,19 +165,19 @@ export function BillCard({ bill, index }: BillCardProps) {
 
         <div className="flex items-center gap-3 shrink-0 text-text-muted">
           {/* Followers */}
-          <span className="flex items-center gap-1 text-[10px]">
+          <span className="flex items-center gap-1 text-xs">
             <Users className="h-3 w-3" />
             {bill.followersCount.toLocaleString()}
           </span>
 
           {/* Discussion */}
-          <span className="flex items-center gap-1 text-[10px]">
+          <span className="flex items-center gap-1 text-xs">
             <MessageSquare className="h-3 w-3" />
             {bill.discussionCount.toLocaleString()}
           </span>
 
           {/* Last updated */}
-          <span className="flex items-center gap-1 text-[10px]">
+          <span className="flex items-center gap-1 text-xs">
             <Clock className="h-3 w-3" />
             {formatDistanceToNow(new Date(bill.lastActionDate), { addSuffix: true })}
           </span>

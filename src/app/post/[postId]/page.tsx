@@ -223,7 +223,7 @@ function FeedbackModal({
             return (
               <button key={reason.id} onClick={() => toggle(reason.id)} className={clsx(
                 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-all min-h-[48px] active:scale-[0.98]',
-                isSelected ? 'bg-civic/10 border border-civic/30 text-text-primary font-medium' : 'bg-surface-elevated border border-border-subtle text-text-secondary hover:bg-surface-hover',
+                isSelected ? 'bg-civic-subtle border border-civic/30 text-text-primary font-medium' : 'bg-surface-elevated border border-border-subtle text-text-secondary hover:bg-surface-hover',
               )}>
                 <div className={clsx('w-5 h-5 rounded border-2 flex items-center justify-center shrink-0', isSelected ? 'bg-civic border-civic text-white' : 'border-border-strong')}>
                   {isSelected && <Check className="w-3.5 h-3.5" />}
@@ -590,7 +590,7 @@ export default function ThreadPage() {
                 {commentCount + legacyReplies.length} {(commentCount + legacyReplies.length) === 1 ? 'comment' : 'comments'}
               </span>
               {postDetail?.is_thread_locked && (
-                <span className="flex items-center gap-1 text-[10px] font-semibold text-warning-light bg-warning/10 px-1.5 py-0.5 rounded">
+                <span className="flex items-center gap-1 text-xs font-semibold text-warning-light bg-warning/10 px-1.5 py-0.5 rounded">
                   <Lock className="w-3 h-3" /> Locked
                 </span>
               )}
@@ -625,7 +625,7 @@ export default function ThreadPage() {
                     <div className="flex items-center gap-2 text-xs text-text-muted">
                       <time>{new Date(displayPost.createdAt).toLocaleString()}</time>
                       {displayPost.author.affiliations[0] && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface-active text-text-secondary">
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-surface-active text-text-secondary">
                           {displayPost.author.affiliations[0]}
                         </span>
                       )}
@@ -633,14 +633,14 @@ export default function ThreadPage() {
                   </div>
                 </div>
 
-                <div className="text-[15px] text-text-primary leading-relaxed whitespace-pre-wrap mb-4">
+                <div className="text-base text-text-primary leading-relaxed whitespace-pre-wrap mb-4">
                   {displayPost.content}
                 </div>
 
                 {displayPost.topics && displayPost.topics.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {displayPost.topics.map((topic) => (
-                      <Link key={topic} href={`/hashtag/${encodeURIComponent(topic)}`} className="text-xs font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full hover:bg-civic/15 transition-colors">
+                      <Link key={topic} href={`/hashtag/${encodeURIComponent(topic)}`} className="text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full hover:bg-civic-muted transition-colors">
                         #{topic}
                       </Link>
                     ))}
@@ -653,7 +653,7 @@ export default function ThreadPage() {
                       <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-civic-light hover:text-civic bg-surface rounded-lg px-3 py-2 border border-border-subtle hover:border-civic/30 transition-all">
                         <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{src.domain}</span>
-                        <span className={clsx('ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded', src.trustScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light')}>
+                        <span className={clsx('ml-auto text-xs font-mono px-1.5 py-0.5 rounded', src.trustScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light')}>
                           {Math.round(src.trustScore * 100)}%
                         </span>
                       </a>
@@ -675,7 +675,7 @@ export default function ThreadPage() {
                     { type: 'agree' as ReactionType, icon: ThumbsUp, label: 'Agree', color: 'text-positive-light', bg: 'bg-positive/10' },
                     { type: 'disagree' as ReactionType, icon: ThumbsDown, label: 'Disagree', color: 'text-danger-light', bg: 'bg-danger/10' },
                     { type: 'insightful' as ReactionType, icon: Lightbulb, label: 'Insightful', color: 'text-warning-light', bg: 'bg-warning/10' },
-                    { type: 'nuance' as ReactionType, icon: Scale, label: 'Nuanced', color: 'text-civic-light', bg: 'bg-civic/10' },
+                    { type: 'nuance' as ReactionType, icon: Scale, label: 'Nuanced', color: 'text-civic-light', bg: 'bg-civic-subtle' },
                   ]).map((btn) => {
                     const isActive = viewerReaction === btn.type;
                     return (
@@ -698,7 +698,7 @@ export default function ThreadPage() {
                     onClick={() => setBookmarked(!bookmarked)}
                     className={clsx(
                       'flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 active:scale-90 min-h-[44px]',
-                      bookmarked ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                      bookmarked ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
                     )}
                   >
                     {bookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
@@ -800,7 +800,7 @@ export default function ThreadPage() {
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-sm font-semibold text-text-primary">{reply.author.displayName}</span>
                             {replyVerif && <ReplyVerifIcon className={clsx('w-3.5 h-3.5', replyVerif.color)} />}
-                            <span className="text-[11px] text-text-muted">· {formatRelativeTime(reply.createdAt)}</span>
+                            <span className="text-xs text-text-muted">· {formatRelativeTime(reply.createdAt)}</span>
                           </div>
                           <p className="text-[14px] text-text-secondary leading-relaxed">{reply.content}</p>
                         </div>
@@ -826,7 +826,7 @@ export default function ThreadPage() {
                         const last = comments[comments.length - 1];
                         if (last) fetchComments(last.id);
                       }}
-                      className="text-xs text-civic-light hover:text-civic font-medium px-4 py-2.5 rounded-lg hover:bg-civic/10 transition-all min-h-[44px]"
+                      className="text-xs text-civic-light hover:text-civic font-medium px-4 py-2.5 rounded-lg hover:bg-civic-subtle transition-all min-h-[44px]"
                     >
                       Load more comments
                     </button>
@@ -985,7 +985,7 @@ function CommentCard({
               {comment.author.displayName}
             </Link>
             {verif && <VerifIcon className={clsx('w-3.5 h-3.5', verif.color)} />}
-            <span className="text-[11px] text-text-muted">· {formatRelativeTime(comment.createdAt)}</span>
+            <span className="text-xs text-text-muted">· {formatRelativeTime(comment.createdAt)}</span>
             {comment._optimistic && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
           </div>
           <p className="text-[14px] text-text-secondary leading-relaxed">{comment.body}</p>

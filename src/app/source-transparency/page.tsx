@@ -104,7 +104,7 @@ export default function SourceTransparencyPage() {
           {/* ── Header ── */}
           <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-civic/10 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
                 <Shield className="w-5 h-5 text-civic-light" />
               </div>
               <div>
@@ -167,7 +167,7 @@ export default function SourceTransparencyPage() {
                       >
                         <span
                           className={clsx(
-                            'text-[10px] font-bold px-2 py-1 rounded-lg border shrink-0',
+                            'text-xs font-bold px-2 py-1 rounded-lg border shrink-0',
                             tier.badgeColor,
                           )}
                         >
@@ -215,7 +215,7 @@ export default function SourceTransparencyPage() {
                                 </div>
                                 <span
                                   className={clsx(
-                                    'text-[11px] font-mono font-bold px-2 py-0.5 rounded-md',
+                                    'text-xs font-mono font-bold px-2 py-0.5 rounded-md',
                                     source.trust >= 90
                                       ? 'bg-positive/10 text-positive-light'
                                       : source.trust >= 80
@@ -307,7 +307,7 @@ export default function SourceTransparencyPage() {
                     },
                   ].map((metric) => (
                     <div key={metric.label} className="flex items-center gap-3">
-                      <span className="text-[11px] text-text-muted w-40 shrink-0 truncate">
+                      <span className="text-xs text-text-muted w-40 shrink-0 truncate">
                         {metric.label}
                       </span>
                       <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
@@ -319,7 +319,7 @@ export default function SourceTransparencyPage() {
                           style={{ width: `${metric.value}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-mono text-text-muted w-10 text-right">
+                      <span className="text-xs font-mono text-text-muted w-10 text-right">
                         {metric.value}%
                       </span>
                     </div>
@@ -362,8 +362,8 @@ export default function SourceTransparencyPage() {
                     },
                   ].map((item) => (
                     <div key={item.step} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-civic/10 flex items-center justify-center shrink-0">
-                        <span className="text-[11px] font-bold text-civic-light">
+                      <div className="w-6 h-6 rounded-full bg-civic-subtle flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-civic-light">
                           {item.step}
                         </span>
                       </div>

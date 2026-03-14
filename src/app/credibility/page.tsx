@@ -211,7 +211,7 @@ function PublicCredibilityPage() {
                           <span className="text-sm font-semibold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>
                             {factor.label}
                           </span>
-                          <span className="text-[10px] font-bold text-white/40 bg-white/5 px-1.5 py-0.5 rounded-full">
+                          <span className="text-xs font-bold text-white/40 bg-white/5 px-1.5 py-0.5 rounded-full">
                             {factor.weight}
                           </span>
                         </div>
@@ -222,7 +222,7 @@ function PublicCredibilityPage() {
                               style={{ width: `${Math.round(factor.exampleScore * 100)}%` }}
                             />
                           </div>
-                          <span className="text-[11px] font-mono text-white/40 w-10 text-right">
+                          <span className="text-xs font-mono text-white/40 w-10 text-right">
                             {Math.round(factor.exampleScore * 100)}%
                           </span>
                         </div>
@@ -316,7 +316,7 @@ function AuthenticatedCredibilityPage() {
           {/* ── Header ── */}
           <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-civic/10 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
                 <Shield className="w-5 h-5 text-civic-light" />
               </div>
               <div>
@@ -386,7 +386,7 @@ function AuthenticatedCredibilityPage() {
                             <span className="text-sm font-semibold text-text-primary">
                               {factor.label}
                             </span>
-                            <span className="text-[10px] font-bold text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full">
+                            <span className="text-xs font-bold text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full">
                               {factor.weight}
                             </span>
                           </div>
@@ -403,7 +403,7 @@ function AuthenticatedCredibilityPage() {
                                 }}
                               />
                             </div>
-                            <span className="text-[11px] font-mono text-text-muted w-10 text-right">
+                            <span className="text-xs font-mono text-text-muted w-10 text-right">
                               {Math.round(factor.exampleScore * 100)}%
                             </span>
                           </div>

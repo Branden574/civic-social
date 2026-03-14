@@ -122,7 +122,7 @@ export default function AdminPage() {
               className={clsx(
                 'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-colors shrink-0',
                 tab === t.id
-                  ? 'text-civic-light border-b-2 border-civic bg-civic/5'
+                  ? 'text-civic-light border-b-2 border-civic bg-civic-subtle'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
               )}
             >
@@ -178,7 +178,7 @@ function OverviewTab() {
           return (
             <div key={c.label} className="p-4 bg-surface-elevated rounded-xl border border-border-subtle">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-semibold text-text-muted uppercase tracking-widest">{c.label}</span>
+                <span className="text-xs font-semibold text-text-muted uppercase tracking-widest">{c.label}</span>
                 <Icon className={clsx('w-4 h-4', c.color)} />
               </div>
               <p className={clsx('text-2xl font-bold', c.color)}>{c.value}</p>
@@ -247,21 +247,21 @@ function UsersTab() {
           <div className="divide-y divide-border-subtle">
             {users.map((u) => (
               <div key={u.id} className="px-4 py-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-civic/10 flex items-center justify-center text-civic-light text-xs font-bold shrink-0">
+                <div className="w-9 h-9 rounded-full bg-civic-subtle flex items-center justify-center text-civic-light text-xs font-bold shrink-0">
                   {u.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-text-primary truncate">{u.displayName}</span>
-                    <span className="text-[10px] text-text-muted">@{u.username}</span>
+                    <span className="text-xs text-text-muted">@{u.username}</span>
                     <RoleBadge role={u.role} />
                     {u.suspendedUntil && new Date(u.suspendedUntil) > new Date() && (
-                      <span className="text-[10px] bg-warning/10 text-warning-light px-1.5 py-0.5 rounded-md font-medium">
+                      <span className="text-xs bg-warning/10 text-warning-light px-1.5 py-0.5 rounded-md font-medium">
                         Suspended
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-text-muted">{u.email} · {u.postCount} posts · Joined {formatDistanceToNow(new Date(u.createdAt), { addSuffix: true })}</p>
+                  <p className="text-xs text-text-muted">{u.email} · {u.postCount} posts · Joined {formatDistanceToNow(new Date(u.createdAt), { addSuffix: true })}</p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {u.role !== 'banned' && u.role !== 'admin' && u.role !== 'creator' && (
@@ -269,14 +269,14 @@ function UsersTab() {
                       <button
                         onClick={() => handleAction(u.id, 'suspend', { suspendUntil: new Date(Date.now() + 7 * 86400000).toISOString(), reason: '7-day suspension' })}
                         disabled={actionLoading === u.id}
-                        className="text-[10px] px-2 py-1 rounded-md bg-warning/10 text-warning-light hover:bg-warning/20 font-medium transition-colors disabled:opacity-50"
+                        className="text-xs px-2 py-1 rounded-md bg-warning/10 text-warning-light hover:bg-warning/20 font-medium transition-colors disabled:opacity-50"
                       >
                         Suspend 7d
                       </button>
                       <button
                         onClick={() => handleAction(u.id, 'ban', { reason: 'Banned by admin' })}
                         disabled={actionLoading === u.id}
-                        className="text-[10px] px-2 py-1 rounded-md bg-danger/10 text-danger-light hover:bg-danger/20 font-medium transition-colors disabled:opacity-50"
+                        className="text-xs px-2 py-1 rounded-md bg-danger/10 text-danger-light hover:bg-danger/20 font-medium transition-colors disabled:opacity-50"
                       >
                         Ban
                       </button>
@@ -286,7 +286,7 @@ function UsersTab() {
                     <button
                       onClick={() => handleAction(u.id, 'unban', { reason: 'Unbanned by admin' })}
                       disabled={actionLoading === u.id}
-                      className="text-[10px] px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium transition-colors disabled:opacity-50"
+                      className="text-xs px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium transition-colors disabled:opacity-50"
                     >
                       Unban
                     </button>
@@ -401,17 +401,17 @@ function PostsTab() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-md', statusStyles[p.status] || 'bg-surface-active text-text-muted')}>
+                      <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded-md', statusStyles[p.status] || 'bg-surface-active text-text-muted')}>
                         {p.status}
                       </span>
-                      <span className="text-[10px] text-text-muted">{formatDistanceToNow(new Date(p.createdAt), { addSuffix: true })}</span>
-                      <span className="text-[10px] text-text-muted">by {p.authorId.slice(0, 16)}</span>
+                      <span className="text-xs text-text-muted">{formatDistanceToNow(new Date(p.createdAt), { addSuffix: true })}</span>
+                      <span className="text-xs text-text-muted">by {p.authorId.slice(0, 16)}</span>
                     </div>
                     <p className="text-xs text-text-primary line-clamp-2">{p.content}</p>
                     {p.topics.length > 0 && (
                       <div className="flex items-center gap-1 mt-1">
                         {p.topics.slice(0, 4).map((t) => (
-                          <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted">#{t}</span>
+                          <span key={t} className="text-xs px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted">#{t}</span>
                         ))}
                       </div>
                     )}
@@ -421,7 +421,7 @@ function PostsTab() {
                       <button
                         onClick={() => { setRemoveModal({ postId: p.id, authorId: p.authorId }); setRemoveReason('spam'); }}
                         disabled={actionLoading === p.id}
-                        className="text-[10px] px-2 py-1 rounded-md bg-danger/10 text-danger-light hover:bg-danger/20 font-medium transition-colors disabled:opacity-50"
+                        className="text-xs px-2 py-1 rounded-md bg-danger/10 text-danger-light hover:bg-danger/20 font-medium transition-colors disabled:opacity-50"
                       >
                         Remove
                       </button>
@@ -430,7 +430,7 @@ function PostsTab() {
                       <button
                         onClick={() => handleRestore(p.id)}
                         disabled={actionLoading === p.id}
-                        className="text-[10px] px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium transition-colors disabled:opacity-50"
+                        className="text-xs px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium transition-colors disabled:opacity-50"
                       >
                         Restore
                       </button>
@@ -539,15 +539,15 @@ function ReportsTab() {
                   <div className="flex items-center gap-2 mb-1">
                     <ReportStatusBadge status={r.status} />
                     <span className="text-xs font-medium text-text-primary">{r.reason}</span>
-                    <span className="text-[10px] text-text-muted">{formatDistanceToNow(new Date(r.createdAt), { addSuffix: true })}</span>
+                    <span className="text-xs text-text-muted">{formatDistanceToNow(new Date(r.createdAt), { addSuffix: true })}</span>
                   </div>
-                  {r.details && <p className="text-[11px] text-text-muted line-clamp-2">{r.details}</p>}
-                  <p className="text-[10px] text-text-muted mt-1">Post: {r.postId} · Reporter: {r.reporterId}</p>
+                  {r.details && <p className="text-xs text-text-muted line-clamp-2">{r.details}</p>}
+                  <p className="text-xs text-text-muted mt-1">Post: {r.postId} · Reporter: {r.reporterId}</p>
                 </div>
                 {r.status === 'PENDING' && (
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <button onClick={() => handleResolve(r.id, 'ACTIONED')} className="text-[10px] px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium">Action</button>
-                    <button onClick={() => handleResolve(r.id, 'DISMISSED')} className="text-[10px] px-2 py-1 rounded-md bg-surface-active text-text-muted hover:bg-surface-hover font-medium">Dismiss</button>
+                    <button onClick={() => handleResolve(r.id, 'ACTIONED')} className="text-xs px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium">Action</button>
+                    <button onClick={() => handleResolve(r.id, 'DISMISSED')} className="text-xs px-2 py-1 rounded-md bg-surface-active text-text-muted hover:bg-surface-hover font-medium">Dismiss</button>
                   </div>
                 )}
               </div>
@@ -597,11 +597,11 @@ function FeedbackTab() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-xs font-medium text-text-primary">{f.title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted font-medium">{f.type}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted font-medium">{f.status}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted font-medium">{f.type}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted font-medium">{f.status}</span>
                     </div>
-                    <p className="text-[11px] text-text-muted line-clamp-2">{f.description}</p>
-                    <p className="text-[10px] text-text-muted mt-1">{formatDistanceToNow(new Date(f.createdAt), { addSuffix: true })}</p>
+                    <p className="text-xs text-text-muted line-clamp-2">{f.description}</p>
+                    <p className="text-xs text-text-muted mt-1">{formatDistanceToNow(new Date(f.createdAt), { addSuffix: true })}</p>
                   </div>
                 </div>
               </div>
@@ -645,9 +645,9 @@ function AuditTab() {
               <Shield className="w-3.5 h-3.5 text-text-muted shrink-0" />
               <div className="flex-1 min-w-0">
                 <span className="text-xs text-text-primary font-medium">{l.action}</span>
-                <span className="text-[10px] text-text-muted ml-2">{l.targetType}:{l.targetId.slice(0, 12)}</span>
+                <span className="text-xs text-text-muted ml-2">{l.targetType}:{l.targetId.slice(0, 12)}</span>
               </div>
-              <span className="text-[10px] text-text-muted shrink-0">
+              <span className="text-xs text-text-muted shrink-0">
                 {formatDistanceToNow(new Date(l.createdAt), { addSuffix: true })}
               </span>
             </div>
@@ -682,12 +682,12 @@ function RoleBadge({ role }: { role: string }) {
   const styles: Record<string, string> = {
     user: 'bg-surface-active text-text-muted',
     moderator: 'bg-info/10 text-info-light',
-    admin: 'bg-civic/10 text-civic-light',
+    admin: 'bg-civic-subtle text-civic-light',
     creator: 'bg-positive/10 text-positive-light',
     banned: 'bg-danger/10 text-danger-light',
   };
   return (
-    <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-md', styles[role] || styles.user)}>
+    <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded-md', styles[role] || styles.user)}>
       {role}
     </span>
   );
@@ -701,7 +701,7 @@ function ReportStatusBadge({ status }: { status: string }) {
     DISMISSED: 'bg-surface-active text-text-muted',
   };
   return (
-    <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-md', styles[status] || styles.PENDING)}>
+    <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded-md', styles[status] || styles.PENDING)}>
       {status}
     </span>
   );

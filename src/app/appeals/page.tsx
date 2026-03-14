@@ -141,7 +141,7 @@ export default function AppealsPage() {
           {/* ── Header ── */}
           <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-civic/10 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
                 <Scale className="w-5 h-5 text-civic-light" />
               </div>
               <div>
@@ -230,7 +230,7 @@ export default function AppealsPage() {
                             <div className="flex items-center gap-2 flex-wrap">
                               <span
                                 className={clsx(
-                                  'text-[10px] font-bold px-2 py-0.5 rounded-full',
+                                  'text-xs font-bold px-2 py-0.5 rounded-full',
                                   appeal.status === 'resolved'
                                     ? 'bg-positive/15 text-positive-light'
                                     : appeal.status === 'pending'
@@ -264,7 +264,7 @@ export default function AppealsPage() {
                             <div className="space-y-4 pl-8">
                               {/* Content snippet */}
                               <div>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                                   Original Content
                                 </p>
                                 <div className="bg-surface rounded-lg border border-border-subtle p-3">
@@ -276,7 +276,7 @@ export default function AppealsPage() {
 
                               {/* Rule violated */}
                               <div>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                                   Rule Flagged
                                 </p>
                                 <p className="text-sm text-warning-light">
@@ -286,7 +286,7 @@ export default function AppealsPage() {
 
                               {/* Action taken */}
                               <div>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                                   Action Taken
                                 </p>
                                 <p className="text-sm text-text-secondary">
@@ -296,7 +296,7 @@ export default function AppealsPage() {
 
                               {/* Resolution */}
                               <div>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                                   Resolution
                                 </p>
                                 <div className="bg-positive/5 border border-positive/15 rounded-lg p-3">
@@ -349,7 +349,7 @@ export default function AppealsPage() {
                     }}
                   >
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-civic/10 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-civic-subtle flex items-center justify-center shrink-0">
                         <span className="text-sm font-bold text-civic-light">
                           {step.step}
                         </span>
@@ -445,7 +445,7 @@ export default function AppealsPage() {
                   <Scale className="w-4 h-4" />
                   No Pending Actions to Appeal
                 </button>
-                <p className="text-[11px] text-text-muted mt-2">
+                <p className="text-xs text-text-muted mt-2">
                   Appeals are available when a moderation action is taken on your
                   content.
                 </p>

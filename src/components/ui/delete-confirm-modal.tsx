@@ -166,7 +166,7 @@ export function DeleteConfirmModal({
         {/* Privacy assurance */}
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-positive/5 border border-positive/15">
           <ShieldCheck className="w-4 h-4 text-positive-light shrink-0 mt-0.5" />
-          <p className="text-[11px] text-text-muted leading-relaxed">
+          <p className="text-xs text-text-muted leading-relaxed">
             Your content will be fully wiped from our servers. No residual data
             will remain that could be extracted or recovered.
           </p>

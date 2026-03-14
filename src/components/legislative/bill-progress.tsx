@@ -107,7 +107,7 @@ export function BillProgress({ currentStatus, compact = false }: BillProgressPro
               {!compact && (
                 <span
                   className={clsx(
-                    'mt-2 text-[10px] font-medium leading-tight text-center hidden sm:block',
+                    'mt-2 text-xs font-medium leading-tight text-center hidden sm:block',
                     isFinalFailed && 'text-danger-light',
                     !isFinalFailed && (isCompleted || isCurrent) && 'text-civic-light',
                     !isFinalFailed && !isCompleted && !isCurrent && 'text-text-muted'

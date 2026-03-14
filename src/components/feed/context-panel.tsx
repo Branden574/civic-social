@@ -419,7 +419,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
             Context
           </span>
           <span className="mx-2 text-text-muted">·</span>
-          <span className="text-[11px] text-text-muted">
+          <span className="text-xs text-text-muted">
             This topic is frequently debated
           </span>
         </div>
@@ -440,7 +440,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
 
           {/* Key Facts */}
           <div className="mb-4">
-            <h4 className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">
+            <h4 className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
               Key Facts
             </h4>
             <ul className="space-y-1.5">
@@ -458,7 +458,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
 
           {/* Multiple Perspectives */}
           <div className="mb-4">
-            <h4 className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">
+            <h4 className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
               Multiple Perspectives
             </h4>
             <div className="space-y-2.5">
@@ -475,7 +475,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
                           'bg-text-muted',
                       )}
                     />
-                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide w-16">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wide w-16">
                       {perspective.label}
                     </span>
                   </div>

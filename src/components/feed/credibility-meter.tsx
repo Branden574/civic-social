@@ -120,7 +120,7 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
       <button
         onClick={() => setExpanded(!expanded)}
         className={clsx(
-          'flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-colors cursor-pointer',
+          'flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md border transition-colors cursor-pointer',
           level.bgColor,
           level.borderColor,
           level.color,
@@ -168,7 +168,7 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
                 style={{ width: `${Math.round(score * 100)}%` }}
               />
             </div>
-            <span className={clsx('text-[11px] font-mono', level.color)}>
+            <span className={clsx('text-xs font-mono', level.color)}>
               {Math.round(score * 100)}%
             </span>
           </div>
@@ -183,7 +183,7 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
       {/* Expanded breakdown */}
       {expanded && (
         <div className="mt-2 p-3 bg-surface-elevated rounded-lg border border-border-subtle animate-fade-in space-y-2.5">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Credibility Breakdown
           </p>
 
@@ -223,13 +223,13 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
             />
           )}
           {data.flagCount > 0 && data.penalty <= 0.05 && (
-            <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
+            <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Flag className="w-3 h-3" />
               <span>{data.flagCount} community flag{data.flagCount !== 1 ? 's' : ''}</span>
             </div>
           )}
 
-          <p className="text-[10px] text-text-muted pt-1 border-t border-border-subtle">
+          <p className="text-xs text-text-muted pt-1 border-t border-border-subtle">
             {level.description}
           </p>
         </div>
@@ -254,7 +254,7 @@ function BreakdownRow({
   return (
     <div className="flex items-center gap-2">
       <Icon className={clsx('w-3.5 h-3.5 shrink-0', isWarning ? 'text-warning-light' : 'text-text-muted')} />
-      <span className="text-[11px] text-text-secondary w-28 shrink-0">{label}</span>
+      <span className="text-xs text-text-secondary w-28 shrink-0">{label}</span>
       <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
         <div
           className={clsx(
@@ -270,7 +270,7 @@ function BreakdownRow({
           style={{ width: `${Math.round(value * 100)}%` }}
         />
       </div>
-      <span className="text-[10px] font-mono text-text-muted w-8 text-right">
+      <span className="text-xs font-mono text-text-muted w-8 text-right">
         {Math.round(value * 100)}%
       </span>
     </div>

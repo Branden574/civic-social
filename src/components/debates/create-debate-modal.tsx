@@ -150,7 +150,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
               placeholder="e.g., Should the US Adopt Universal Basic Income?"
               className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 transition-colors"
             />
-            <p className="text-[11px] text-text-muted mt-1">{title.length}/120 — frame it as a clear question</p>
+            <p className="text-xs text-text-muted mt-1">{title.length}/120 — frame it as a clear question</p>
           </div>
 
           {/* Description */}
@@ -194,9 +194,9 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                 <button
                   onClick={() => setCreatorSide('A')}
                   className={clsx(
-                    'w-full text-[11px] font-medium py-1.5 rounded-lg border transition-colors',
+                    'w-full text-xs font-medium py-1.5 rounded-lg border transition-colors',
                     creatorSide === 'A'
-                      ? 'border-civic/40 bg-civic/10 text-civic-light'
+                      ? 'border-civic/40 bg-civic-subtle text-civic-light'
                       : 'border-border-subtle text-text-muted hover:text-text-secondary',
                   )}
                 >
@@ -207,7 +207,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
               {/* VS divider */}
               <div className="flex flex-col items-center justify-center gap-1 pt-2">
                 <ArrowLeftRight className="w-4 h-4 text-text-muted" />
-                <span className="text-[10px] text-text-muted font-bold">VS</span>
+                <span className="text-xs text-text-muted font-bold">VS</span>
               </div>
 
               {/* Side B */}
@@ -230,9 +230,9 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                 <button
                   onClick={() => setCreatorSide('B')}
                   className={clsx(
-                    'w-full text-[11px] font-medium py-1.5 rounded-lg border transition-colors',
+                    'w-full text-xs font-medium py-1.5 rounded-lg border transition-colors',
                     creatorSide === 'B'
-                      ? 'border-civic/40 bg-civic/10 text-civic-light'
+                      ? 'border-civic/40 bg-civic-subtle text-civic-light'
                       : 'border-border-subtle text-text-muted hover:text-text-secondary',
                   )}
                 >
@@ -256,7 +256,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                   className={clsx(
                     'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors',
                     duration === opt.value
-                      ? 'border-civic/40 bg-civic/10 text-civic-light'
+                      ? 'border-civic/40 bg-civic-subtle text-civic-light'
                       : 'border-border-subtle text-text-muted hover:text-text-secondary',
                   )}
                 >
@@ -274,7 +274,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
             </label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {topics.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 text-[11px] font-medium text-civic-light bg-civic/8 px-2.5 py-1 rounded-full">
+                <span key={t} className="inline-flex items-center gap-1 text-xs font-medium text-civic-light bg-civic-subtle px-2.5 py-1 rounded-full">
                   #{t}
                   <button onClick={() => removeTopic(t)} className="hover:text-danger-light"><X className="w-3 h-3" /></button>
                 </span>
@@ -303,7 +303,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                   <button
                     key={s}
                     onClick={() => addTopic(s)}
-                    className="text-[10px] text-text-muted hover:text-civic-light bg-surface px-2 py-0.5 rounded-full border border-border-subtle hover:border-civic/30 transition-colors"
+                    className="text-xs text-text-muted hover:text-civic-light bg-surface px-2 py-0.5 rounded-full border border-border-subtle hover:border-civic/30 transition-colors"
                   >
                     +{s}
                   </button>

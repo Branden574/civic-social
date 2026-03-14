@@ -185,13 +185,13 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
             <>
               {/* Post snippet */}
               <div className="mb-4 p-3 bg-surface rounded-lg border border-border-subtle">
-                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-1">
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">
                   Reported Content
                 </p>
                 <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
                   &ldquo;{postSnippet}&rdquo;
                 </p>
-                <p className="text-[10px] text-text-muted mt-1 font-mono">
+                <p className="text-xs text-text-muted mt-1 font-mono">
                   Post ID: {postId}
                 </p>
               </div>
@@ -209,7 +209,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
                   <span className={clsx('text-xs font-semibold', severity.text)}>
                     {severity.label}
                   </span>
-                  <span className="text-[11px] text-text-muted ml-1">
+                  <span className="text-xs text-text-muted ml-1">
                     — {category?.description}
                   </span>
                 </div>
@@ -217,7 +217,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
 
               {/* Report categories */}
               <div className="mb-4">
-                <h3 className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2.5">
+                <h3 className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2.5">
                   What&apos;s the issue?
                 </h3>
                 <div className="space-y-1.5">
@@ -231,7 +231,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
                         className={clsx(
                           'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all',
                           isSelected
-                            ? 'bg-civic/10 border border-civic/30'
+                            ? 'bg-civic-subtle border border-civic/30'
                             : 'bg-surface border border-border-subtle hover:bg-surface-hover',
                         )}
                       >
@@ -276,7 +276,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
 
               {/* Additional details */}
               <div className="mb-4">
-                <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-1.5 block">
+                <label className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1.5 block">
                   Additional Details{' '}
                   <span className="text-text-muted font-normal normal-case tracking-normal">
                     (optional)
@@ -290,7 +290,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
                   className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
                 />
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-[11px] font-mono text-text-muted">
+                  <span className="text-xs font-mono text-text-muted">
                     {details.length}/1000
                   </span>
                 </div>
@@ -307,7 +307,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
               {/* Credibility note */}
               <div className="flex items-start gap-2 p-3 bg-surface rounded-lg border border-border-subtle mb-4">
                 <Info className="w-4 h-4 text-civic-light shrink-0 mt-0.5" />
-                <p className="text-[11px] text-text-muted leading-relaxed">
+                <p className="text-xs text-text-muted leading-relaxed">
                   Your report credibility score affects review priority. Accurate reports
                   improve your score; false reports may reduce it.
                 </p>
@@ -328,7 +328,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
               </p>
               <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-surface-elevated rounded-lg border border-border-subtle">
                 <Shield className="w-3.5 h-3.5 text-civic-light" />
-                <span className="text-[11px] text-text-muted">
+                <span className="text-xs text-text-muted">
                   Report #{postId.slice(0, 8).toUpperCase()}
                 </span>
               </div>
@@ -372,7 +372,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
           <div className="px-4 py-3 border-t border-border-subtle">
             <button
               onClick={handleClose}
-              className="w-full py-2 text-sm font-semibold text-civic-light bg-civic/10 hover:bg-civic/15 rounded-xl transition-colors"
+              className="w-full py-2 text-sm font-semibold text-civic-light bg-civic-subtle hover:bg-civic-muted rounded-xl transition-colors"
             >
               Done
             </button>

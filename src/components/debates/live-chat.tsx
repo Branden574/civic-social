@@ -294,15 +294,15 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-civic-light" />
           <span className="text-xs font-semibold text-text-primary">Live Chat</span>
-          <span className="text-[10px] text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full">Everyone</span>
+          <span className="text-xs text-text-muted bg-surface-active px-1.5 py-0.5 rounded-full">Everyone</span>
           {(spectatorCount !== undefined || debaterCount !== undefined) && (
-            <span className="flex items-center gap-1 text-[10px] text-text-muted">
+            <span className="flex items-center gap-1 text-xs text-text-muted">
               <Users className="w-2.5 h-2.5" />
               {((spectatorCount || 0) + (debaterCount || 0)).toLocaleString()} watching
             </span>
           )}
           {config?.slowModeSeconds && config.slowModeSeconds > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-warning-light bg-warning/10 px-1.5 py-0.5 rounded-full">
+            <span className="flex items-center gap-0.5 text-xs text-warning-light bg-warning/10 px-1.5 py-0.5 rounded-full">
               <Clock className="w-2.5 h-2.5" />
               {config.slowModeSeconds}s
             </span>
@@ -327,32 +327,32 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
           {/* ── Host settings panel ── */}
           {showSettings && isCreator && (
             <div className="px-3 py-2 border-b border-border-subtle bg-surface space-y-2 animate-fade-in shrink-0">
-              <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Chat Settings</p>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Chat Settings</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => updateConfig({ enabled: !config?.enabled })}
-                  className={clsx('text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors',
+                  className={clsx('text-xs font-medium px-2.5 py-1 rounded-full border transition-colors',
                     config?.enabled ? 'bg-positive/10 text-positive-light border-positive/20' : 'bg-danger/10 text-danger-light border-danger/20')}
                 >
                   Chat {config?.enabled ? 'On' : 'Off'}
                 </button>
                 <button
                   onClick={() => updateConfig({ slowModeSeconds: config?.slowModeSeconds ? 0 : 5 })}
-                  className={clsx('text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors',
+                  className={clsx('text-xs font-medium px-2.5 py-1 rounded-full border transition-colors',
                     config?.slowModeSeconds ? 'bg-warning/10 text-warning-light border-warning/20' : 'bg-surface-elevated text-text-muted border-border-subtle')}
                 >
                   Slow Mode {config?.slowModeSeconds ? `${config.slowModeSeconds}s` : 'Off'}
                 </button>
                 <button
                   onClick={() => updateConfig({ autoClearOnEnd: !config?.autoClearOnEnd })}
-                  className={clsx('text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors',
-                    config?.autoClearOnEnd ? 'bg-civic/10 text-civic-light border-civic/20' : 'bg-surface-elevated text-text-muted border-border-subtle')}
+                  className={clsx('text-xs font-medium px-2.5 py-1 rounded-full border transition-colors',
+                    config?.autoClearOnEnd ? 'bg-civic-subtle text-civic-light border-civic/20' : 'bg-surface-elevated text-text-muted border-border-subtle')}
                 >
                   Auto-Clear {config?.autoClearOnEnd ? 'On' : 'Off'}
                 </button>
                 <button
                   onClick={handleClearChat}
-                  className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-danger/20 bg-danger/10 text-danger-light hover:bg-danger/20 transition-colors"
+                  className="text-xs font-medium px-2.5 py-1 rounded-full border border-danger/20 bg-danger/10 text-danger-light hover:bg-danger/20 transition-colors"
                 >
                   Clear Chat Now
                 </button>
@@ -362,10 +362,10 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
 
           {/* ── Pinned message bar ── */}
           {pinnedMessages.length > 0 && (
-            <div className="px-3 py-2 border-b border-border-subtle bg-civic/5 shrink-0">
+            <div className="px-3 py-2 border-b border-border-subtle bg-civic-subtle shrink-0">
               <div className="flex items-center gap-1.5">
                 <Pin className="w-3 h-3 text-civic-light shrink-0" />
-                <p className="text-[11px] text-text-primary font-medium truncate">
+                <p className="text-xs text-text-primary font-medium truncate">
                   <span className="text-civic-light">{pinnedMessages[pinnedMessages.length - 1].displayName}:</span>{' '}
                   {pinnedMessages[pinnedMessages.length - 1].content}
                 </p>
@@ -392,7 +392,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
               <div className="flex flex-col items-center justify-center h-full text-center py-8">
                 <Shield className="w-8 h-8 text-positive-light mb-2 opacity-60" />
                 <p className="text-xs text-text-muted">Chat data has been cleared.</p>
-                <p className="text-[10px] text-text-muted mt-1">All messages and logs have been permanently deleted.</p>
+                <p className="text-xs text-text-muted mt-1">All messages and logs have been permanently deleted.</p>
               </div>
             )}
 
@@ -419,7 +419,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
                   setAutoScroll(true);
                   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full text-center text-[11px] font-medium text-civic-light bg-civic/10 rounded-lg py-1.5 hover:bg-civic/15 transition-colors"
+                className="w-full text-center text-xs font-medium text-civic-light bg-civic-subtle rounded-lg py-1.5 hover:bg-civic-muted transition-colors"
               >
                 <ChevronDown className="w-3 h-3 inline mr-1" />
                 New messages below
@@ -430,7 +430,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
           {/* ── Error message ── */}
           {error && (
             <div className="px-3 py-1.5 shrink-0">
-              <div className="flex items-center gap-1.5 text-[11px] text-danger-light bg-danger/10 px-2.5 py-1.5 rounded-lg">
+              <div className="flex items-center gap-1.5 text-xs text-danger-light bg-danger/10 px-2.5 py-1.5 rounded-lg">
                 <AlertCircle className="w-3 h-3 shrink-0" />
                 {error}
                 <button onClick={() => setError(null)} className="ml-auto"><X className="w-3 h-3" /></button>
@@ -459,7 +459,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowEmoji(!showEmoji)}
-                  className={clsx('p-1.5 rounded-lg transition-colors', showEmoji ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-primary')}
+                  className={clsx('p-1.5 rounded-lg transition-colors', showEmoji ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-primary')}
                 >
                   <Smile className="w-4 h-4" />
                 </button>
@@ -533,7 +533,7 @@ function ChatMessageBubble({
   if (message.type === 'system') {
     return (
       <div className="flex items-center justify-center gap-1.5 py-1">
-        <span className="text-[10px] text-text-muted italic">{message.content}</span>
+        <span className="text-xs text-text-muted italic">{message.content}</span>
       </div>
     );
   }
@@ -559,7 +559,7 @@ function ChatMessageBubble({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={clsx('text-[11px] font-bold', sideColor)}>
+          <span className={clsx('text-xs font-bold', sideColor)}>
             {message.displayName}
           </span>
           {sideBadge && (
@@ -582,7 +582,7 @@ function ChatMessageBubble({
               <button
                 key={emoji}
                 onClick={() => onReact(message.id, emoji)}
-                className="flex items-center gap-0.5 text-[10px] bg-surface-active hover:bg-surface-hover px-1.5 py-0.5 rounded-full transition-colors"
+                className="flex items-center gap-0.5 text-xs bg-surface-active hover:bg-surface-hover px-1.5 py-0.5 rounded-full transition-colors"
               >
                 {emoji} <span className="text-text-muted">{count}</span>
               </button>

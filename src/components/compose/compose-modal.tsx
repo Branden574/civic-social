@@ -418,7 +418,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
         <div className="flex items-center justify-between px-4 h-12 shrink-0 border-b border-border-subtle">
           <button
             onClick={handleClose}
-            className="text-[15px] font-medium text-text-secondary hover:text-text-primary transition-colors min-h-[44px] flex items-center"
+            className="text-base font-medium text-text-secondary hover:text-text-primary transition-colors min-h-[44px] flex items-center"
           >
             Cancel
           </button>
@@ -428,7 +428,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
             className={clsx(
               'px-5 py-1.5 rounded-full text-sm font-bold transition-all min-h-[36px]',
               content.trim() && !posting
-                ? 'bg-civic text-white hover:bg-civic-dark active:scale-95'
+                ? 'bg-civic text-white hover:bg-civic-dark'
                 : 'bg-surface-active text-text-muted cursor-not-allowed',
             )}
           >
@@ -444,7 +444,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               {user?.avatar ? (
                 <img src={user.avatar} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-border-subtle" />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-civic/20 flex items-center justify-center text-civic-light text-sm font-semibold">
+                <div className="w-10 h-10 rounded-full bg-civic-muted flex items-center justify-center text-civic-light text-sm font-semibold">
                   {user?.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                 </div>
               )}
@@ -460,7 +460,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                   onChange={(e) => handleContentChange(e.target.value)}
                   onKeyDown={handleTextareaKeyDown}
                   placeholder="What's happening?"
-                  className="w-full bg-transparent text-text-primary text-[15px] leading-relaxed placeholder:text-text-muted/60 resize-none border-none focus:outline-none focus:ring-0 min-h-[100px] sm:min-h-[120px]"
+                  className="w-full bg-transparent text-text-primary text-base leading-relaxed placeholder:text-text-muted/60 resize-none border-none focus:outline-none focus:ring-0 min-h-[100px] sm:min-h-[120px]"
                   maxLength={MAX_CHARS}
                   autoFocus
                 />
@@ -478,7 +478,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                         onMouseDown={(e) => { e.preventDefault(); insertMention(u.username); }}
                         className={clsx(
                           'w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors',
-                          i === mentionIdx ? 'bg-civic/10' : 'hover:bg-surface-hover',
+                          i === mentionIdx ? 'bg-civic-subtle' : 'hover:bg-surface-hover',
                         )}
                       >
                         {u.avatarUrl ? (
@@ -518,7 +518,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                   </div>
                   {articleUrl && (
                     <div className="mt-2 p-3 bg-surface rounded-lg border border-border-subtle">
-                      <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Article Preview</p>
+                      <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Article Preview</p>
                       <p className="text-sm text-civic-light truncate">{articleUrl}</p>
                       <p className="text-xs text-text-muted mt-0.5">Article URL will be attached to your post</p>
                     </div>
@@ -544,19 +544,19 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                     <button
                       onClick={() => dispatch({ type: 'ADD_HASHTAG', payload: hashtagInput })}
                       disabled={!hashtagInput.trim()}
-                      className="px-3 py-2 bg-civic/10 text-civic-light text-xs font-semibold rounded-lg hover:bg-civic/20 transition-colors disabled:opacity-40 min-h-[44px]"
+                      className="px-3 py-2 bg-civic-subtle text-civic-light text-xs font-semibold rounded-lg hover:bg-civic-muted transition-colors disabled:opacity-40 min-h-[44px]"
                     >
                       Add
                     </button>
                   </div>
-                  <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Suggested Topics</p>
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Suggested Topics</p>
                   <div className="flex flex-wrap gap-1.5">
                     {SUGGESTED_TOPICS.map((topic) => (
                       <button
                         key={topic}
                         onClick={() => dispatch({ type: 'TOGGLE_TOPIC', payload: topic })}
                         className={clsx(
-                          'text-[11px] font-medium px-2 py-1 rounded-full transition-all min-h-[32px]',
+                          'text-xs font-medium px-2 py-1 rounded-full transition-all min-h-[32px]',
                           selectedTopics.includes(topic)
                             ? 'bg-civic text-white'
                             : 'bg-surface-active text-text-secondary hover:bg-surface-hover',
@@ -573,7 +573,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               {allTags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {allTags.map((tag) => (
-                    <span key={tag} className="flex items-center gap-1 text-[11px] font-medium text-civic-light bg-civic/10 px-2 py-0.5 rounded-full">
+                    <span key={tag} className="flex items-center gap-1 text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full">
                       #{tag}
                       <button
                         onClick={() => {
@@ -635,7 +635,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                         {issue}
                       </p>
                     ))}
-                    <p className="text-[11px] text-text-muted mt-1 italic">
+                    <p className="text-xs text-text-muted mt-1 italic">
                       Would you like to rephrase for clarity and civility?
                     </p>
                   </div>
@@ -664,7 +664,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               onClick={() => dispatch({ type: 'TOGGLE_URL_INPUT' })}
               className={clsx(
                 'w-11 h-11 flex items-center justify-center rounded-full transition-colors',
-                showUrlInput ? 'text-civic-light bg-civic/10' : 'text-civic-light/70 hover:bg-civic/10',
+                showUrlInput ? 'text-civic-light bg-civic-subtle' : 'text-civic-light/70 hover:bg-civic-subtle',
               )}
               title="Attach article"
             >
@@ -674,7 +674,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               onClick={() => dispatch({ type: 'TOGGLE_TOPICS' })}
               className={clsx(
                 'w-11 h-11 flex items-center justify-center rounded-full transition-colors',
-                showTopics ? 'text-civic-light bg-civic/10' : 'text-civic-light/70 hover:bg-civic/10',
+                showTopics ? 'text-civic-light bg-civic-subtle' : 'text-civic-light/70 hover:bg-civic-subtle',
               )}
               title="Add hashtags"
             >
@@ -696,7 +696,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                   textarea.focus();
                 });
               }}
-              className="w-11 h-11 flex items-center justify-center rounded-full transition-colors text-civic-light/70 hover:bg-civic/10"
+              className="w-11 h-11 flex items-center justify-center rounded-full transition-colors text-civic-light/70 hover:bg-civic-subtle"
               title="Mention someone"
             >
               <AtSign className="w-[20px] h-[20px]" />
@@ -710,7 +710,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               <button
                 type="button"
                 onClick={() => dispatch({ type: 'TOGGLE_REPLY_MENU' })}
-                className="flex items-center gap-1 text-[11px] font-medium text-civic-light hover:text-civic transition-colors h-11 px-2"
+                className="flex items-center gap-1 text-xs font-medium text-civic-light hover:text-civic transition-colors h-11 px-2"
               >
                 {commentPolicy === 'everyone' && <Globe className="w-3.5 h-3.5" />}
                 {commentPolicy === 'followers_only' && <Users className="w-3.5 h-3.5" />}
@@ -729,13 +729,13 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                       onClick={() => dispatch({ type: 'SET_COMMENT_POLICY', payload: opt.value })}
                       className={clsx(
                         'w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover transition-colors',
-                        commentPolicy === opt.value && 'bg-civic/5',
+                        commentPolicy === opt.value && 'bg-civic-subtle',
                       )}
                     >
                       <opt.icon className={clsx('w-4 h-4', commentPolicy === opt.value ? 'text-civic-light' : 'text-text-muted')} />
                       <div>
                         <p className={clsx('text-xs font-medium', commentPolicy === opt.value ? 'text-civic-light' : 'text-text-primary')}>{opt.label}</p>
-                        <p className="text-[10px] text-text-muted">{opt.desc}</p>
+                        <p className="text-xs text-text-muted">{opt.desc}</p>
                       </div>
                     </button>
                   ))}
@@ -748,7 +748,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               <button
                 type="button"
                 onClick={() => dispatch({ type: 'TOGGLE_TYPE_MENU' })}
-                className="flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-civic-light transition-colors h-11 px-2"
+                className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-civic-light transition-colors h-11 px-2"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <ChevronDown className="w-3 h-3" />
@@ -761,7 +761,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                       onClick={() => dispatch({ type: 'SET_POST_TYPE', payload: opt.value })}
                       className={clsx(
                         'w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover transition-colors',
-                        postType === opt.value && 'bg-civic/5',
+                        postType === opt.value && 'bg-civic-subtle',
                       )}
                     >
                       <span className="text-sm">{opt.icon}</span>
@@ -779,7 +779,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               <button
                 onClick={() => dispatch({ type: 'TOGGLE_CIVILITY_CHECK' })}
                 className={clsx(
-                  'flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-colors',
+                  'flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full transition-colors',
                   civility.score >= 0.8
                     ? 'bg-positive/10 text-positive-light'
                     : civility.score >= 0.5

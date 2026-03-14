@@ -66,7 +66,7 @@ export default function HashtagPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-lg bg-civic/10 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
                   <Hash className="w-5 h-5 text-civic-light" />
                 </div>
                 <div>
@@ -82,7 +82,7 @@ export default function HashtagPage() {
                 onClick={() => setContentTab('posts')}
                 className={clsx(
                   'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
-                  contentTab === 'posts' ? 'bg-civic/10 text-civic-light' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                  contentTab === 'posts' ? 'bg-civic-subtle text-civic-light' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                 )}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -92,7 +92,7 @@ export default function HashtagPage() {
                 onClick={() => setContentTab('news')}
                 className={clsx(
                   'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
-                  contentTab === 'news' ? 'bg-civic/10 text-civic-light' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                  contentTab === 'news' ? 'bg-civic-subtle text-civic-light' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                 )}
               >
                 <Newspaper className="w-3.5 h-3.5" />
@@ -151,14 +151,14 @@ export default function HashtagPage() {
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">{article.source}</span>
-                            <span className="text-[10px] text-text-muted">{formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })}</span>
+                            <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{article.source}</span>
+                            <span className="text-xs text-text-muted">{formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })}</span>
                           </div>
                           <h3 className="text-sm font-medium text-text-primary line-clamp-2 mb-1">{article.title}</h3>
                           <p className="text-xs text-text-muted line-clamp-2">{article.summary}</p>
                           <div className="flex items-center gap-2 mt-2">
                             {article.topics.slice(0, 3).map((t) => (
-                              <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted">#{t}</span>
+                              <span key={t} className="text-xs px-1.5 py-0.5 rounded-md bg-surface-active text-text-muted">#{t}</span>
                             ))}
                             <ExternalLink className="w-3 h-3 text-text-muted ml-auto" />
                           </div>

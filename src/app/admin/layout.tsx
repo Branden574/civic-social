@@ -63,7 +63,7 @@ export default function AdminLayout({
         <Sidebar />
         <main className="flex-1 min-w-0 flex items-center justify-center p-4">
           <div className="max-w-sm w-full text-center p-8 bg-surface-elevated rounded-2xl border border-border-subtle">
-            <div className="w-14 h-14 rounded-2xl bg-civic/10 flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 rounded-2xl bg-civic-subtle flex items-center justify-center mx-auto mb-4">
               <Lock className="w-7 h-7 text-civic-light" aria-hidden />
             </div>
             <h2 className="text-xl font-bold text-text-primary mb-2">
@@ -144,14 +144,14 @@ export default function AdminLayout({
                 </h1>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-civic/15 text-civic-light"
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full bg-civic-muted text-civic-light"
                     title={`Role: ${roleLabel}`}
                   >
                     {roleLabel}
                   </span>
                   {sessionStarted && (
                     <span
-                      className="text-[10px] text-text-muted flex items-center gap-1"
+                      className="text-xs text-text-muted flex items-center gap-1"
                       title="Session started"
                     >
                       <Clock className="w-3 h-3" />

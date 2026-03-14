@@ -621,7 +621,7 @@ function TopicsSection() {
               className={clsx(
                 'text-xs font-medium px-2.5 py-1 rounded-full border transition-colors',
                 selected
-                  ? 'bg-civic/15 text-civic-light border-civic/30'
+                  ? 'bg-civic-muted text-civic-light border-civic/30'
                   : 'bg-surface text-text-muted border-border-subtle hover:text-text-secondary hover:border-border',
               )}
             >
@@ -634,7 +634,7 @@ function TopicsSection() {
           <button
             key={topic}
             onClick={() => toggleTopic(topic)}
-            className="text-xs font-medium px-2.5 py-1 rounded-full border bg-civic/15 text-civic-light border-civic/30 transition-colors flex items-center gap-1"
+            className="text-xs font-medium px-2.5 py-1 rounded-full border bg-civic-muted text-civic-light border-civic/30 transition-colors flex items-center gap-1"
           >
             #{topic}
             <X className="w-3 h-3" />
@@ -695,7 +695,7 @@ function NotificationSoundSetting() {
       <div className="flex items-center gap-3">
         <div className={clsx(
           'w-7 h-7 rounded-lg flex items-center justify-center',
-          soundEnabled ? 'bg-civic/10 text-civic-light' : 'bg-surface-active text-text-muted',
+          soundEnabled ? 'bg-civic-subtle text-civic-light' : 'bg-surface-active text-text-muted',
         )}>
           {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
         </div>
@@ -897,7 +897,7 @@ function ThemeToggleSetting() {
               className={clsx(
                 'relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
                 isSelected
-                  ? 'border-civic bg-civic/5 shadow-[0_0_0_1px_var(--color-civic)]'
+                  ? 'border-civic bg-civic-subtle shadow-[0_0_0_1px_var(--color-civic)]'
                   : 'border-border-subtle hover:border-border hover:bg-surface-hover',
               )}
             >

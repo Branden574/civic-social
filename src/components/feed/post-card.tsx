@@ -138,7 +138,7 @@ const verificationIcons: Record<string, { icon: typeof ShieldCheck; label: strin
 const threadTypeLabels: Record<string, { label: string; color: string }> = {
   POLICY_PROPOSAL: { label: 'Policy Proposal', color: 'bg-positive/10 text-positive-light' },
   STRUCTURED_DEBATE: { label: 'Structured Debate', color: 'bg-warning/10 text-warning-light' },
-  CROSS_PARTY_ROUNDTABLE: { label: 'Cross-Party Roundtable', color: 'bg-civic/10 text-civic-light' },
+  CROSS_PARTY_ROUNDTABLE: { label: 'Cross-Party Roundtable', color: 'bg-civic-subtle text-civic-light' },
   EXPERT_AMA: { label: 'Expert Q&A', color: 'bg-info/10 text-info-light' },
   NEWS_DISCUSSION: { label: 'News Discussion', color: 'bg-danger/10 text-danger-light' },
   OPEN_DISCUSSION: { label: 'Discussion', color: 'bg-surface-active text-text-secondary' },
@@ -372,20 +372,20 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
   return (
     <article
       className={clsx(
-        'feed-item animate-fade-in opacity-0 border-b border-border-subtle hover:bg-surface/40 transition-colors duration-150',
+        'feed-item animate-fade-in opacity-0 border-b border-border-subtle hover:bg-surface-elevated/40 transition-colors duration-150',
         post._optimistic && 'opacity-70',
         post._failed && 'opacity-50 border-l-2 border-l-danger',
       )}
       style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'forwards' }}
     >
       {post._optimistic && (
-        <div className="px-4 sm:px-6 pt-2 pb-0 flex items-center gap-1.5 text-[11px] text-text-muted">
+        <div className="px-4 sm:px-6 pt-2 pb-0 flex items-center gap-1.5 text-xs text-text-muted">
           <div className="w-3 h-3 border-2 border-civic/40 border-t-civic rounded-full animate-spin" />
           Posting...
         </div>
       )}
       {post._failed && (
-        <div className="px-4 sm:px-6 pt-2 pb-0 flex items-center gap-1.5 text-[11px] text-danger-light">
+        <div className="px-4 sm:px-6 pt-2 pb-0 flex items-center gap-1.5 text-xs text-danger-light">
           <span className="font-semibold">Failed to post</span>
           <span className="text-text-muted">— tap to retry or dismiss</span>
         </div>
@@ -395,12 +395,12 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
         <div className="flex items-start gap-3 mb-3">
           <Link
             href={`/profile/${encodeURIComponent(post.author.id)}`}
-            className="w-10 h-10 rounded-full shrink-0 hover:ring-2 hover:ring-civic/20 transition-all cursor-pointer overflow-hidden"
+            className="w-10 h-10 rounded-full shrink-0 cursor-pointer overflow-hidden"
           >
             {post.author.avatarUrl ? (
-              <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-10 h-10 rounded-full object-cover border border-border-subtle" />
+              <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-10 h-10 rounded-full object-cover" />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-sm font-semibold border border-border-subtle">
+              <div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-sm font-semibold">
                 {post.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </div>
             )}
@@ -420,7 +420,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 </span>
               )}
               {ideology && (
-                <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-full', ideologyStyle)}>
+                <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded-full', ideologyStyle)}>
                   {ideology}
                 </span>
               )}
@@ -432,7 +432,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
               {displayType && (
                 <>
                   <span className="text-text-muted">·</span>
-                  <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded-md', displayType.color)}>
+                  <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded-md', displayType.color)}>
                     {displayType.label}
                   </span>
                 </>
@@ -448,7 +448,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             >
               <div
                 className={clsx(
-                  'text-[10px] font-mono font-bold px-2 py-1 rounded-md',
+                  'text-xs font-mono font-bold px-2 py-1 rounded-md',
                   post.algorithm.qualityScore >= 0.6
                     ? 'bg-positive/10 text-positive-light'
                     : post.algorithm.qualityScore >= 0.3
@@ -505,7 +505,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 window.location.href = `/post/${encodeURIComponent(post.id)}`;
               }
             }}
-            className="block text-[14.5px] leading-relaxed text-text-primary whitespace-pre-line hover:text-text-primary/90 transition-colors cursor-pointer"
+            className="block text-sm leading-relaxed text-text-primary whitespace-pre-line hover:text-text-primary/90 transition-colors cursor-pointer"
           >
             <MentionText text={displayContent} />
           </div>
@@ -528,7 +528,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 <Link
                   key={topic}
                   href={`/hashtag/${encodeURIComponent(topic)}`}
-                  className="text-[11px] font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full hover:bg-civic/15 transition-colors cursor-pointer"
+                  className="text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full hover:bg-civic-muted transition-colors cursor-pointer"
                 >
                   #{topic}
                 </Link>
@@ -554,7 +554,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                   <span className="truncate">{source.domain}</span>
                   <span
                     className={clsx(
-                      'text-[9px] font-semibold px-1 py-0.5 rounded',
+                      'text-xs font-semibold px-1 py-0.5 rounded',
                       source.trustScore >= 0.8 ? 'bg-positive/10 text-positive-light'
                         : source.trustScore >= 0.5 ? 'bg-warning/10 text-warning-light'
                           : 'bg-danger/10 text-danger-light',
@@ -587,7 +587,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
               { type: 'agree' as ReactionType, icon: ThumbsUp, label: 'Agree', color: 'text-positive', bgActive: 'bg-positive/15' },
               { type: 'disagree' as ReactionType, icon: ThumbsDown, label: 'Disagree', color: 'text-danger', bgActive: 'bg-danger/15' },
               { type: 'insightful' as ReactionType, icon: Lightbulb, label: 'Insightful', color: 'text-warning', bgActive: 'bg-warning/15' },
-              { type: 'nuance' as ReactionType, icon: Layers, label: 'Nuance', color: 'text-civic-light', bgActive: 'bg-civic/15' },
+              { type: 'nuance' as ReactionType, icon: Layers, label: 'Nuance', color: 'text-civic-light', bgActive: 'bg-civic-muted' },
             ]).map((btn) => {
               const isActive = viewerReaction === btn.type;
               return (
@@ -596,7 +596,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                   onClick={(e) => handleReaction(e, btn.type)}
                   disabled={reactionLoading}
                   className={clsx(
-                    'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-lg transition-all duration-150 min-h-[44px] active:scale-95 select-none',
+                    'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-lg transition-colors duration-150 min-h-[44px] select-none',
                     isActive
                       ? `${btn.color} ${btn.bgActive} font-semibold`
                       : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
@@ -641,7 +641,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
               onClick={(e) => { e.stopPropagation(); setBookmarked(!bookmarked); }}
               className={clsx(
                 'p-2.5 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
-                bookmarked ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                bookmarked ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
               )}
               title={bookmarked ? 'Remove bookmark' : 'Save post'}
             >
@@ -668,7 +668,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
               onClick={(e) => { e.stopPropagation(); setShowAlgorithm(!showAlgorithm); }}
               className={clsx(
                 'p-2.5 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
-                showAlgorithm ? 'text-civic-light bg-civic/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                showAlgorithm ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
               )}
               title="Why am I seeing this?"
             >
@@ -895,7 +895,7 @@ function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorit
         <div className="mt-3 pt-3 border-t border-border-subtle">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-3.5 h-3.5 text-warning-light" />
-            <span className="text-[11px] font-semibold text-text-primary uppercase tracking-wider">
+            <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
               Civility Issues ({Math.round(civility.score * 100)}%)
             </span>
           </div>
@@ -913,7 +913,7 @@ function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorit
         <div className="mt-3 pt-3 border-t border-border-subtle">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-positive-light" />
-            <span className="text-[11px] text-positive-light font-medium">
+            <span className="text-xs text-positive-light font-medium">
               This post promotes constructive civic discourse
             </span>
           </div>
@@ -923,7 +923,7 @@ function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorit
       {algorithm.explanationTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border-subtle">
           {algorithm.explanationTags.map((tag) => (
-            <span key={tag} className="text-[10px] font-medium text-text-muted bg-surface-active px-2 py-0.5 rounded-full">{tag}</span>
+            <span key={tag} className="text-xs font-medium text-text-muted bg-surface-active px-2 py-0.5 rounded-full">{tag}</span>
           ))}
         </div>
       )}
@@ -934,11 +934,11 @@ function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorit
 function SignalBar({ label, value, weight, color, isNegative }: { label: string; value: number; weight: string; color: string; isNegative?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-text-muted w-32 shrink-0 truncate">{label}</span>
+      <span className="text-xs text-text-muted w-32 shrink-0 truncate">{label}</span>
       <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all duration-500', color)} style={{ width: `${Math.round(value * 100)}%` }} />
       </div>
-      <span className={clsx('text-[11px] font-mono w-10 text-right', isNegative ? 'text-danger-light' : 'text-text-secondary')}>
+      <span className={clsx('text-xs font-mono w-10 text-right', isNegative ? 'text-danger-light' : 'text-text-secondary')}>
         {isNegative ? '-' : ''}{Math.round(value * 100)}%
       </span>
       <span className="text-[9px] text-text-muted w-8 text-right">{weight}</span>
@@ -969,7 +969,7 @@ function InlineReportPanel({ postId, onClose }: { postId: string; onClose: () =>
           </div>
           <div>
             <p className="text-sm font-semibold text-text-primary">Report submitted</p>
-            <p className="text-[11px] text-text-muted">Our moderation team will review within 24 hours.</p>
+            <p className="text-xs text-text-muted">Our moderation team will review within 24 hours.</p>
           </div>
         </div>
       </div>
@@ -1031,20 +1031,20 @@ function ReplyCard({ reply }: { reply: PostReply }) {
         {reply.author.avatarUrl ? (
           <img src={reply.author.avatarUrl} alt={reply.author.displayName} className="w-6 h-6 rounded-full object-cover" />
         ) : (
-          <div className="w-6 h-6 rounded-full bg-surface-active flex items-center justify-center text-text-muted text-[10px] font-semibold">
+          <div className="w-6 h-6 rounded-full bg-surface-active flex items-center justify-center text-text-muted text-xs font-semibold">
             {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
           </div>
         )}
         <span className="text-xs font-semibold text-text-primary">{reply.author.displayName}</span>
         {verification && <verification.icon className={clsx('w-3 h-3', verification.color)} />}
         {ideology && <span className={clsx('text-[9px] font-medium px-1 py-0.5 rounded-full', ideologyStyle)}>{ideology}</span>}
-        <span className="text-[11px] text-text-muted">{formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}</span>
+        <span className="text-xs text-text-muted">{formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}</span>
       </div>
-      <p className="text-[13px] text-text-secondary leading-relaxed ml-8">{reply.content}</p>
+      <p className="text-sm text-text-secondary leading-relaxed ml-8">{reply.content}</p>
       <div className="flex items-center gap-3 mt-1.5 ml-8">
-        <span className="text-[11px] text-text-muted flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {reply.reactions.agree}</span>
-        <span className="text-[11px] text-text-muted flex items-center gap-1"><Lightbulb className="w-3 h-3" /> {reply.reactions.insightful}</span>
-        <span className={clsx('text-[10px] font-medium px-1.5 py-0.5 rounded', reply.civilityScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light')}>
+        <span className="text-xs text-text-muted flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {reply.reactions.agree}</span>
+        <span className="text-xs text-text-muted flex items-center gap-1"><Lightbulb className="w-3 h-3" /> {reply.reactions.insightful}</span>
+        <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded', reply.civilityScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light')}>
           Civility: {Math.round(reply.civilityScore * 100)}%
         </span>
       </div>

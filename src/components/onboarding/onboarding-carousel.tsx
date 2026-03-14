@@ -22,7 +22,7 @@ const ONBOARDING_SLIDES = [
     id: 'welcome',
     icon: Sparkles,
     iconColor: 'text-civic-light',
-    iconBg: 'bg-civic/15',
+    iconBg: 'bg-civic-muted',
     title: 'Welcome to Civic Social',
     description:
       'Your feed is powered by an algorithm that rewards civility, evidence, and diverse perspectives — not outrage.',
@@ -81,7 +81,7 @@ const ONBOARDING_SLIDES = [
     id: 'algorithm',
     icon: BarChart3,
     iconColor: 'text-civic-light',
-    iconBg: 'bg-civic/15',
+    iconBg: 'bg-civic-muted',
     title: 'How the Algorithm Ranks',
     description:
       'Your For You feed uses 6 signals. Civility is the highest-weighted — constructive posts always beat rage-bait.',
@@ -150,7 +150,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
         <div className="flex items-center justify-between px-4 pt-3 pb-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-civic-light" />
-            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Getting Started — {currentSlide + 1}/{ONBOARDING_SLIDES.length}
             </span>
           </div>

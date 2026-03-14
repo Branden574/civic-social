@@ -166,7 +166,7 @@ export const PerfPanel = memo(function PerfPanel() {
           <h4 className="text-text-muted font-bold mb-2">Recent API Calls</h4>
           <div className="space-y-1">
             {metrics.apiTimings.slice(0, 10).map((t, i) => (
-              <div key={i} className="flex items-center gap-2 text-[10px]">
+              <div key={i} className="flex items-center gap-2 text-xs">
                 <span className={t.status >= 400 ? 'text-danger-light' : 'text-positive-light'}>
                   {t.status || 'ERR'}
                 </span>

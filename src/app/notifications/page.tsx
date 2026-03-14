@@ -43,10 +43,10 @@ const NOTIF_CONFIG: Record<NotificationType, {
 }> = {
   follow: { icon: UserPlus, color: 'text-info-light bg-info/10', label: 'followed you' },
   like: { icon: ThumbsUp, color: 'text-positive-light bg-positive/10', label: 'liked your post' },
-  reply: { icon: MessageSquare, color: 'text-civic-light bg-civic/10', label: 'replied to your post' },
+  reply: { icon: MessageSquare, color: 'text-civic-light bg-civic-subtle', label: 'replied to your post' },
   repost: { icon: Repeat2, color: 'text-info-light bg-info/10', label: 'reposted your post' },
   mention: { icon: AtSign, color: 'text-warning-light bg-warning/10', label: 'mentioned you' },
-  post_from_followed: { icon: Newspaper, color: 'text-civic-light bg-civic/10', label: 'published a new post' },
+  post_from_followed: { icon: Newspaper, color: 'text-civic-light bg-civic-subtle', label: 'published a new post' },
   debate_invite: { icon: Scale, color: 'text-warning-light bg-warning/10', label: 'invited you to a debate' },
   civility_boost: { icon: Shield, color: 'text-positive-light bg-positive/10', label: 'Civic milestone' },
   post_removed: { icon: AlertTriangle, color: 'text-danger-light bg-danger/10', label: 'Your post was removed' },
@@ -301,7 +301,7 @@ export default function NotificationsPage() {
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-text-primary">Notifications</h2>
                 {unreadCount > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-danger/20 text-danger-light">
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-danger/20 text-danger-light">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
@@ -324,7 +324,7 @@ export default function NotificationsPage() {
                   className={clsx(
                     'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all',
                     unreadCount > 0
-                      ? 'text-civic-light hover:bg-civic/10'
+                      ? 'text-civic-light hover:bg-civic-subtle'
                       : 'text-text-muted cursor-not-allowed',
                   )}
                 >
@@ -347,7 +347,7 @@ export default function NotificationsPage() {
                   className={clsx(
                     'text-xs font-medium px-3 py-1.5 rounded-full transition-all',
                     activeFilter === tab.key
-                      ? 'bg-civic/15 text-civic-light'
+                      ? 'bg-civic-muted text-civic-light'
                       : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
                   )}
                 >
@@ -400,7 +400,7 @@ export default function NotificationsPage() {
                 <div key={group.label}>
                   {/* Day header */}
                   <div className="sticky top-[105px] z-30 px-4 sm:px-6 py-2 bg-bg/90 backdrop-blur-sm border-b border-border-subtle/50">
-                    <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
                       {group.label}
                     </p>
                   </div>
@@ -444,7 +444,7 @@ export default function NotificationsPage() {
                               {n.metadata.preview}
                             </p>
                           )}
-                          <p className="text-[11px] text-text-muted mt-1">{formatRelativeTime(n.createdAt)}</p>
+                          <p className="text-xs text-text-muted mt-1">{formatRelativeTime(n.createdAt)}</p>
                         </div>
 
                         {/* Unread dot + dismiss button */}
@@ -472,7 +472,7 @@ export default function NotificationsPage() {
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="flex items-center gap-1.5 text-xs font-medium text-civic-light hover:text-civic px-4 py-2 rounded-lg hover:bg-civic/10 transition-all"
+                    className="flex items-center gap-1.5 text-xs font-medium text-civic-light hover:text-civic px-4 py-2 rounded-lg hover:bg-civic-subtle transition-all"
                   >
                     {loadingMore ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />

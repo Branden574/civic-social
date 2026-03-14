@@ -169,7 +169,7 @@ export function NewPostsBanner({ visible, count, onClick }: NewPostsBannerProps)
         triggerHaptic('light');
         onClick();
       }}
-      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-civic/10 text-civic-light text-sm font-semibold border-b border-civic/20 hover:bg-civic/15 transition-all duration-200 animate-slide-down cursor-pointer active:scale-[0.99]"
+      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-civic-subtle text-civic-light text-sm font-semibold border-b border-civic/20 hover:bg-civic-muted transition-all duration-200 animate-slide-down cursor-pointer active:scale-[0.99]"
     >
       <span className="w-1.5 h-1.5 rounded-full bg-civic animate-pulse" />
       {count ? `${count} new posts` : 'New posts available'}
@@ -231,7 +231,7 @@ export function AnimatedTabBar({ tabs, activeTab, onChange }: AnimatedTabBarProp
         >
           {tab.label}
           {tab.count !== undefined && tab.count > 0 && (
-            <span className="text-[10px] font-bold px-1 py-0.5 rounded-full bg-civic/15 text-civic-light min-w-[18px] text-center">
+            <span className="text-xs font-bold px-1 py-0.5 rounded-full bg-civic-muted text-civic-light min-w-[18px] text-center">
               {tab.count}
             </span>
           )}

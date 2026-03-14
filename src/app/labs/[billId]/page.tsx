@@ -84,7 +84,7 @@ export default function LegacyBillDetailPage() {
                   <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
                     H.R. 1 — 119th Congress
                   </p>
-                  <p className="text-[11px] text-text-muted font-mono">
+                  <p className="text-xs text-text-muted font-mono">
                     /legislation/US/119/hr/1
                   </p>
                 </div>
@@ -99,7 +99,7 @@ export default function LegacyBillDetailPage() {
                   <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
                     S. 5 — 119th Congress
                   </p>
-                  <p className="text-[11px] text-text-muted font-mono">
+                  <p className="text-xs text-text-muted font-mono">
                     /legislation/US/119/s/5
                   </p>
                 </div>
@@ -114,7 +114,7 @@ export default function LegacyBillDetailPage() {
                   <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
                     H.R. 22 — 119th Congress
                   </p>
-                  <p className="text-[11px] text-text-muted font-mono">
+                  <p className="text-xs text-text-muted font-mono">
                     /legislation/US/119/hr/22
                   </p>
                 </div>

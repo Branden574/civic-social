@@ -56,7 +56,7 @@ export default function AdminLegislationPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-civic/15 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-civic-muted flex items-center justify-center">
                 <Shield className="w-5 h-5 text-civic-light" />
               </div>
               <div>
@@ -136,7 +136,7 @@ export default function AdminLegislationPage() {
                     Mismatch Detection
                   </h3>
                   <span className={clsx(
-                    'ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full',
+                    'ml-auto text-xs font-bold px-2 py-0.5 rounded-full',
                     mismatchEvents.length === 0
                       ? 'bg-positive/10 text-positive-light'
                       : 'bg-danger/10 text-danger-light',
@@ -160,7 +160,7 @@ export default function AdminLegislationPage() {
                           <p className="text-xs text-text-primary font-mono">
                             {event.canonicalKey}
                           </p>
-                          <p className="text-[10px] text-text-muted">
+                          <p className="text-xs text-text-muted">
                             {event.mismatchDetails} · {new Date(event.timestamp).toLocaleString()}
                           </p>
                         </div>
@@ -221,7 +221,7 @@ export default function AdminLegislationPage() {
                   <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">
                     Recent Sync Log
                   </h3>
-                  <span className="text-[10px] text-text-muted ml-auto">
+                  <span className="text-xs text-text-muted ml-auto">
                     {syncLog.length} entries
                   </span>
                 </div>
@@ -239,7 +239,7 @@ export default function AdminLegislationPage() {
                         ) : (
                           <XCircle className="w-3 h-3 text-danger-light shrink-0" />
                         )}
-                        <span className="font-mono text-[10px] text-text-muted w-36 shrink-0 truncate">
+                        <span className="font-mono text-xs text-text-muted w-36 shrink-0 truncate">
                           {entry.canonicalKey}
                         </span>
                         <span className="text-text-secondary flex-1 min-w-0 truncate">
@@ -247,7 +247,7 @@ export default function AdminLegislationPage() {
                             ? `OK (${entry.durationMs}ms)`
                             : entry.error || 'Error'}
                         </span>
-                        <span className="text-[10px] text-text-muted shrink-0">
+                        <span className="text-xs text-text-muted shrink-0">
                           {new Date(entry.timestamp).toLocaleTimeString()}
                         </span>
                       </div>
@@ -287,7 +287,7 @@ function HealthCard({
     <div className="p-3 bg-surface-elevated rounded-xl border border-border-subtle">
       <Icon className={clsx('w-4 h-4 mb-1', colorClasses[color])} />
       <p className={clsx('text-lg font-bold', colorClasses[color])}>{value}</p>
-      <p className="text-[10px] text-text-muted uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-text-muted uppercase tracking-wider">{label}</p>
     </div>
   );
 }

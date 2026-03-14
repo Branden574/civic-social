@@ -172,7 +172,7 @@ export default function DebatesPage() {
               </button>
             </div>
             {/* Format explainer */}
-            <div className="flex items-center gap-2 sm:gap-3 mt-3 text-[11px] text-text-muted flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 mt-3 text-xs text-text-muted flex-wrap">
               <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-warning" />Opening</span>
               <span>→</span><span>Rebuttal</span><span>→</span><span className="hidden sm:inline">Cross-Exam</span><span className="sm:hidden">X-Exam</span><span>→</span><span>Closing</span><span>→</span><span>Sources</span>
             </div>
@@ -190,7 +190,7 @@ export default function DebatesPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <Flame className="w-4 h-4 text-warning" />
                     <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Popular Debates</h2>
-                    <span className="text-[10px] text-text-muted ml-1">Most spectators</span>
+                    <span className="text-xs text-text-muted ml-1">Most spectators</span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {popular.map((debate) => (
@@ -206,7 +206,7 @@ export default function DebatesPage() {
                   <div className="flex items-center gap-2 px-4 sm:px-6 pt-5 pb-2">
                     <span className="w-2 h-2 rounded-full bg-danger animate-pulse" />
                     <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Live Now</h2>
-                    <span className="text-[10px] text-text-muted">{liveDebates.length} active</span>
+                    <span className="text-xs text-text-muted">{liveDebates.length} active</span>
                   </div>
                   <div className="divide-y divide-border-subtle">
                     {liveDebates.map((debate, i) => (
@@ -288,11 +288,11 @@ function PopularCard({ debate }: { debate: Debate }) {
       className="block p-4 bg-surface-elevated rounded-xl border border-border-subtle hover:border-civic/30 transition-all group"
     >
       <div className="flex items-center justify-between mb-2">
-        <span className={clsx('flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md', status.color)}>
+        <span className={clsx('flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded-md', status.color)}>
           <span className={clsx('w-1.5 h-1.5 rounded-full', status.dot)} />
           {status.label}
         </span>
-        <span className="flex items-center gap-1 text-[11px] text-text-muted">
+        <span className="flex items-center gap-1 text-xs text-text-muted">
           <Eye className="w-3 h-3" />
           <span className="font-semibold text-text-secondary">{debate.spectatorCount}</span>
         </span>
@@ -336,16 +336,16 @@ function DebateRow({ debate, index }: { debate: Debate; index: number }) {
       <div className="flex items-start gap-3 mb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className={clsx('flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md', status.color)}>
+            <span className={clsx('flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md', status.color)}>
               <span className={clsx('w-1.5 h-1.5 rounded-full', status.dot)} />
               {status.label}
             </span>
             {debate.status === 'live' && (
-              <span className="text-[10px] font-mono text-text-muted">
+              <span className="text-xs font-mono text-text-muted">
                 Stage: {debate.stages[debate.currentStageIndex]}
               </span>
             )}
-            <span className="text-[10px] text-text-muted flex items-center gap-0.5">
+            <span className="text-xs text-text-muted flex items-center gap-0.5">
               <Crown className="w-2.5 h-2.5 text-warning" />
               {debate.creatorName}
             </span>
@@ -412,7 +412,7 @@ function DebateRow({ debate, index }: { debate: Debate; index: number }) {
       {/* Topics */}
       <div className="flex flex-wrap gap-1.5 mb-3">
         {debate.topics.map((topic) => (
-          <span key={topic} className="text-[11px] font-medium text-civic-light bg-civic/8 px-2 py-0.5 rounded-full">
+          <span key={topic} className="text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full">
             #{topic}
           </span>
         ))}
