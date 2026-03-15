@@ -426,7 +426,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
             onClick={handlePost}
             disabled={!content.trim() || posting}
             className={clsx(
-              'px-5 py-1.5 rounded-full text-sm font-bold transition-all min-h-[36px]',
+              'px-5 py-1.5 rounded-full text-sm font-bold transition-colors min-h-[36px]',
               content.trim() && !posting
                 ? 'bg-civic text-white hover:bg-civic-dark'
                 : 'bg-surface-active text-text-muted cursor-not-allowed',
@@ -501,7 +501,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               {/* Article URL input */}
               {showUrlInput && (
                 <div className="mt-3 animate-fade-in">
-                  <div className="flex items-center gap-2 p-3 bg-surface-elevated rounded-lg border border-border-subtle">
+                  <div className="flex items-center gap-2 p-3 bg-surface-elevated rounded-xl border border-border-subtle">
                     <Globe className="w-4 h-4 text-text-muted shrink-0" />
                     <input
                       type="url"
@@ -517,8 +517,8 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                     )}
                   </div>
                   {articleUrl && (
-                    <div className="mt-2 p-3 bg-surface rounded-lg border border-border-subtle">
-                      <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Article Preview</p>
+                    <div className="mt-2 p-3 bg-surface rounded-xl border border-border-subtle">
+                      <p className="text-xs font-semibold text-text-muted mb-1">Article Preview</p>
                       <p className="text-sm text-civic-light truncate">{articleUrl}</p>
                       <p className="text-xs text-text-muted mt-0.5">Article URL will be attached to your post</p>
                     </div>
@@ -530,7 +530,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
               {showTopics && (
                 <div className="mt-3 animate-fade-in">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="flex items-center gap-1.5 flex-1 p-2 bg-surface-elevated rounded-lg border border-border-subtle">
+                    <div className="flex items-center gap-1.5 flex-1 p-2 bg-surface-elevated rounded-xl border border-border-subtle">
                       <Hash className="w-4 h-4 text-text-muted shrink-0" />
                       <input
                         type="text"
@@ -544,19 +544,19 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                     <button
                       onClick={() => dispatch({ type: 'ADD_HASHTAG', payload: hashtagInput })}
                       disabled={!hashtagInput.trim()}
-                      className="px-3 py-2 bg-civic-subtle text-civic-light text-xs font-semibold rounded-lg hover:bg-civic-muted transition-colors disabled:opacity-40 min-h-[44px]"
+                      className="px-3 py-2 bg-civic-subtle text-civic-light text-xs font-semibold rounded-xl hover:bg-civic-muted transition-colors disabled:opacity-40 min-h-[44px]"
                     >
                       Add
                     </button>
                   </div>
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Suggested Topics</p>
+                  <p className="text-xs font-semibold text-text-muted mb-1.5">Suggested Topics</p>
                   <div className="flex flex-wrap gap-1.5">
                     {SUGGESTED_TOPICS.map((topic) => (
                       <button
                         key={topic}
                         onClick={() => dispatch({ type: 'TOGGLE_TOPIC', payload: topic })}
                         className={clsx(
-                          'text-xs font-medium px-2 py-1 rounded-full transition-all min-h-[32px]',
+                          'text-xs font-medium px-2 py-1 rounded-full transition-colors min-h-[32px]',
                           selectedTopics.includes(topic)
                             ? 'bg-civic text-white'
                             : 'bg-surface-active text-text-secondary hover:bg-surface-hover',
@@ -598,7 +598,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
             <div className="mt-4 animate-fade-in">
               <div
                 className={clsx(
-                  'p-3 rounded-lg border',
+                  'p-3 rounded-xl border',
                   civility.score >= 0.8
                     ? 'bg-positive/5 border-positive/20'
                     : civility.score >= 0.5
@@ -620,7 +620,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
                   <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden ml-2">
                     <div
                       className={clsx(
-                        'h-full rounded-full transition-all duration-500',
+                        'h-full rounded-full transition-colors duration-500',
                         civility.score >= 0.8 ? 'bg-positive' : civility.score >= 0.5 ? 'bg-warning' : 'bg-danger',
                       )}
                       style={{ width: `${Math.round(civility.score * 100)}%` }}
@@ -650,7 +650,7 @@ export function ComposeModal({ isOpen, onClose, onPostCreated, initialArticleUrl
           )}
 
           {submitError && (
-            <div className="mt-3 p-3 rounded-lg border border-danger/30 bg-danger/10 text-danger-light text-xs">
+            <div className="mt-3 p-3 rounded-xl border border-danger/30 bg-danger/10 text-danger-light text-xs">
               {submitError}
             </div>
           )}

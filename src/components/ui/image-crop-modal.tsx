@@ -217,7 +217,7 @@ export function ImageCropModal({
           </button>
           <div className="w-32 h-1.5 bg-surface-active rounded-full relative">
             <div
-              className="absolute h-full bg-civic rounded-full transition-all"
+              className="absolute h-full bg-civic rounded-full transition-colors"
               style={{ width: `${Math.min(100, (zoom / 3) * 100)}%` }}
             />
           </div>

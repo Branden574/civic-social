@@ -297,7 +297,7 @@ export default function NotificationsPage() {
         <div className="max-w-2xl mx-auto" ref={scrollRef}>
           {/* Header */}
           <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3">
+            <div className="flex items-center justify-between px-5 py-5">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-text-primary">Notifications</h2>
                 {unreadCount > 0 && (
@@ -311,7 +311,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="p-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-all"
+                  className="p-1.5 rounded-xl text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors"
                   aria-label="Refresh notifications"
                 >
                   <RefreshCw className={clsx('w-4 h-4', refreshing && 'animate-spin')} />
@@ -322,7 +322,7 @@ export default function NotificationsPage() {
                   onClick={handleMarkAllRead}
                   disabled={markingRead || unreadCount === 0}
                   className={clsx(
-                    'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all',
+                    'flex items-center gap-1 text-xs font-medium px-3 py-2.5 rounded-xl transition-colors',
                     unreadCount > 0
                       ? 'text-civic-light hover:bg-civic-subtle'
                       : 'text-text-muted cursor-not-allowed',
@@ -345,7 +345,7 @@ export default function NotificationsPage() {
                   key={tab.key}
                   onClick={() => setActiveFilter(tab.key)}
                   className={clsx(
-                    'text-xs font-medium px-3 py-1.5 rounded-full transition-all',
+                    'text-xs font-medium px-3 py-1.5 rounded-full transition-colors',
                     activeFilter === tab.key
                       ? 'bg-civic-muted text-civic-light'
                       : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
@@ -400,7 +400,7 @@ export default function NotificationsPage() {
                 <div key={group.label}>
                   {/* Day header */}
                   <div className="sticky top-[105px] z-30 px-4 sm:px-6 py-2 bg-bg/90 backdrop-blur-sm border-b border-border-subtle/50">
-                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                    <p className="text-xs font-semibold text-text-muted">
                       {group.label}
                     </p>
                   </div>
@@ -427,7 +427,7 @@ export default function NotificationsPage() {
                         style={{ animationDelay: `${(gi * 10 + i) * 30}ms`, animationFillMode: 'forwards' }}
                       >
                         {/* Icon */}
-                        <div className={clsx('w-9 h-9 rounded-full flex items-center justify-center shrink-0', config.color)}>
+                        <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', config.color)}>
                           <Icon className="w-4 h-4" />
                         </div>
 
@@ -454,7 +454,7 @@ export default function NotificationsPage() {
                           )}
                           <button
                             onClick={(e) => handleDismiss(e, n)}
-                            className="p-1 rounded-md text-text-muted/0 group-hover:text-text-muted hover:!text-text-primary hover:bg-surface-active transition-all"
+                            className="p-1 rounded-md text-text-muted/0 group-hover:text-text-muted hover:!text-text-primary hover:bg-surface-active transition-colors"
                             aria-label="Dismiss notification"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -472,7 +472,7 @@ export default function NotificationsPage() {
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="flex items-center gap-1.5 text-xs font-medium text-civic-light hover:text-civic px-4 py-2 rounded-lg hover:bg-civic-subtle transition-all"
+                    className="flex items-center gap-1.5 text-xs font-medium text-civic-light hover:text-civic px-4 py-2 rounded-xl hover:bg-civic-subtle transition-colors"
                   >
                     {loadingMore ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />

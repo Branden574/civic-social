@@ -28,7 +28,7 @@ export default function HomePage() {
         <FeedView />
       </main>
       {/* Right panel — trending / suggested (desktop only) */}
-      <aside className="hidden xl:block w-[300px] p-5 sticky top-0 h-screen overflow-y-auto">
+      <aside className="hidden xl:block w-[300px] p-6 sticky top-0 h-screen overflow-y-auto">
         <TrendingPanel />
       </aside>
       <MobileNav onCompose={() => setComposeOpen(true)} />
@@ -97,10 +97,10 @@ function TrendingPanel() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Trending */}
-      <div className="bg-surface-elevated rounded-2xl p-5">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">
+      <div className="bg-surface-elevated rounded-2xl p-6">
+        <h3 className="text-sm font-medium text-text-secondary mb-3">
           Trending Topics
         </h3>
         <div className="space-y-3">
@@ -120,8 +120,8 @@ function TrendingPanel() {
       </div>
 
       {/* Suggested */}
-      <div className="bg-surface-elevated rounded-2xl p-5">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">
+      <div className="bg-surface-elevated rounded-2xl p-6">
+        <h3 className="text-sm font-medium text-text-secondary mb-3">
           Suggested Voices
         </h3>
         <div className="space-y-3">

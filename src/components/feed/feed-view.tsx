@@ -294,7 +294,7 @@ export function FeedView() {
           <div className="hidden lg:block" />
           <div className="flex items-center gap-2">
             {/* Sort mode toggle */}
-            <div className="flex items-center bg-surface-elevated rounded-lg overflow-hidden">
+            <div className="flex items-center bg-surface-elevated rounded-xl overflow-hidden">
               <button
                 onClick={() => setSortMode('top')}
                 className={clsx(
@@ -325,7 +325,7 @@ export function FeedView() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-1.5 rounded-lg text-text-muted hover:text-civic-light hover:bg-surface-hover transition-colors disabled:opacity-50"
+              className="p-1.5 rounded-xl text-text-muted hover:text-civic-light hover:bg-surface-hover transition-colors disabled:opacity-50"
               title="Refresh feed"
             >
               <RefreshCw className={clsx('w-4 h-4', isRefreshing && 'animate-spin')} />
@@ -334,7 +334,7 @@ export function FeedView() {
             <button
               onClick={() => setShowDiversity(!showDiversity)}
               className={clsx(
-                'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors',
+                'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl transition-colors',
                 showDiversity
                   ? 'bg-civic-subtle text-civic-light'
                   : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
@@ -413,8 +413,8 @@ export function FeedView() {
               'flex items-center gap-2 px-5 py-2.5 mt-2',
               'bg-civic text-white text-sm font-semibold',
               'rounded-full shadow-lg',
-              'hover:bg-civic-dark active:scale-95',
-              'transition-all duration-200',
+              'hover:bg-civic-dark',
+              'transition-colors duration-200',
               'animate-slide-down cursor-pointer',
             )}
           >
@@ -431,7 +431,7 @@ export function FeedView() {
         <div className="mx-4 sm:mx-6 mt-4 p-5 bg-surface-elevated rounded-2xl animate-fade-in">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-4 h-4 text-civic-light" />
-            <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-text-primary">
               Feed Health Dashboard
             </h3>
           </div>
@@ -465,7 +465,7 @@ export function FeedView() {
 
           {/* Affiliation distribution */}
           <div className="mt-3 pt-3 border-t border-border-subtle">
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+            <p className="text-xs font-semibold text-text-muted mb-2">
               Viewpoint Distribution
             </p>
             <div className="flex gap-1 h-3 rounded-full overflow-hidden">
@@ -473,7 +473,7 @@ export function FeedView() {
                 ([aff, pct]) => (
                   <div
                     key={aff}
-                    className={clsx('rounded-full transition-all', getAffiliationBarColor(aff))}
+                    className={clsx('rounded-full transition-colors', getAffiliationBarColor(aff))}
                     style={{ width: `${Math.max(pct * 100, 5)}%` }}
                     title={`${aff}: ${Math.round(pct * 100)}%`}
                   />
@@ -523,7 +523,7 @@ export function FeedView() {
       {showScrollTop && !showNewPostsPill && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-36 right-4 lg:bottom-8 lg:right-8 z-50 w-10 h-10 bg-surface-elevated border border-border-subtle text-text-secondary rounded-full flex items-center justify-center shadow-lg hover:bg-surface-hover hover:text-civic-light transition-all active:scale-95"
+          className="fixed bottom-36 right-4 lg:bottom-8 lg:right-8 z-50 w-10 h-10 bg-surface-elevated border border-border-subtle text-text-secondary rounded-full flex items-center justify-center shadow-lg hover:bg-surface-hover hover:text-civic-light transition-colors"
           title="Jump to top"
         >
           <ChevronUp className="w-5 h-5" />
@@ -558,7 +558,7 @@ function MetricCard({
 }) {
   return (
     <div className="p-3 bg-surface rounded-xl">
-      <p className="text-xs text-text-muted font-medium uppercase tracking-wider">
+      <p className="text-xs text-text-muted font-medium">
         {label}
       </p>
       <p

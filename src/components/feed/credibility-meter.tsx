@@ -139,7 +139,7 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
       <button
         onClick={() => setExpanded(!expanded)}
         className={clsx(
-          'flex items-center gap-2 w-full px-3 py-2 rounded-lg border transition-all',
+          'flex items-center gap-2 w-full px-3 py-2 rounded-xl border transition-colors',
           level.bgColor,
           level.borderColor,
           'hover:opacity-90',
@@ -154,7 +154,7 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
             <div className="flex-1 h-1.5 bg-surface-active/50 rounded-full overflow-hidden max-w-20">
               <div
                 className={clsx(
-                  'h-full rounded-full transition-all duration-700',
+                  'h-full rounded-full transition-colors duration-700',
                   score >= 0.8
                     ? 'bg-positive'
                     : score >= 0.6
@@ -182,8 +182,8 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
 
       {/* Expanded breakdown */}
       {expanded && (
-        <div className="mt-2 p-3 bg-surface-elevated rounded-lg border border-border-subtle animate-fade-in space-y-2.5">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+        <div className="mt-2 p-3 bg-surface-elevated rounded-xl border border-border-subtle animate-fade-in space-y-2.5">
+          <p className="text-xs font-semibold text-text-muted">
             Credibility Breakdown
           </p>
 
@@ -258,7 +258,7 @@ function BreakdownRow({
       <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
         <div
           className={clsx(
-            'h-full rounded-full transition-all duration-500',
+            'h-full rounded-full transition-colors duration-500',
             isWarning
               ? 'bg-warning'
               : value >= 0.7

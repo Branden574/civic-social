@@ -119,7 +119,7 @@ export default function NewsPage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-5 sm:px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Newspaper className="w-5 h-5 text-civic-light" />
@@ -136,7 +136,7 @@ export default function NewsPage() {
                 <button
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-muted hover:text-civic-light border border-border-subtle rounded-lg hover:border-civic/30 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-muted hover:text-civic-light border border-border-subtle rounded-xl hover:border-civic/30 transition-colors disabled:opacity-50"
                   title="Refresh from news sources"
                 >
                   <RefreshCw className={clsx('w-3.5 h-3.5', refreshing && 'animate-spin')} />
@@ -153,7 +153,7 @@ export default function NewsPage() {
             </div>
             {/* Source badges */}
             <div className="flex items-center gap-2 mt-3 text-xs text-text-muted overflow-x-auto">
-              <span className="shrink-0 font-semibold uppercase tracking-wider">Sources:</span>
+              <span className="shrink-0 font-semibold">Sources:</span>
               {['AP', 'Reuters', 'NPR', 'PBS', 'BBC'].map((s) => (
                 <span key={s} className="shrink-0 px-2 py-0.5 rounded-full bg-surface-elevated border border-border-subtle font-medium">{s}</span>
               ))}
@@ -260,10 +260,10 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
           </a>
 
           {/* AI Summary */}
-          <div className="bg-surface-elevated rounded-lg p-3 mb-3 border border-border-subtle">
+          <div className="bg-surface-elevated rounded-xl p-3 mb-3 border border-border-subtle">
             <div className="flex items-center gap-1.5 mb-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-civic animate-pulse" />
-              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+              <span className="text-xs font-semibold text-text-muted">
                 AI Summary · Neutral Tone
               </span>
             </div>
@@ -275,7 +275,7 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
           {/* Multiple Perspectives Panel */}
           <button
             onClick={() => setShowPerspectives(!showPerspectives)}
-            className="flex items-center gap-2 w-full text-left mb-3 px-3 py-2 bg-surface rounded-lg border border-border-subtle hover:bg-surface-hover transition-colors"
+            className="flex items-center gap-2 w-full text-left mb-3 px-3 py-2 bg-surface rounded-xl border border-border-subtle hover:bg-surface-hover transition-colors"
           >
             <Eye className="w-4 h-4 text-civic-light shrink-0" />
             <span className="text-xs font-semibold text-text-primary flex-1">
@@ -294,7 +294,7 @@ function NewsArticleCard({ article, index, onDiscuss }: { article: NewsArticle; 
               {perspectives.map((p) => (
                 <div
                   key={p.ideology}
-                  className="flex items-start gap-2.5 px-3 py-2.5 bg-surface-elevated rounded-lg border border-border-subtle"
+                  className="flex items-start gap-2.5 px-3 py-2.5 bg-surface-elevated rounded-xl border border-border-subtle"
                 >
                   <div className={clsx('w-2 h-2 rounded-full mt-1.5 shrink-0', p.color)} />
                   <div className="flex-1 min-w-0">

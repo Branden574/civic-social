@@ -161,7 +161,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -192,7 +192,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
           {/* Cooldown notice */}
           {cooldown > 0 && (
-            <div className="flex items-center gap-3 p-3 bg-warning/5 border border-warning/20 rounded-lg animate-fade-in">
+            <div className="flex items-center gap-3 p-3 bg-warning/5 border border-warning/20 rounded-xl animate-fade-in">
               <Clock className="w-4 h-4 text-warning-light shrink-0" />
               <div className="flex-1">
                 <p className="text-xs font-semibold text-warning-light">
@@ -215,7 +215,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                 <span className="w-5 h-5 rounded-md bg-civic-subtle flex items-center justify-center text-xs font-bold text-civic-light">
                   1
                 </span>
-                <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-primary">
                   Claim
                 </span>
                 <span className="text-xs text-danger-light">*</span>
@@ -240,7 +240,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
               }}
               placeholder="What is your core argument? Be specific and direct..."
               maxLength={500}
-              className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
+              className="w-full bg-surface rounded-xl border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
             />
           </div>
 
@@ -251,7 +251,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                 <span className="w-5 h-5 rounded-md bg-civic-subtle flex items-center justify-center text-xs font-bold text-civic-light">
                   2
                 </span>
-                <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-primary">
                   Evidence
                 </span>
                 <span className="text-xs text-danger-light">*</span>
@@ -276,10 +276,10 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
               }}
               placeholder="What data, research, or examples support your position?"
               maxLength={1000}
-              className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
+              className="w-full bg-surface rounded-xl border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
             />
             {/* Source URL input */}
-            <div className="flex items-center gap-2 mt-2 p-2.5 bg-surface rounded-lg border border-border-subtle">
+            <div className="flex items-center gap-2 mt-2 p-2.5 bg-surface rounded-xl border border-border-subtle">
               <Link2 className="w-4 h-4 text-text-muted shrink-0" />
               <input
                 type="url"
@@ -306,7 +306,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                 <span className="w-5 h-5 rounded-md bg-civic-subtle flex items-center justify-center text-xs font-bold text-civic-light">
                   3
                 </span>
-                <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                <span className="text-xs font-semibold text-text-primary">
                   Reasoning
                 </span>
                 <span className="text-xs text-danger-light">*</span>
@@ -331,7 +331,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
               }}
               placeholder="How does your evidence support your claim? What's the logical connection?"
               maxLength={1000}
-              className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
+              className="w-full bg-surface rounded-xl border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
             />
           </div>
 
@@ -357,7 +357,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                 )}
               >
                 <div
-                  className="w-3.5 h-3.5 rounded-full bg-white absolute top-[3px] transition-all duration-200"
+                  className="w-3.5 h-3.5 rounded-full bg-white absolute top-[3px] transition-colors duration-200"
                   style={{ left: steelmanEnabled ? '18px' : '3px' }}
                 />
               </div>
@@ -373,7 +373,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
                   }}
                   placeholder="Before responding, summarize your opponent's strongest argument..."
                   maxLength={500}
-                  className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[60px]"
+                  className="w-full bg-surface rounded-xl border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[60px]"
                 />
                 <div className="flex items-center justify-between mt-1.5">
                   <p className="text-xs text-text-muted flex items-center gap-1">
@@ -392,7 +392,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
           {civility.level !== 'green' && allText.length > 20 && (
             <div
               className={clsx(
-                'flex items-start gap-2.5 p-3 rounded-lg border animate-fade-in',
+                'flex items-start gap-2.5 p-3 rounded-xl border animate-fade-in',
                 civility.level === 'yellow'
                   ? 'bg-warning/5 border-warning/20'
                   : 'bg-danger/5 border-danger/20',
@@ -427,7 +427,7 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
         <div className="flex items-center justify-between px-4 py-3 border-t border-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg transition-colors"
+            className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-xl transition-colors"
           >
             Cancel
           </button>
@@ -446,9 +446,9 @@ export function DebateComposer({ isOpen, onClose, debateTitle }: DebateComposerP
               onClick={handleSubmit}
               disabled={!isValid || posting || cooldown > 0}
               className={clsx(
-                'flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-all',
+                'flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-colors',
                 isValid && !posting && cooldown === 0
-                  ? 'bg-civic text-white hover:bg-civic-dark hover:shadow-glow active:scale-[0.98]'
+                  ? 'bg-civic text-white hover:bg-civic-dark'
                   : 'bg-surface-active text-text-muted cursor-not-allowed',
               )}
             >

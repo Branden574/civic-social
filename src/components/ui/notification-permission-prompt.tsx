@@ -126,7 +126,7 @@ export function NotificationPermissionPrompt({ authenticated }: { authenticated:
           </div>
           <button
             onClick={handleDismiss}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
             aria-label="Dismiss"
           >
             <X className="w-4 h-4" />
@@ -140,7 +140,7 @@ export function NotificationPermissionPrompt({ authenticated }: { authenticated:
               <p className="text-xs text-text-secondary mb-3">
                 Notifications are currently blocked. To re-enable them, open your browser settings and allow notifications for this site.
               </p>
-              <div className="flex items-start gap-2 p-2.5 bg-surface-active rounded-lg mb-3">
+              <div className="flex items-start gap-2 p-2.5 bg-surface-active rounded-xl mb-3">
                 <Settings className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                 <p className="text-xs text-text-muted">
                   <strong>Chrome:</strong> Click the lock icon in the address bar &gt; Site settings &gt; Notifications &gt; Allow
@@ -153,15 +153,15 @@ export function NotificationPermissionPrompt({ authenticated }: { authenticated:
                 To get notifications on iPhone/iPad, add Civic Social to your Home Screen first:
               </p>
               <div className="space-y-2 mb-3">
-                <div className="flex items-start gap-2 p-2 bg-surface-active rounded-lg">
+                <div className="flex items-start gap-2 p-2 bg-surface-active rounded-xl">
                   <span className="text-xs font-semibold text-civic-light shrink-0">1.</span>
                   <p className="text-xs text-text-muted">Tap the Share button in Safari</p>
                 </div>
-                <div className="flex items-start gap-2 p-2 bg-surface-active rounded-lg">
+                <div className="flex items-start gap-2 p-2 bg-surface-active rounded-xl">
                   <span className="text-xs font-semibold text-civic-light shrink-0">2.</span>
                   <p className="text-xs text-text-muted">Tap &quot;Add to Home Screen&quot;</p>
                 </div>
-                <div className="flex items-start gap-2 p-2 bg-surface-active rounded-lg">
+                <div className="flex items-start gap-2 p-2 bg-surface-active rounded-xl">
                   <span className="text-xs font-semibold text-civic-light shrink-0">3.</span>
                   <p className="text-xs text-text-muted">Open the app from your Home Screen, then enable notifications</p>
                 </div>
@@ -194,7 +194,7 @@ export function NotificationPermissionPrompt({ authenticated }: { authenticated:
           <div className="flex gap-2">
             <button
               onClick={handleDismiss}
-              className="flex-1 py-2 rounded-lg text-xs font-medium text-text-muted hover:bg-surface-hover transition-colors"
+              className="flex-1 py-2 rounded-xl text-xs font-medium text-text-muted hover:bg-surface-hover transition-colors"
             >
               Not now
             </button>
@@ -203,7 +203,7 @@ export function NotificationPermissionPrompt({ authenticated }: { authenticated:
                 onClick={handleEnable}
                 disabled={requesting}
                 className={clsx(
-                  'flex-1 py-2 rounded-lg text-xs font-semibold transition-all',
+                  'flex-1 py-2 rounded-xl text-xs font-semibold transition-colors',
                   requesting ? 'bg-surface-active text-text-muted' : 'bg-civic text-white hover:bg-civic-dark',
                 )}
               >

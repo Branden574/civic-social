@@ -17,14 +17,14 @@ export default function SettingsPage() {
       <Sidebar />
       <main className="flex-1 min-w-0">
         <div className="max-w-2xl mx-auto">
-          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-5 sm:px-6 py-5">
             <div className="flex items-center gap-3">
               <Settings className="w-5 h-5 text-civic-light" />
               <h1 className="text-lg font-bold text-text-primary">Settings</h1>
             </div>
           </header>
 
-          <div className="px-4 sm:px-6 py-6 space-y-6">
+          <div className="px-5 sm:px-6 py-8 space-y-8">
             {/* Profile Photo & Banner */}
             <ProfileMediaSection />
 
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                   <p className="text-sm text-text-primary font-medium">Language</p>
                   <p className="text-xs text-text-muted">Interface language</p>
                 </div>
-                <select className="bg-surface-elevated border border-border text-text-primary text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50">
+                <select className="bg-surface-elevated border border-border text-text-primary text-sm rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50">
                   <option>English (US)</option>
                   <option>English (UK)</option>
                   <option>Español</option>
@@ -130,7 +130,7 @@ export default function SettingsPage() {
 
             {/* Data */}
             <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
-              <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider mb-4">
+              <h3 className="text-sm font-semibold text-text-primary mb-4">
                 Your Data
               </h3>
               <div className="space-y-3">
@@ -171,7 +171,7 @@ function SettingsSection({
     <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
       <div className="flex items-center gap-2 mb-4">
         <Icon className="w-4 h-4 text-civic-light" />
-        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-text-primary">
           {title}
         </h3>
       </div>
@@ -208,7 +208,7 @@ function ToggleSetting({
         )}
       >
         <div
-          className="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all"
+          className="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-colors"
           style={{ left: enabled ? '22px' : '2px' }}
         />
       </button>
@@ -359,7 +359,7 @@ function ProfileMediaSection() {
     <div className="bg-surface-elevated rounded-xl border border-border-subtle overflow-hidden">
       <div className="flex items-center gap-2 px-5 pt-5 mb-4">
         <Camera className="w-4 h-4 text-civic-light" />
-        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-text-primary">
           Profile Photo & Banner
         </h3>
       </div>
@@ -432,7 +432,7 @@ function ProfileMediaSection() {
       </div>
 
       {error && (
-        <div className="mx-5 mb-5 p-3 bg-danger/5 border border-danger/20 rounded-lg text-xs text-danger-light">
+        <div className="mx-5 mb-5 p-3 bg-danger/5 border border-danger/20 rounded-xl text-xs text-danger-light">
           {error}
         </div>
       )}
@@ -497,7 +497,7 @@ function BioSection() {
     <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
       <div className="flex items-center gap-2 mb-4">
         <PenLine className="w-4 h-4 text-civic-light" />
-        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-text-primary">
           Bio
         </h3>
       </div>
@@ -506,7 +506,7 @@ function BioSection() {
         onChange={(e) => setBio(e.target.value.slice(0, 300))}
         placeholder="Tell others about yourself, your interests, and what topics you care about..."
         rows={3}
-        className="w-full bg-surface border border-border text-text-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted resize-none"
+        className="w-full bg-surface border border-border text-text-primary text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted resize-none"
       />
       <div className="flex items-center justify-between mt-2">
         <span className="text-xs text-text-muted">{bio.length}/300</span>
@@ -521,7 +521,7 @@ function BioSection() {
             onClick={handleSave}
             disabled={saving || !hasChanged}
             className={clsx(
-              'px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors',
+              'px-4 py-1.5 text-sm font-semibold rounded-xl transition-colors',
               hasChanged
                 ? 'bg-civic text-white hover:bg-civic-dark'
                 : 'bg-surface-active text-text-muted cursor-not-allowed',
@@ -602,7 +602,7 @@ function TopicsSection() {
     <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
       <div className="flex items-center gap-2 mb-1">
         <Hash className="w-4 h-4 text-civic-light" />
-        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-text-primary">
           Topics & Interests
         </h3>
       </div>
@@ -649,11 +649,11 @@ function TopicsSection() {
           onChange={(e) => setCustomTopic(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addCustomTopic()}
           placeholder="Add custom topic..."
-          className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
+          className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
         />
         <button
           onClick={addCustomTopic}
-          className="p-1.5 bg-surface border border-border-subtle rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-primary"
+          className="p-1.5 bg-surface border border-border-subtle rounded-xl hover:bg-surface-hover text-text-muted hover:text-text-primary"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
@@ -673,7 +673,7 @@ function TopicsSection() {
             onClick={handleSave}
             disabled={saving || !hasChanged}
             className={clsx(
-              'px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors',
+              'px-4 py-1.5 text-sm font-semibold rounded-xl transition-colors',
               hasChanged
                 ? 'bg-civic text-white hover:bg-civic-dark'
                 : 'bg-surface-active text-text-muted cursor-not-allowed',
@@ -694,7 +694,7 @@ function NotificationSoundSetting() {
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-3">
         <div className={clsx(
-          'w-7 h-7 rounded-lg flex items-center justify-center',
+          'w-7 h-7 rounded-xl flex items-center justify-center',
           soundEnabled ? 'bg-civic-subtle text-civic-light' : 'bg-surface-active text-text-muted',
         )}>
           {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
@@ -712,7 +712,7 @@ function NotificationSoundSetting() {
         )}
       >
         <div
-          className="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all"
+          className="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-colors"
           style={{ left: soundEnabled ? '22px' : '2px' }}
         />
       </button>
@@ -743,7 +743,7 @@ function MuteFiltersSection() {
     <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
       <div className="flex items-center gap-2 mb-4">
         <VolumeX className="w-4 h-4 text-civic-light" />
-        <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-text-primary">
           Mute Filters
         </h3>
       </div>
@@ -770,11 +770,11 @@ function MuteFiltersSection() {
               onChange={(e) => setNewTopic(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addItem(mutedTopics, setMutedTopics, newTopic, setNewTopic)}
               placeholder="Add topic to mute..."
-              className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
+              className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
             />
             <button
               onClick={() => addItem(mutedTopics, setMutedTopics, newTopic, setNewTopic)}
-              className="p-1.5 bg-surface border border-border-subtle rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-primary"
+              className="p-1.5 bg-surface border border-border-subtle rounded-xl hover:bg-surface-hover text-text-muted hover:text-text-primary"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -800,11 +800,11 @@ function MuteFiltersSection() {
               onChange={(e) => setNewKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addItem(mutedKeywords, setMutedKeywords, newKeyword, setNewKeyword)}
               placeholder="Add keyword to mute..."
-              className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
+              className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
             />
             <button
               onClick={() => addItem(mutedKeywords, setMutedKeywords, newKeyword, setNewKeyword)}
-              className="p-1.5 bg-surface border border-border-subtle rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-primary"
+              className="p-1.5 bg-surface border border-border-subtle rounded-xl hover:bg-surface-hover text-text-muted hover:text-text-primary"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -830,11 +830,11 @@ function MuteFiltersSection() {
               onChange={(e) => setNewAccount(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addItem(mutedAccounts, setMutedAccounts, newAccount, setNewAccount)}
               placeholder="@username to mute..."
-              className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
+              className="flex-1 bg-surface border border-border text-text-primary text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic/50 placeholder:text-text-muted"
             />
             <button
               onClick={() => addItem(mutedAccounts, setMutedAccounts, newAccount, setNewAccount)}
-              className="p-1.5 bg-surface border border-border-subtle rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-primary"
+              className="p-1.5 bg-surface border border-border-subtle rounded-xl hover:bg-surface-hover text-text-muted hover:text-text-primary"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -895,7 +895,7 @@ function ThemeToggleSetting() {
               key={opt.value}
               onClick={() => setPreference(opt.value)}
               className={clsx(
-                'relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
+                'relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-colors duration-200',
                 isSelected
                   ? 'border-civic bg-civic-subtle shadow-[0_0_0_1px_var(--color-civic)]'
                   : 'border-border-subtle hover:border-border hover:bg-surface-hover',
@@ -910,7 +910,7 @@ function ThemeToggleSetting() {
 
               {/* Mini preview card */}
               <div
-                className="w-full aspect-[4/3] rounded-lg border overflow-hidden flex flex-col"
+                className="w-full aspect-[4/3] rounded-xl border overflow-hidden flex flex-col"
                 style={{
                   background: opt.value === 'system' ? opt.preview.bg : opt.preview.bg,
                   borderColor: opt.value === 'system' ? '#555' : opt.preview.border,
@@ -971,7 +971,7 @@ function ThemeToggleSetting() {
       </div>
 
       {/* Current status */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-surface rounded-lg border border-border-subtle">
+      <div className="flex items-center gap-2 px-3 py-2 bg-surface rounded-xl border border-border-subtle">
         <div className={clsx(
           'w-2 h-2 rounded-full',
           theme === 'dark' ? 'bg-civic-light' : 'bg-warning',

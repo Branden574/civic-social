@@ -148,7 +148,7 @@ export default function SearchPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search posts, people, topics..."
-                  className="w-full bg-surface-elevated border border-border-subtle rounded-xl pl-10 pr-10 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/40 transition-all"
+                  className="w-full bg-surface-elevated border border-border-subtle rounded-xl pl-10 pr-10 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/40 transition-colors"
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
@@ -156,7 +156,7 @@ export default function SearchPage() {
                 {query && (
                   <button
                     onClick={clearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 -mr-1.5 rounded-lg text-text-muted hover:text-text-primary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 -mr-1.5 rounded-xl text-text-muted hover:text-text-primary transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -172,7 +172,7 @@ export default function SearchPage() {
                     key={topic}
                     onClick={() => toggleTopic(topic)}
                     className={clsx(
-                      'text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-all min-h-[36px]',
+                      'text-xs font-medium px-3 py-1.5 rounded-full whitespace-nowrap transition-colors min-h-[36px]',
                       selectedTopics.has(topic)
                         ? 'bg-civic text-white'
                         : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover hover:text-text-primary',
@@ -211,7 +211,7 @@ export default function SearchPage() {
                     key={s}
                     onClick={() => setSearchScope(s)}
                     className={clsx(
-                      'text-xs font-medium px-3 py-1.5 rounded-lg transition-all min-h-[36px]',
+                      'text-xs font-medium px-3 py-1.5 rounded-xl transition-colors min-h-[36px]',
                       searchScope === s
                         ? 'bg-civic-subtle text-civic-light font-semibold'
                         : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
@@ -258,7 +258,7 @@ export default function SearchPage() {
                 <div>
                   {activeTab === 'all' && (
                     <div className="px-4 sm:px-6 pt-4 pb-2 flex items-center justify-between">
-                      <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">People</h3>
+                      <h3 className="text-xs font-semibold text-text-muted">People</h3>
                       {people.length >= 3 && (
                         <button
                           onClick={() => setActiveTab('people')}
@@ -282,7 +282,7 @@ export default function SearchPage() {
                 <div>
                   {activeTab === 'all' && (
                     <div className="px-4 sm:px-6 pt-6 pb-2">
-                      <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">Posts</h3>
+                      <h3 className="text-xs font-semibold text-text-muted">Posts</h3>
                     </div>
                   )}
                   <div className="divide-y divide-border-subtle">
@@ -298,7 +298,7 @@ export default function SearchPage() {
                 <div>
                   {activeTab === 'all' && (
                     <div className="px-4 sm:px-6 pt-6 pb-2">
-                      <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">News</h3>
+                      <h3 className="text-xs font-semibold text-text-muted">News</h3>
                     </div>
                   )}
                   <div className="divide-y divide-border-subtle">
@@ -326,7 +326,7 @@ export default function SearchPage() {
                 <div>
                   {activeTab === 'all' && (
                     <div className="px-4 sm:px-6 pt-6 pb-2">
-                      <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">Debates</h3>
+                      <h3 className="text-xs font-semibold text-text-muted">Debates</h3>
                     </div>
                   )}
                   <div className="divide-y divide-border-subtle">
@@ -476,7 +476,7 @@ function PersonCard({ person, index, onFollowChange }: { person: SearchUser; ind
           onClick={handleFollow}
           disabled={followLoading}
           className={clsx(
-            'text-xs font-semibold px-3 py-2 rounded-lg transition-colors shrink-0 min-h-[44px] flex items-center',
+            'text-xs font-semibold px-3 py-2 rounded-xl transition-colors shrink-0 min-h-[44px] flex items-center',
             following
               ? 'text-text-secondary bg-surface-elevated border border-border-subtle hover:border-danger/40 hover:text-danger-light'
               : 'text-civic-light bg-civic-subtle hover:bg-civic-muted',
@@ -491,7 +491,7 @@ function PersonCard({ person, index, onFollowChange }: { person: SearchUser; ind
         </button>
       </div>
       {errorToast && (
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-50 bg-surface-elevated border border-border-subtle text-text-primary text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-fade-in">
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-50 bg-surface-elevated border border-border-subtle text-text-primary text-xs font-medium px-3 py-1.5 rounded-xl shadow-lg animate-fade-in">
           {errorToast}
         </div>
       )}

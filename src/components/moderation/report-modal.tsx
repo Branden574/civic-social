@@ -173,7 +173,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -184,8 +184,8 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
           {!submitted ? (
             <>
               {/* Post snippet */}
-              <div className="mb-4 p-3 bg-surface rounded-lg border border-border-subtle">
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1">
+              <div className="mb-4 p-3 bg-surface rounded-xl border border-border-subtle">
+                <p className="text-xs font-semibold text-text-muted mb-1">
                   Reported Content
                 </p>
                 <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
@@ -200,7 +200,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
               {severity && (
                 <div
                   className={clsx(
-                    'flex items-center gap-2 px-3 py-2 rounded-lg border mb-4 animate-fade-in',
+                    'flex items-center gap-2 px-3 py-2 rounded-xl border mb-4 animate-fade-in',
                     severity.bg,
                     severity.border,
                   )}
@@ -217,7 +217,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
 
               {/* Report categories */}
               <div className="mb-4">
-                <h3 className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2.5">
+                <h3 className="text-xs font-semibold text-text-muted mb-2.5">
                   What&apos;s the issue?
                 </h3>
                 <div className="space-y-1.5">
@@ -229,7 +229,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.id)}
                         className={clsx(
-                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all',
+                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors',
                           isSelected
                             ? 'bg-civic-subtle border border-civic/30'
                             : 'bg-surface border border-border-subtle hover:bg-surface-hover',
@@ -276,7 +276,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
 
               {/* Additional details */}
               <div className="mb-4">
-                <label className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-1.5 block">
+                <label className="text-xs font-semibold text-text-muted mb-1.5 block">
                   Additional Details{' '}
                   <span className="text-text-muted font-normal normal-case tracking-normal">
                     (optional)
@@ -287,7 +287,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
                   onChange={(e) => setDetails(e.target.value)}
                   placeholder="Provide any additional context that may help our review team..."
                   maxLength={1000}
-                  className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
+                  className="w-full bg-surface rounded-xl border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-civic/40 transition-colors min-h-[80px]"
                 />
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-xs font-mono text-text-muted">
@@ -298,14 +298,14 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
 
               {/* Error message */}
               {submitError && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg border mb-4 bg-danger/5 border-danger/20 animate-fade-in">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border mb-4 bg-danger/5 border-danger/20 animate-fade-in">
                   <AlertTriangle className="w-4 h-4 text-danger-light shrink-0" />
                   <p className="text-xs text-danger-light">{submitError}</p>
                 </div>
               )}
 
               {/* Credibility note */}
-              <div className="flex items-start gap-2 p-3 bg-surface rounded-lg border border-border-subtle mb-4">
+              <div className="flex items-start gap-2 p-3 bg-surface rounded-xl border border-border-subtle mb-4">
                 <Info className="w-4 h-4 text-civic-light shrink-0 mt-0.5" />
                 <p className="text-xs text-text-muted leading-relaxed">
                   Your report credibility score affects review priority. Accurate reports
@@ -326,7 +326,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
                 Our moderation team will review within 24 hours. You&apos;ll be notified
                 of the outcome.
               </p>
-              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-surface-elevated rounded-lg border border-border-subtle">
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-surface-elevated rounded-xl border border-border-subtle">
                 <Shield className="w-3.5 h-3.5 text-civic-light" />
                 <span className="text-xs text-text-muted">
                   Report #{postId.slice(0, 8).toUpperCase()}
@@ -341,7 +341,7 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
           <div className="flex items-center justify-between px-4 py-3 border-t border-border-subtle">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg transition-colors"
+              className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-xl transition-colors"
             >
               Cancel
             </button>
@@ -349,9 +349,9 @@ export function ReportModal({ isOpen, onClose, postId, postSnippet }: ReportModa
               onClick={handleSubmit}
               disabled={!selectedCategory || submitting}
               className={clsx(
-                'flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-all',
+                'flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-colors',
                 selectedCategory && !submitting
-                  ? 'bg-danger text-white hover:bg-danger/90 active:scale-[0.98]'
+                  ? 'bg-danger text-white hover:bg-danger/90'
                   : 'bg-surface-active text-text-muted cursor-not-allowed',
               )}
             >

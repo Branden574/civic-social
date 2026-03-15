@@ -62,7 +62,7 @@ export default function AdminLayout({
       <div className="flex min-h-screen bg-bg">
         <Sidebar />
         <main className="flex-1 min-w-0 flex items-center justify-center p-4">
-          <div className="max-w-sm w-full text-center p-8 bg-surface-elevated rounded-2xl border border-border-subtle">
+          <div className="max-w-sm w-full text-center p-8 bg-surface-elevated rounded-2xl">
             <div className="w-14 h-14 rounded-2xl bg-civic-subtle flex items-center justify-center mx-auto mb-4">
               <Lock className="w-7 h-7 text-civic-light" aria-hidden />
             </div>
@@ -74,7 +74,7 @@ export default function AdminLayout({
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors focus:outline-none focus:ring-2 focus:ring-civic focus:ring-offset-2 focus:ring-offset-bg"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors focus:outline-none focus:ring-2 focus:ring-civic focus:ring-offset-2 focus:ring-offset-bg"
             >
               Go to Sign In
               <ChevronRight className="w-4 h-4" />
@@ -92,7 +92,7 @@ export default function AdminLayout({
       <div className="flex min-h-screen bg-bg">
         <Sidebar />
         <main className="flex-1 min-w-0 flex items-center justify-center p-4">
-          <div className="max-w-sm w-full text-center p-8 bg-surface-elevated rounded-2xl border border-border-subtle">
+          <div className="max-w-sm w-full text-center p-8 bg-surface-elevated rounded-2xl">
             <div className="w-14 h-14 rounded-2xl bg-danger/10 flex items-center justify-center mx-auto mb-4">
               <Shield className="w-7 h-7 text-danger-light" aria-hidden />
             </div>
@@ -104,7 +104,7 @@ export default function AdminLayout({
             </p>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-surface text-text-secondary text-sm font-semibold rounded-lg border border-border-subtle hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-civic focus:ring-offset-2 focus:ring-offset-bg"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-surface text-text-secondary text-sm font-semibold rounded-xl border border-border-subtle hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-civic focus:ring-offset-2 focus:ring-offset-bg"
             >
               <Home className="w-4 h-4" />
               Back to Home
@@ -133,7 +133,7 @@ export default function AdminLayout({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className="w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center shrink-0"
+                className="w-9 h-9 rounded-xl bg-danger/10 flex items-center justify-center shrink-0"
                 aria-hidden
               >
                 <Shield className="w-5 h-5 text-danger-light" />
@@ -170,7 +170,7 @@ export default function AdminLayout({
               </span>
               <Link
                 href="/admin/guide"
-                className="p-2 rounded-lg text-text-muted hover:text-civic-light hover:bg-surface-hover transition-colors"
+                className="p-2 rounded-xl text-text-muted hover:text-civic-light hover:bg-surface-hover transition-colors"
                 title="Admin guide"
                 aria-label="Admin guide"
               >
@@ -179,7 +179,7 @@ export default function AdminLayout({
               <button
                 type="button"
                 onClick={logout}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-danger-light hover:bg-danger/5 rounded-lg border border-border-subtle hover:border-danger/20 transition-colors focus:outline-none focus:ring-2 focus:ring-danger/30"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-danger-light hover:bg-danger/5 rounded-xl border border-border-subtle hover:border-danger/20 transition-colors focus:outline-none focus:ring-2 focus:ring-danger/30"
                 aria-label="Sign out of admin"
               >
                 <LogOut className="w-3.5 h-3.5" />

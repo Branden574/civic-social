@@ -61,12 +61,12 @@ export default function HashtagPage() {
             <div className="flex items-center gap-3 px-4 sm:px-6 py-4">
               <Link
                 href="/"
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-civic-subtle flex items-center justify-center">
                   <Hash className="w-5 h-5 text-civic-light" />
                 </div>
                 <div>
@@ -81,7 +81,7 @@ export default function HashtagPage() {
               <button
                 onClick={() => setContentTab('posts')}
                 className={clsx(
-                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl transition-colors',
                   contentTab === 'posts' ? 'bg-civic-subtle text-civic-light' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                 )}
               >
@@ -91,7 +91,7 @@ export default function HashtagPage() {
               <button
                 onClick={() => setContentTab('news')}
                 className={clsx(
-                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl transition-colors',
                   contentTab === 'news' ? 'bg-civic-subtle text-civic-light' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                 )}
               >
@@ -151,7 +151,7 @@ export default function HashtagPage() {
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{article.source}</span>
+                            <span className="text-xs font-medium text-text-muted">{article.source}</span>
                             <span className="text-xs text-text-muted">{formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })}</span>
                           </div>
                           <h3 className="text-sm font-medium text-text-primary line-clamp-2 mb-1">{article.title}</h3>
@@ -164,7 +164,7 @@ export default function HashtagPage() {
                           </div>
                         </div>
                         {article.imageUrl && (
-                          <img src={article.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />
+                          <img src={article.imageUrl} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
                         )}
                       </div>
                     </a>

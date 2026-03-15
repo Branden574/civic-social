@@ -178,7 +178,7 @@ function OverviewTab() {
           return (
             <div key={c.label} className="p-4 bg-surface-elevated rounded-xl border border-border-subtle">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-text-muted uppercase tracking-widest">{c.label}</span>
+                <span className="text-xs font-semibold text-text-muted">{c.label}</span>
                 <Icon className={clsx('w-4 h-4', c.color)} />
               </div>
               <p className={clsx('text-2xl font-bold', c.color)}>{c.value}</p>
@@ -236,7 +236,7 @@ function UsersTab() {
             placeholder="Search users by name, username, or email..."
             value={query}
             onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-3 py-2 bg-surface-elevated border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
+            className="w-full pl-9 pr-3 py-2 bg-surface-elevated border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
           />
         </div>
         <span className="text-xs text-text-muted shrink-0">{total} users</span>
@@ -377,13 +377,13 @@ function PostsTab() {
             placeholder="Search post content..."
             value={query}
             onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-3 py-2 bg-surface-elevated border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
+            className="w-full pl-9 pr-3 py-2 bg-surface-elevated border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="bg-surface-elevated border border-border-subtle rounded-lg text-xs text-text-primary px-2 py-2 focus:outline-none"
+          className="bg-surface-elevated border border-border-subtle rounded-xl text-xs text-text-primary px-2 py-2 focus:outline-none"
         >
           <option value="">All</option>
           <option value="published">Published</option>
@@ -461,7 +461,7 @@ function PostsTab() {
               <select
                 value={removeReason}
                 onChange={(e) => setRemoveReason(e.target.value)}
-                className="w-full bg-bg border border-border-subtle rounded-lg text-sm text-text-primary px-3 py-2 focus:outline-none focus:border-civic/40"
+                className="w-full bg-bg border border-border-subtle rounded-xl text-sm text-text-primary px-3 py-2 focus:outline-none focus:border-civic/40"
               >
                 <option value="spam">Spam / Misleading</option>
                 <option value="harassment">Harassment</option>
@@ -474,14 +474,14 @@ function PostsTab() {
             <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={() => setRemoveModal(null)}
-                className="text-xs px-3 py-1.5 rounded-lg text-text-muted hover:bg-surface-hover transition-colors"
+                className="text-xs px-3 py-1.5 rounded-xl text-text-muted hover:bg-surface-hover transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRemove}
                 disabled={actionLoading === removeModal.postId}
-                className="text-xs px-3 py-1.5 rounded-lg bg-danger text-white hover:bg-danger/90 font-medium transition-colors disabled:opacity-50"
+                className="text-xs px-3 py-1.5 rounded-xl bg-danger text-white hover:bg-danger/90 font-medium transition-colors disabled:opacity-50"
               >
                 Remove Post
               </button>

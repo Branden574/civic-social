@@ -347,7 +347,7 @@ export default function DebateDetailPage() {
           {/* Header */}
           <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-3">
             <div className="flex items-center gap-3">
-              <button onClick={() => router.push('/debates')} className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
+              <button onClick={() => router.push('/debates')} className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div className="flex-1 min-w-0">
@@ -400,7 +400,7 @@ export default function DebateDetailPage() {
             <div className="h-2 bg-surface rounded-full overflow-hidden">
               <div
                 className={clsx(
-                  'h-full rounded-full transition-all duration-500',
+                  'h-full rounded-full transition-colors duration-500',
                   progressPct > 90 ? 'bg-danger' : progressPct > 70 ? 'bg-warning' : 'bg-civic',
                 )}
                 style={{ width: `${progressPct}%` }}
@@ -436,7 +436,7 @@ export default function DebateDetailPage() {
                   <button
                     onClick={() => doAction('start')}
                     disabled={actionLoading === 'start'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-positive text-white hover:bg-positive-light transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-positive text-white hover:bg-positive-light transition-colors disabled:opacity-50"
                   >
                     {actionLoading === 'start' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                     {debate.status === 'paused' ? 'Resume' : 'Start Debate'}
@@ -447,7 +447,7 @@ export default function DebateDetailPage() {
                   <button
                     onClick={() => doAction('pause')}
                     disabled={actionLoading === 'pause'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-warning text-white hover:bg-warning-light transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-warning text-white hover:bg-warning-light transition-colors disabled:opacity-50"
                   >
                     {actionLoading === 'pause' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pause className="w-3.5 h-3.5" />}
                     Pause
@@ -458,7 +458,7 @@ export default function DebateDetailPage() {
                   <button
                     onClick={() => doAction('stop')}
                     disabled={actionLoading === 'stop'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-danger text-white hover:bg-danger-light transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-danger text-white hover:bg-danger-light transition-colors disabled:opacity-50"
                   >
                     {actionLoading === 'stop' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                     End Debate
@@ -469,7 +469,7 @@ export default function DebateDetailPage() {
                   <button
                     onClick={() => doAction('advance_stage')}
                     disabled={actionLoading === 'advance_stage'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-civic text-white hover:bg-civic-dark transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-civic text-white hover:bg-civic-dark transition-colors disabled:opacity-50"
                   >
                     {actionLoading === 'advance_stage' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SkipForward className="w-3.5 h-3.5" />}
                     Next Stage
@@ -479,7 +479,7 @@ export default function DebateDetailPage() {
                 <button
                   onClick={() => setShowInvitePanel(!showInvitePanel)}
                   className={clsx(
-                    'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',
+                    'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors',
                     showInvitePanel
                       ? 'border-civic/40 bg-civic-subtle text-civic-light'
                       : 'border-border-subtle text-text-secondary hover:text-civic-light hover:border-civic/30',
@@ -499,7 +499,7 @@ export default function DebateDetailPage() {
                     value={inviteSearch}
                     onChange={(e) => setInviteSearch(e.target.value)}
                     placeholder="Search users..."
-                    className="w-full bg-surface rounded-lg border border-border-subtle p-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 mb-2"
+                    className="w-full bg-surface rounded-xl border border-border-subtle p-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 mb-2"
                   />
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
                     {inviteLoading && (
@@ -513,13 +513,13 @@ export default function DebateDetailPage() {
                       const isInvited = debate.invitedUserIds.includes(u.id);
                       const isLoadingInvite = actionLoading === 'invite-' + u.id;
                       return (
-                        <div key={u.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-surface-hover">
+                        <div key={u.id} className="flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-surface-hover">
                           <span className="text-sm text-text-primary">{u.displayName}</span>
                           <button
                             onClick={() => handleInvite(u.id)}
                             disabled={isInvited || isLoadingInvite}
                             className={clsx(
-                              'text-xs font-medium px-2.5 py-1 rounded-lg transition-colors',
+                              'text-xs font-medium px-2.5 py-1 rounded-xl transition-colors',
                               isInvited
                                 ? 'bg-positive/10 text-positive-light cursor-default'
                                 : 'bg-civic-subtle text-civic-light hover:bg-civic-muted',
@@ -578,7 +578,7 @@ export default function DebateDetailPage() {
                     onClick={() => handleJoin('A')}
                     disabled={!!joinLoading}
                     className={clsx(
-                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all',
+                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-colors',
                       'hover:border-civic/40 hover:bg-civic-subtle',
                       joinLoading === 'A' ? 'border-civic/40 bg-civic-subtle' : 'border-border-subtle',
                     )}
@@ -599,7 +599,7 @@ export default function DebateDetailPage() {
                     onClick={() => handleJoin('B')}
                     disabled={!!joinLoading}
                     className={clsx(
-                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all',
+                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-colors',
                       'hover:border-civic/40 hover:bg-civic-subtle',
                       joinLoading === 'B' ? 'border-civic/40 bg-civic-subtle' : 'border-border-subtle',
                     )}
@@ -651,7 +651,7 @@ export default function DebateDetailPage() {
                   {sideAParticipants.map((p) => (
                     <div key={p.userId} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-surface flex items-center justify-center text-xs font-bold text-civic-light">
+                        <div className="w-7 h-7 rounded-xl bg-surface flex items-center justify-center text-xs font-bold text-civic-light">
                           {p.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                         </div>
                         <div>
@@ -696,7 +696,7 @@ export default function DebateDetailPage() {
                   {sideBParticipants.map((p) => (
                     <div key={p.userId} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-surface flex items-center justify-center text-xs font-bold text-civic-light">
+                        <div className="w-7 h-7 rounded-xl bg-surface flex items-center justify-center text-xs font-bold text-civic-light">
                           {p.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                         </div>
                         <div>
@@ -741,7 +741,7 @@ export default function DebateDetailPage() {
           {isCreator && debate.kickedUserIds.length > 0 && (
             <div className="px-4 sm:px-6 pb-4">
               <div className="p-3 bg-danger/5 border border-danger/15 rounded-xl">
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Removed Users</p>
+                <p className="text-xs font-semibold text-text-muted mb-1.5">Removed Users</p>
                 <div className="flex flex-wrap gap-1.5">
                   {debate.kickedUserIds.map((uid) => {
                     const knownUser = inviteableUsers.find((u) => u.id === uid);
@@ -763,7 +763,7 @@ export default function DebateDetailPage() {
               <button
                 onClick={() => setShowMobilePanel(showMobilePanel === 'chat' ? null : 'chat')}
                 className={clsx(
-                  'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-lg border transition-colors',
+                  'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl border transition-colors',
                   showMobilePanel === 'chat'
                     ? 'bg-civic-subtle text-civic-light border-civic/30'
                     : 'bg-surface-elevated text-text-secondary border-border-subtle hover:bg-surface-hover',
@@ -775,7 +775,7 @@ export default function DebateDetailPage() {
               <button
                 onClick={() => setShowMobilePanel(showMobilePanel === 'voice' ? null : 'voice')}
                 className={clsx(
-                  'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-lg border transition-colors',
+                  'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-xl border transition-colors',
                   showMobilePanel === 'voice'
                     ? 'bg-positive/10 text-positive-light border-positive/30'
                     : 'bg-surface-elevated text-text-secondary border-border-subtle hover:bg-surface-hover',
@@ -917,7 +917,7 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
       <div className="grid grid-cols-2 gap-4">
         {/* Side A */}
         <div>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 text-center">
+          <p className="text-xs font-semibold text-text-muted mb-2 text-center">
             {sideA.label}
           </p>
           <div className={clsx(
@@ -943,7 +943,7 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
 
         {/* Side B */}
         <div>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 text-center">
+          <p className="text-xs font-semibold text-text-muted mb-2 text-center">
             {sideB.label}
           </p>
           <div className={clsx(
@@ -1020,7 +1020,7 @@ function VideoSlot({
   return (
     <div
       className={clsx(
-        'relative aspect-video rounded-xl overflow-hidden transition-all duration-500 ease-out',
+        'relative aspect-video rounded-xl overflow-hidden transition-colors duration-500 ease-out',
         entered ? 'opacity-100 scale-100' : 'opacity-0 scale-90',
         cameraRevealed
           ? 'border-2 border-civic/40 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
@@ -1030,7 +1030,7 @@ function VideoSlot({
       {/* Camera feed — fades in smoothly */}
       {cameraOn && videoStream ? (
         <div className={clsx(
-          'absolute inset-0 transition-all duration-700 ease-out',
+          'absolute inset-0 transition-colors duration-700 ease-out',
           cameraRevealed ? 'opacity-100 scale-100' : 'opacity-0 scale-105',
         )}>
           <video
@@ -1045,11 +1045,11 @@ function VideoSlot({
 
       {/* Placeholder (initials) — visible when camera is off, fades out when camera turns on */}
       <div className={clsx(
-        'absolute inset-0 flex flex-col items-center justify-center bg-surface-elevated transition-all duration-500',
+        'absolute inset-0 flex flex-col items-center justify-center bg-surface-elevated transition-colors duration-500',
         cameraRevealed ? 'opacity-0 scale-95' : 'opacity-100 scale-100',
       )}>
         <div className={clsx(
-          'w-14 h-14 rounded-2xl flex items-center justify-center text-base font-bold mb-2 transition-all duration-300',
+          'w-14 h-14 rounded-2xl flex items-center justify-center text-base font-bold mb-2 transition-colors duration-300',
           side === 'A' ? 'bg-ideology-center-left/15 text-ideology-center-left' : 'bg-ideology-center-right/15 text-ideology-center-right',
         )}>
           {initials}

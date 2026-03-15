@@ -407,7 +407,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
   const context = TOPIC_CONTEXT[matchedTopic];
 
   return (
-    <div className="mt-3 rounded-xl border border-border-subtle bg-surface-elevated overflow-hidden transition-all duration-200">
+    <div className="mt-3 rounded-xl border border-border-subtle bg-surface-elevated overflow-hidden transition-colors duration-200">
       {/* Collapsed header — always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -440,7 +440,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
 
           {/* Key Facts */}
           <div className="mb-4">
-            <h4 className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
+            <h4 className="text-xs font-semibold text-text-muted mb-2">
               Key Facts
             </h4>
             <ul className="space-y-1.5">
@@ -458,7 +458,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
 
           {/* Multiple Perspectives */}
           <div className="mb-4">
-            <h4 className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">
+            <h4 className="text-xs font-semibold text-text-muted mb-2">
               Multiple Perspectives
             </h4>
             <div className="space-y-2.5">
@@ -475,7 +475,7 @@ export function ContextPanel({ topics, isVisible = true }: ContextPanelProps) {
                           'bg-text-muted',
                       )}
                     />
-                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wide w-16">
+                    <span className="text-xs font-semibold text-text-muted uppercase w-16">
                       {perspective.label}
                     </span>
                   </div>

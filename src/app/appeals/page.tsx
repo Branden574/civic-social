@@ -139,9 +139,9 @@ export default function AppealsPage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-3xl mx-auto">
           {/* ── Header ── */}
-          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-5 sm:px-6 py-5">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-civic-subtle flex items-center justify-center">
                 <Scale className="w-5 h-5 text-civic-light" />
               </div>
               <div>
@@ -163,7 +163,7 @@ export default function AppealsPage() {
               <div className="bg-surface-elevated rounded-xl border border-border-subtle p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <CheckCircle2 className="w-4 h-4 text-positive-light" />
-                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-text-muted">
                     Resolved
                   </span>
                 </div>
@@ -174,7 +174,7 @@ export default function AppealsPage() {
               <div className="bg-surface-elevated rounded-xl border border-border-subtle p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Clock className="w-4 h-4 text-warning-light" />
-                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-text-muted">
                     Pending
                   </span>
                 </div>
@@ -264,10 +264,10 @@ export default function AppealsPage() {
                             <div className="space-y-4 pl-8">
                               {/* Content snippet */}
                               <div>
-                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted mb-1">
                                   Original Content
                                 </p>
-                                <div className="bg-surface rounded-lg border border-border-subtle p-3">
+                                <div className="bg-surface rounded-xl border border-border-subtle p-3">
                                   <p className="text-sm text-text-secondary leading-relaxed italic">
                                     &ldquo;{appeal.contentSnippet}&rdquo;
                                   </p>
@@ -276,7 +276,7 @@ export default function AppealsPage() {
 
                               {/* Rule violated */}
                               <div>
-                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted mb-1">
                                   Rule Flagged
                                 </p>
                                 <p className="text-sm text-warning-light">
@@ -286,7 +286,7 @@ export default function AppealsPage() {
 
                               {/* Action taken */}
                               <div>
-                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted mb-1">
                                   Action Taken
                                 </p>
                                 <p className="text-sm text-text-secondary">
@@ -296,10 +296,10 @@ export default function AppealsPage() {
 
                               {/* Resolution */}
                               <div>
-                                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+                                <p className="text-xs font-semibold text-text-muted mb-1">
                                   Resolution
                                 </p>
-                                <div className="bg-positive/5 border border-positive/15 rounded-lg p-3">
+                                <div className="bg-positive/5 border border-positive/15 rounded-xl p-3">
                                   <p className="text-sm text-positive-light leading-relaxed">
                                     {appeal.resolution}
                                   </p>
@@ -349,7 +349,7 @@ export default function AppealsPage() {
                     }}
                   >
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-civic-subtle flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-civic-subtle flex items-center justify-center shrink-0">
                         <span className="text-sm font-bold text-civic-light">
                           {step.step}
                         </span>

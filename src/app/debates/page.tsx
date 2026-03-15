@@ -154,7 +154,7 @@ export default function DebatesPage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-5 sm:px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <MessageSquare className="w-5 h-5 text-civic-light" />
@@ -165,7 +165,7 @@ export default function DebatesPage() {
               </div>
               <button
                 onClick={() => setCreateOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors active:scale-[0.98]"
+                className="flex items-center gap-1.5 px-4 py-2 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Create Debate
@@ -189,7 +189,7 @@ export default function DebatesPage() {
                 <section className="px-4 sm:px-6 py-5 border-b border-border-subtle">
                   <div className="flex items-center gap-2 mb-3">
                     <Flame className="w-4 h-4 text-warning" />
-                    <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Popular Debates</h2>
+                    <h2 className="text-sm font-bold text-text-primary">Popular Debates</h2>
                     <span className="text-xs text-text-muted ml-1">Most spectators</span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -205,7 +205,7 @@ export default function DebatesPage() {
                 <section>
                   <div className="flex items-center gap-2 px-4 sm:px-6 pt-5 pb-2">
                     <span className="w-2 h-2 rounded-full bg-danger animate-pulse" />
-                    <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Live Now</h2>
+                    <h2 className="text-sm font-bold text-text-primary">Live Now</h2>
                     <span className="text-xs text-text-muted">{liveDebates.length} active</span>
                   </div>
                   <div className="divide-y divide-border-subtle">
@@ -221,7 +221,7 @@ export default function DebatesPage() {
                 <section>
                   <div className="flex items-center gap-2 px-4 sm:px-6 pt-5 pb-2">
                     <Play className="w-3.5 h-3.5 text-info-light" />
-                    <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Waiting to Start</h2>
+                    <h2 className="text-sm font-bold text-text-primary">Waiting to Start</h2>
                   </div>
                   <div className="divide-y divide-border-subtle">
                     {waitingDebates.map((debate, i) => (
@@ -236,7 +236,7 @@ export default function DebatesPage() {
                 <section>
                   <div className="flex items-center gap-2 px-4 sm:px-6 pt-5 pb-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-text-muted" />
-                    <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Completed</h2>
+                    <h2 className="text-sm font-bold text-text-primary">Completed</h2>
                   </div>
                   <div className="divide-y divide-border-subtle">
                     {completedDebates.map((debate, i) => (
@@ -285,7 +285,7 @@ function PopularCard({ debate }: { debate: Debate }) {
   return (
     <Link
       href={`/debates/${debate.id}`}
-      className="block p-4 bg-surface-elevated rounded-xl border border-border-subtle hover:border-civic/30 transition-all group"
+      className="block p-4 bg-surface-elevated rounded-xl border border-border-subtle hover:border-civic/30 transition-colors group"
     >
       <div className="flex items-center justify-between mb-2">
         <span className={clsx('flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded-md', status.color)}>
@@ -356,7 +356,7 @@ function DebateRow({ debate, index }: { debate: Debate; index: number }) {
         {/* Live timer */}
         {(debate.status === 'live' || debate.status === 'paused') && (
           <div className={clsx(
-            'flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg font-mono',
+            'flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl font-mono',
             debate.status === 'live' ? 'bg-danger/10' : 'bg-warning/10',
           )}>
             <span className={clsx(
@@ -375,7 +375,7 @@ function DebateRow({ debate, index }: { debate: Debate; index: number }) {
         <div className="h-1.5 bg-surface rounded-full overflow-hidden mb-3">
           <div
             className={clsx(
-              'h-full rounded-full transition-all',
+              'h-full rounded-full transition-colors',
               progressPct > 90 ? 'bg-danger' : progressPct > 70 ? 'bg-warning' : 'bg-civic',
             )}
             style={{ width: `${progressPct}%` }}
@@ -385,7 +385,7 @@ function DebateRow({ debate, index }: { debate: Debate; index: number }) {
 
       {/* Sides */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="flex-1 p-3 rounded-lg border bg-surface-elevated border-border-subtle text-center">
+        <div className="flex-1 p-3 rounded-xl border bg-surface-elevated border-border-subtle text-center">
           <p className="text-sm font-semibold text-text-primary">{debate.sideA.label}</p>
           <p className="text-xs text-text-muted mt-0.5">
             {debate.participants.filter((p) => p.side === 'A').length} debaters
@@ -398,7 +398,7 @@ function DebateRow({ debate, index }: { debate: Debate; index: number }) {
           <ArrowLeftRight className="w-4 h-4 text-text-muted" />
           <span className="text-[9px] text-text-muted font-medium">VS</span>
         </div>
-        <div className="flex-1 p-3 rounded-lg border bg-surface-elevated border-border-subtle text-center">
+        <div className="flex-1 p-3 rounded-xl border bg-surface-elevated border-border-subtle text-center">
           <p className="text-sm font-semibold text-text-primary">{debate.sideB.label}</p>
           <p className="text-xs text-text-muted mt-0.5">
             {debate.participants.filter((p) => p.side === 'B').length} debaters

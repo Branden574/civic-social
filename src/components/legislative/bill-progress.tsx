@@ -72,7 +72,7 @@ export function BillProgress({ currentStatus, compact = false }: BillProgressPro
               {/* Step dot */}
               <div
                 className={clsx(
-                  'relative z-10 flex items-center justify-center rounded-full border-2 transition-all duration-300',
+                  'relative z-10 flex items-center justify-center rounded-full border-2 transition-colors duration-300',
                   compact ? 'h-6 w-6' : 'h-8 w-8',
                   isFinalFailed && 'border-danger bg-danger',
                   !isFinalFailed && isCompleted && 'border-civic bg-civic',
@@ -138,7 +138,7 @@ export function BillProgress({ currentStatus, compact = false }: BillProgressPro
       {/* Failed/vetoed label */}
       {isFailed && (
         <div className="mt-2 flex justify-end">
-          <span className="text-xs font-semibold text-danger-light uppercase tracking-wide">
+          <span className="text-xs font-semibold text-danger-light uppercase">
             {currentStatus === 'vetoed' ? 'Vetoed' : 'Failed'}
           </span>
         </div>

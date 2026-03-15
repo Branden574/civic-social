@@ -150,7 +150,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
         <div className="flex items-center justify-between px-4 pt-3 pb-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-civic-light" />
-            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+            <span className="text-xs font-semibold text-text-muted">
               Getting Started — {currentSlide + 1}/{ONBOARDING_SLIDES.length}
             </span>
           </div>
@@ -205,7 +205,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
             onClick={handlePrev}
             disabled={currentSlide === 0}
             className={clsx(
-              'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors',
+              'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-xl transition-colors',
               currentSlide > 0
                 ? 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
                 : 'text-text-muted/30 cursor-not-allowed',
@@ -217,7 +217,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
 
           <button
             onClick={handleNext}
-            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-civic text-white rounded-lg hover:bg-civic-dark transition-colors"
+            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-civic text-white rounded-xl hover:bg-civic-dark transition-colors"
           >
             {isLast ? 'Got it!' : 'Next'}
             {!isLast && <ChevronRight className="w-3.5 h-3.5" />}

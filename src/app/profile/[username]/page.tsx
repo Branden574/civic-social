@@ -258,7 +258,7 @@ function BellDropdown({
         onClick={() => setOpen(!open)}
         disabled={isLoading}
         className={clsx(
-          'flex items-center gap-1 p-2 rounded-lg border transition-all duration-150',
+          'flex items-center gap-1 p-2 rounded-xl border transition-colors duration-150',
           isNotifyEnabled
             ? 'border-civic/40 bg-civic-subtle text-civic-light hover:bg-civic-muted'
             : 'border-border-subtle bg-surface-elevated text-text-muted hover:bg-surface-hover hover:text-text-secondary',
@@ -609,7 +609,7 @@ export default function UserProfilePage() {
             </p>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-5 py-2 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Feed
@@ -667,7 +667,7 @@ export default function UserProfilePage() {
                   onClick={handleFollowToggle}
                   disabled={followLoading || !loaded}
                   className={clsx(
-                    'flex items-center gap-1.5 px-4 py-1.5 text-sm font-semibold rounded-lg transition-all group',
+                    'flex items-center gap-1.5 px-4 py-1.5 text-sm font-semibold rounded-xl transition-colors group',
                     isFollowing
                       ? 'bg-surface-elevated border border-border-subtle text-text-secondary hover:bg-danger/5 hover:border-danger/30 hover:text-danger-light'
                       : 'bg-civic text-white hover:bg-civic-dark',
@@ -797,7 +797,7 @@ export default function UserProfilePage() {
             <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Shield className="w-5 h-5 text-civic-light" />
-                <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+                <h2 className="text-sm font-semibold text-text-primary">
                   Civic Reputation
                 </h2>
                 <span className="ml-auto text-lg font-bold text-positive-light">
@@ -818,7 +818,7 @@ export default function UserProfilePage() {
           {/* ── Active Topics ── */}
           <div className="px-4 sm:px-6 mb-6">
             <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
-              <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-semibold text-text-primary mb-3">
                 Active Topics
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -872,7 +872,7 @@ function RepBar({
       <span className="text-xs text-text-secondary w-36 shrink-0">{label}</span>
       <div className="flex-1 h-2 bg-surface rounded-full overflow-hidden">
         <div
-          className={clsx('h-full rounded-full transition-all duration-700', color)}
+          className={clsx('h-full rounded-full transition-colors duration-700', color)}
           style={{ width: `${Math.round(value * 100)}%` }}
         />
       </div>

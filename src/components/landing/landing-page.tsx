@@ -24,7 +24,7 @@ export function LandingPage() {
         <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-8 py-12 sm:py-20 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center z-10">
           {/* Copy */}
           <div>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-bold tracking-widest uppercase bg-civic-subtle border border-civic/20 text-civic-light">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-bold uppercase bg-civic-subtle border border-civic/20 text-civic-light">
               <span className="w-1.5 h-1.5 rounded-full bg-positive inline-block" />
               Now in early access
             </div>
@@ -61,7 +61,7 @@ export function LandingPage() {
           {/* Static product preview cards (no float animation) */}
           <div className="relative hidden lg:block" style={{ height: 520 }}>
             {/* Feed card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5 border border-border-subtle" style={{ width: 280, top: 20, left: 0 }}>
+            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 280, top: 20, left: 0 }}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-full bg-civic-muted shrink-0" />
                 <div>
@@ -80,8 +80,8 @@ export function LandingPage() {
             </div>
 
             {/* Context card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5 border border-border-subtle" style={{ width: 240, top: 80, right: 0 }}>
-              <div className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wider uppercase text-text-muted">
+            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 240, top: 80, right: 0 }}>
+              <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase text-text-muted">
                 <span className="w-1.5 h-1.5 rounded-full bg-positive inline-block" />
                 Context Panel
               </div>
@@ -98,8 +98,8 @@ export function LandingPage() {
             </div>
 
             {/* Bill tracker card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5 border border-border-subtle" style={{ width: 260, bottom: 80, left: 30 }}>
-              <div className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wider uppercase text-text-muted">
+            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 260, bottom: 80, left: 30 }}>
+              <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase text-text-muted">
                 <span className="w-1.5 h-1.5 rounded-full bg-warning inline-block" />
                 Live Bill Update
               </div>
@@ -126,8 +126,8 @@ export function LandingPage() {
             </div>
 
             {/* Trending card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5 border border-border-subtle" style={{ width: 200, bottom: 60, right: 20 }}>
-              <div className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wider uppercase text-text-muted">
+            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 200, bottom: 60, right: 20 }}>
+              <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase text-text-muted">
                 <span className="w-1.5 h-1.5 rounded-full bg-civic inline-block" />
                 Trending
               </div>
@@ -170,7 +170,7 @@ export function LandingPage() {
 
       {/* ── FEATURES ────────────────────────────────────────── */}
       <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="features">
-        <p className="text-civic-light text-xs font-bold tracking-widest uppercase mb-4">
+        <p className="text-civic-light text-xs font-bold uppercase mb-4">
           Core Features
         </p>
         <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-4">
@@ -207,7 +207,7 @@ export function LandingPage() {
 
       {/* ── HOW IT WORKS ────────────────────────────────────── */}
       <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="how-it-works">
-        <p className="text-civic-light text-xs font-bold tracking-widest uppercase mb-4">
+        <p className="text-civic-light text-xs font-bold uppercase mb-4">
           How It Works
         </p>
         <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-10">
@@ -238,7 +238,7 @@ export function LandingPage() {
 
       {/* ── TRUST ───────────────────────────────────────────── */}
       <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
-        <p className="text-civic-light text-xs font-bold tracking-widest uppercase mb-4">
+        <p className="text-civic-light text-xs font-bold uppercase mb-4">
           Trust &amp; Safety
         </p>
         <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-4">
@@ -282,7 +282,7 @@ export function LandingPage() {
       {/* ── PRICING ─────────────────────────────────────────── */}
       <section className="py-16 sm:py-24 px-4 sm:px-8" id="pricing">
         <div className="max-w-6xl mx-auto">
-          <p className="text-civic-light text-xs font-bold tracking-widest uppercase mb-4">
+          <p className="text-civic-light text-xs font-bold uppercase mb-4">
             Plans
           </p>
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-10">
@@ -292,8 +292,8 @@ export function LandingPage() {
           </h2>
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Free */}
-            <div className="bg-surface-elevated rounded-2xl p-8 border border-border-subtle">
-              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-civic-subtle text-civic-light text-xs font-bold tracking-wide uppercase">
+            <div className="bg-surface-elevated rounded-2xl p-8">
+              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-civic-subtle text-civic-light text-xs font-bold uppercase">
                 Free
               </div>
               <div className="text-2xl font-black tracking-tight mb-1">
@@ -323,7 +323,7 @@ export function LandingPage() {
 
             {/* Pro */}
             <div className="bg-surface-elevated rounded-2xl p-8 border border-civic/20">
-              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-civic-muted text-civic-light text-xs font-bold tracking-wide uppercase">
+              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-civic-muted text-civic-light text-xs font-bold uppercase">
                 Pro
               </div>
               <div className="text-2xl font-black tracking-tight mb-1">

@@ -68,29 +68,24 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden">
-      <style dangerouslySetInnerHTML={{ __html: `@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');` }} />
-
+    <div className="relative min-h-screen bg-bg overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a14] via-black to-[#0a0f18] z-0" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-sky-400/5 rounded-full blur-[120px] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-bg via-bg-alt to-bg z-0" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-civic/5 rounded-full blur-[120px] z-0" />
 
       <div className="relative z-10">
         <LandingNav />
 
         {/* Hero */}
         <section className="max-w-[1163px] mx-auto px-6 pt-16 pb-16 text-center">
-          <div className="inline-flex items-center gap-2 bg-sky-400/10 border border-sky-400/20 rounded-full px-4 py-1.5 mb-6">
-            <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
-            <span className="text-xs font-semibold text-sky-400" style={{ fontFamily: 'Manrope, sans-serif' }}>Get in touch</span>
+          <div className="inline-flex items-center gap-2 bg-civic-muted border border-civic/20 rounded-full px-4 py-1.5 mb-6">
+            <MessageSquare className="w-3.5 h-3.5 text-civic-light" />
+            <span className="text-xs font-semibold text-civic-light">Get in touch</span>
           </div>
-          <h1
-            className="text-4xl sm:text-5xl lg:text-[64px] font-bold text-white mb-6 leading-tight"
-            style={{ fontFamily: 'Manrope, sans-serif' }}
-          >
+          <h1 className="text-4xl sm:text-5xl lg:text-[64px] font-bold text-text-primary mb-6 leading-tight">
             Contact Us
           </h1>
-          <p className="text-lg text-white/60 max-w-[500px] mx-auto leading-relaxed" style={{ fontFamily: 'Manrope, sans-serif' }}>
+          <p className="text-lg text-text-muted max-w-[500px] mx-auto leading-relaxed">
             Questions, bug reports, partnership inquiries, or feedback — we read everything and respond.
           </p>
         </section>
@@ -102,31 +97,31 @@ export default function ContactPage() {
             {/* Contact form */}
             <div className="lg:col-span-3">
               {sent ? (
-                <div className="flex flex-col items-center justify-center text-center p-12 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 min-h-[400px]">
-                  <CheckCircle2 className="w-16 h-16 text-emerald-400 mb-4" />
-                  <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                <div className="flex flex-col items-center justify-center text-center p-12 rounded-2xl border border-positive/20 bg-positive/5 min-h-[400px]">
+                  <CheckCircle2 className="w-16 h-16 text-positive mb-4" />
+                  <h2 className="text-2xl font-bold text-text-primary mb-2">
                     Message sent
                   </h2>
-                  <p className="text-white/60 text-sm" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  <p className="text-text-muted text-sm">
                     We will get back to you within 24–48 hours.
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-2xl border border-white/10 bg-white/[0.03]">
-                  <h2 className="text-lg font-bold text-white mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-2xl border border-border bg-surface">
+                  <h2 className="text-lg font-bold text-text-primary mb-6">
                     Send us a message
                   </h2>
 
                   {error && (
-                    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5">
-                      <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                      <span className="text-sm text-red-400" style={{ fontFamily: 'Manrope, sans-serif' }}>{error}</span>
+                    <div className="flex items-center gap-2 bg-danger/10 border border-danger/20 rounded-xl px-3 py-2.5">
+                      <AlertCircle className="w-4 h-4 text-danger-light shrink-0" />
+                      <span className="text-sm text-danger-light">{error}</span>
                     </div>
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-white/50 mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                      <label className="block text-sm font-medium text-text-secondary mb-2">
                         Name
                       </label>
                       <input
@@ -134,13 +129,12 @@ export default function ContactPage() {
                         required
                         value={form.name}
                         onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#7b39fc]/50 focus:ring-1 focus:ring-[#7b39fc]/20 transition-colors"
+                        className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-civic/50 focus:ring-1 focus:ring-civic/20 transition-colors"
                         placeholder="Your name"
-                        style={{ fontFamily: 'Manrope, sans-serif' }}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-white/50 mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                      <label className="block text-sm font-medium text-text-secondary mb-2">
                         Email
                       </label>
                       <input
@@ -148,26 +142,24 @@ export default function ContactPage() {
                         required
                         value={form.email}
                         onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#7b39fc]/50 focus:ring-1 focus:ring-[#7b39fc]/20 transition-colors"
+                        className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-civic/50 focus:ring-1 focus:ring-civic/20 transition-colors"
                         placeholder="you@example.com"
-                        style={{ fontFamily: 'Manrope, sans-serif' }}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-white/50 mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Subject
                     </label>
                     <select
                       value={form.subject}
                       onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#7b39fc]/50 focus:ring-1 focus:ring-[#7b39fc]/20 transition-colors"
-                      style={{ fontFamily: 'Manrope, sans-serif' }}
+                      className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:border-civic/50 focus:ring-1 focus:ring-civic/20 transition-colors"
                     >
-                      <option value="" className="bg-[#0a0a14]">Select a subject</option>
+                      <option value="" className="bg-bg">Select a subject</option>
                       {SUBJECTS.map((s) => (
-                        <option key={s.value} value={s.value} className="bg-[#0a0a14]">
+                        <option key={s.value} value={s.value} className="bg-bg">
                           {s.label}
                         </option>
                       ))}
@@ -175,7 +167,7 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-white/50 mb-1.5" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Message
                     </label>
                     <textarea
@@ -183,17 +175,15 @@ export default function ContactPage() {
                       value={form.message}
                       onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                       rows={6}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#7b39fc]/50 focus:ring-1 focus:ring-[#7b39fc]/20 transition-colors resize-none"
+                      className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-civic/50 focus:ring-1 focus:ring-civic/20 transition-colors resize-none"
                       placeholder="Tell us what is on your mind..."
-                      style={{ fontFamily: 'Manrope, sans-serif' }}
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full flex items-center justify-center gap-2 bg-[#7b39fc] text-white font-semibold py-3 rounded-xl hover:bg-[#6a2de0] transition-all shadow-lg shadow-[#7b39fc]/25 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ fontFamily: 'Manrope, sans-serif' }}
+                    className="w-full flex items-center justify-center gap-2 bg-civic text-white font-semibold py-3.5 rounded-xl hover:bg-civic-dark transition-colors shadow-lg shadow-civic/25 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-4 h-4" />
                     {submitting ? 'Sending...' : 'Send Message'}
@@ -204,47 +194,46 @@ export default function ContactPage() {
 
             {/* Sidebar info */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03]">
+              <div className="p-6 rounded-2xl border border-border bg-surface">
                 <div className="flex items-center gap-3 mb-2">
-                  <Mail className="w-5 h-5 text-[#7b39fc]" />
-                  <h3 className="text-sm font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>Response Time</h3>
+                  <Mail className="w-5 h-5 text-civic" />
+                  <h3 className="text-sm font-bold text-text-primary">Response Time</h3>
                 </div>
-                <p className="text-sm text-white/50" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                <p className="text-sm text-text-muted">
                   We respond to all messages within 24–48 hours on business days.
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03]">
+              <div className="p-6 rounded-2xl border border-border bg-surface">
                 <div className="flex items-center gap-3 mb-2">
-                  <Github className="w-5 h-5 text-white/60" />
-                  <h3 className="text-sm font-bold text-white" style={{ fontFamily: 'Manrope, sans-serif' }}>Open Source</h3>
+                  <Github className="w-5 h-5 text-text-secondary" />
+                  <h3 className="text-sm font-bold text-text-primary">Open Source</h3>
                 </div>
-                <p className="text-sm text-white/50 mb-3" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                <p className="text-sm text-text-muted mb-3">
                   Found a bug? Open an issue directly on GitHub for the fastest response.
                 </p>
                 <a
                   href="https://github.com/Branden574/civic-social"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#7b39fc] hover:underline"
-                  style={{ fontFamily: 'Manrope, sans-serif' }}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-civic-light hover:underline"
                 >
                   View on GitHub <ChevronRight className="w-3 h-3" />
                 </a>
               </div>
 
               {/* FAQ */}
-              <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03]">
-                <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              <div className="p-6 rounded-2xl border border-border bg-surface">
+                <h3 className="text-sm font-bold text-text-primary mb-4">
                   Common Questions
                 </h3>
                 <div className="space-y-5">
                   {FAQ.map((item) => (
                     <div key={item.q}>
-                      <p className="text-xs font-semibold text-white/80 mb-1 leading-snug" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                      <p className="text-xs font-semibold text-text-secondary mb-1 leading-snug">
                         {item.q}
                       </p>
-                      <p className="text-xs text-white/40 leading-relaxed" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                      <p className="text-xs text-text-muted leading-relaxed">
                         {item.a}
                       </p>
                     </div>
@@ -256,16 +245,16 @@ export default function ContactPage() {
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-white/10 py-8 px-6">
-          <div className="max-w-[1163px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40" style={{ fontFamily: 'Manrope, sans-serif' }}>
+        <footer className="border-t border-border-subtle py-8 px-6">
+          <div className="max-w-[1163px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-muted">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
               <span>Civic Social v0.2.0</span>
             </div>
             <p>No rage amplification · No echo chambers · No ad tracking</p>
             <div className="flex gap-4">
-              <Link href="/how-it-works" className="hover:text-white/60 transition-colors">How it Works</Link>
-              <Link href="/safety" className="hover:text-white/60 transition-colors">Safety</Link>
+              <Link href="/how-it-works" className="hover:text-text-secondary transition-colors">How it Works</Link>
+              <Link href="/safety" className="hover:text-text-secondary transition-colors">Safety</Link>
             </div>
           </div>
         </footer>

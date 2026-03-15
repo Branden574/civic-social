@@ -275,7 +275,7 @@ function PublicCredibilityPage() {
               </p>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 bg-[#7b39fc] text-white font-semibold px-7 py-3 rounded-xl hover:bg-[#6a2de0] transition-all shadow-xl shadow-[#7b39fc]/30"
+                className="inline-flex items-center gap-2 bg-[#7b39fc] text-white font-semibold px-7 py-3 rounded-xl hover:bg-[#6a2de0] transition-colors shadow-xl shadow-[#7b39fc]/30"
                 style={{ fontFamily: 'Manrope, sans-serif' }}
               >
                 Get Started Free
@@ -314,9 +314,9 @@ function AuthenticatedCredibilityPage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-3xl mx-auto">
           {/* ── Header ── */}
-          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-5 sm:px-6 py-5">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-civic-subtle flex items-center justify-center">
                 <Shield className="w-5 h-5 text-civic-light" />
               </div>
               <div>
@@ -366,7 +366,7 @@ function AuthenticatedCredibilityPage() {
                   return (
                     <div
                       key={factor.label}
-                      className="feed-item animate-fade-in opacity-0 bg-surface-elevated rounded-xl border border-border-subtle overflow-hidden transition-all"
+                      className="feed-item animate-fade-in opacity-0 bg-surface-elevated rounded-xl border border-border-subtle overflow-hidden transition-colors"
                       style={{
                         animationDelay: `${(i + 1) * 80}ms`,
                         animationFillMode: 'forwards',
@@ -395,7 +395,7 @@ function AuthenticatedCredibilityPage() {
                             <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
                               <div
                                 className={clsx(
-                                  'h-full rounded-full transition-all duration-700',
+                                  'h-full rounded-full transition-colors duration-700',
                                   factor.barColor,
                                 )}
                                 style={{

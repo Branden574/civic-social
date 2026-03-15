@@ -63,7 +63,7 @@ export function LiveBillCard({ bill, index }: LiveBillCardProps) {
       href={billLink}
       className={clsx(
         'feed-item block rounded-xl border bg-surface p-4',
-        'transition-all duration-200 hover:bg-surface-hover hover:shadow-md',
+        'transition-colors duration-200 hover:bg-surface-hover hover:shadow-md',
         'animate-fade-in opacity-0',
         isDemo
           ? 'border-info/30 hover:border-info/50'
@@ -91,7 +91,7 @@ export function LiveBillCard({ bill, index }: LiveBillCardProps) {
       <div className="flex items-center gap-2 flex-wrap mb-2">
         <span
           className={clsx(
-            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider',
+            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold',
             bill.originChamber === 'Senate'
               ? 'bg-purple-500/15 text-purple-400'
               : 'bg-info/15 text-info-light',
@@ -99,7 +99,7 @@ export function LiveBillCard({ bill, index }: LiveBillCardProps) {
         >
           {bill.billCode}
         </span>
-        <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
+        <span className="text-xs font-medium text-text-muted uppercase">
           {bill.originChamber}
         </span>
         <span className="text-xs text-text-muted">
@@ -126,7 +126,7 @@ export function LiveBillCard({ bill, index }: LiveBillCardProps) {
         <div className="mb-3">
           <div className="flex items-center gap-1 mb-1">
             <Sparkles className="w-3 h-3 text-civic-light" />
-            <span className="text-[9px] font-semibold text-civic-light uppercase tracking-wider">AI Summary</span>
+            <span className="text-[9px] font-semibold text-civic-light">AI Summary</span>
           </div>
           <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
             {bill.aiSummary.plainLanguage}

@@ -60,17 +60,17 @@ export function Sidebar({ onCompose }: SidebarProps) {
   const { unreadCount } = useNotifications();
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 h-screen sticky top-0 border-r border-border-subtle bg-bg-alt">
+    <aside className="hidden lg:flex flex-col w-[240px] h-screen sticky top-0 border-r border-border-subtle bg-bg-alt">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-border-subtle">
-        <div className="w-9 h-9 rounded-lg bg-civic flex items-center justify-center">
+      <div className="flex items-center gap-3 px-5 py-6 border-b border-border-subtle">
+        <div className="w-10 h-10 rounded-xl bg-civic flex items-center justify-center">
           <Shield className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-base font-semibold text-text-primary tracking-tight">
+          <h1 className="text-sm font-bold text-text-primary tracking-tight">
             Civic Social
           </h1>
-          <p className="text-xs text-text-muted tracking-wide uppercase">
+          <p className="text-xs text-text-muted">
             Discourse Platform
           </p>
         </div>
@@ -78,10 +78,10 @@ export function Sidebar({ onCompose }: SidebarProps) {
 
       {/* Compose button */}
       {onCompose && (
-        <div className="px-3 pt-4">
+        <div className="px-4 pt-5">
           <button
             onClick={onCompose}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
           >
             <PenSquare className="w-4 h-4" />
             New Post
@@ -90,7 +90,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
       )}
 
       {/* Main nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -100,7 +100,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-civic-subtle text-civic-light font-semibold'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
@@ -108,8 +108,8 @@ export function Sidebar({ onCompose }: SidebarProps) {
             >
               <item.icon
                 className={clsx(
-                  'w-[18px] h-[18px]',
-                  isActive ? 'text-civic-light' : '',
+                  'w-5 h-5',
+                  isActive ? 'text-civic-light' : 'text-text-muted',
                 )}
               />
               <span>{item.label}</span>
@@ -137,7 +137,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
         })}
 
         <div className="pt-4 pb-2 px-3">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-widest">
+          <p className="text-xs font-semibold text-text-muted">
             Account
           </p>
         </div>
@@ -149,13 +149,13 @@ export function Sidebar({ onCompose }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-civic-subtle text-civic-light font-semibold'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
               )}
             >
-              <item.icon className={clsx('w-[18px] h-[18px]', isActive && 'text-civic-light')} />
+              <item.icon className={clsx('w-5 h-5', isActive ? 'text-civic-light' : 'text-text-muted')} />
               <span>{item.label}</span>
             </Link>
           );
@@ -164,7 +164,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
         {(isAdmin || isCreator) && (
           <>
             <div className="pt-4 pb-2 px-3">
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-widest">
+              <p className="text-xs font-semibold text-text-muted">
                 Admin
               </p>
             </div>
@@ -175,13 +175,13 @@ export function Sidebar({ onCompose }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={clsx(
-                    'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150',
+                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                     isActive
                       ? 'bg-civic-subtle text-civic-light font-semibold'
                       : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
                   )}
                 >
-                  <item.icon className="w-[18px] h-[18px]" />
+                  <item.icon className="w-5 h-5" />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -191,7 +191,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
       </nav>
 
       {/* Footer: user account */}
-      <div className="p-4 border-t border-border-subtle space-y-2">
+      <div className="p-4 border-t border-border-subtle space-y-1">
         {isAuthenticated && user ? (
           <Link
             href="/profile"
@@ -235,7 +235,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
             onClick={logout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-danger-light hover:bg-danger/5 transition-colors duration-150"
           >
-            <LogOut className="w-[18px] h-[18px]" />
+            <LogOut className="w-5 h-5" />
             <span>Sign Out</span>
           </button>
         )}
@@ -407,7 +407,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
             {(isAdmin || isCreator) && (
               <div className="px-3 pb-3">
                 <div className="border-t border-border-subtle pt-2">
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-widest px-4 py-1.5">
+                  <p className="text-xs font-semibold text-text-muted px-4 py-1.5">
                     Admin
                   </p>
                   {adminItems.map((item) => (
@@ -415,7 +415,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                       key={item.href}
                       href={item.href}
                       onClick={handleCloseMore}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-all"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:bg-surface-hover active:bg-surface-active transition-colors"
                     >
                       <item.icon className="w-5 h-5 text-text-muted" />
                       <span>{item.label}</span>
@@ -434,7 +434,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                       handleCloseMore();
                       logout();
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger-light hover:bg-danger/5 transition-all"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger-light hover:bg-danger/5 transition-colors"
                   >
                     <LogOut className="w-5 h-5" />
                     <span>Sign Out</span>

@@ -77,7 +77,7 @@ export function NotificationToast({
     <div
       className={clsx(
         'fixed top-4 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-md',
-        'transition-all duration-300 ease-out',
+        'transition-colors duration-300 ease-out',
         visible && !exiting ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4',
       )}
     >
@@ -86,7 +86,7 @@ export function NotificationToast({
         tabIndex={0}
         onClick={handleClick}
         onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
-        className="w-full flex items-start gap-3 p-3.5 bg-surface-elevated border border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl text-left hover:bg-surface-hover transition-colors active:scale-[0.98] cursor-pointer"
+        className="w-full flex items-start gap-3 p-3.5 bg-surface-elevated border border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl text-left hover:bg-surface-hover transition-colors cursor-pointer"
       >
         <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', config.color, 'bg-surface-active')}>
           <Icon className="w-4.5 h-4.5" />
@@ -102,7 +102,7 @@ export function NotificationToast({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); dismiss(); }}
-          className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-active transition-colors shrink-0"
+          className="p-1 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-active transition-colors shrink-0"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />

@@ -196,7 +196,7 @@ function FeedbackModal({
           </div>
           <p className="text-base font-semibold text-text-primary mb-1">Thanks for your feedback!</p>
           <p className="text-sm text-text-muted mb-4">Your input helps improve content ranking.</p>
-          <button onClick={onSkip} className="px-6 py-2.5 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors">Done</button>
+          <button onClick={onSkip} className="px-6 py-3 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors">Done</button>
         </div>
       </div>,
       document.body,
@@ -212,7 +212,7 @@ function FeedbackModal({
             <Icon className={clsx('w-5 h-5', color)} />
             <span className={clsx('text-sm font-semibold', color)}>{title}</span>
           </div>
-          <button onClick={onSkip} className="p-2 -mr-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+          <button onClick={onSkip} className="p-2 -mr-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -222,7 +222,7 @@ function FeedbackModal({
             const isSelected = selected.has(reason.id);
             return (
               <button key={reason.id} onClick={() => toggle(reason.id)} className={clsx(
-                'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-all min-h-[48px] active:scale-[0.98]',
+                'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-colors min-h-[48px]',
                 isSelected ? 'bg-civic-subtle border border-civic/30 text-text-primary font-medium' : 'bg-surface-elevated border border-border-subtle text-text-secondary hover:bg-surface-hover',
               )}>
                 <div className={clsx('w-5 h-5 rounded border-2 flex items-center justify-center shrink-0', isSelected ? 'bg-civic border-civic text-white' : 'border-border-strong')}>
@@ -233,9 +233,9 @@ function FeedbackModal({
             );
           })}
           <div className="flex gap-2 pt-2">
-            <button onClick={onSkip} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:bg-surface-hover transition-colors min-h-[44px]">Skip</button>
+            <button onClick={onSkip} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-text-muted hover:bg-surface-hover transition-colors min-h-[44px]">Skip</button>
             <button onClick={handleSubmit} disabled={selected.size === 0} className={clsx(
-              'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px]',
+              'flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors min-h-[44px]',
               selected.size > 0 ? 'bg-civic text-white hover:bg-civic-dark' : 'bg-surface-active text-text-muted cursor-not-allowed',
             )}>Submit ({selected.size})</button>
           </div>
@@ -581,7 +581,7 @@ export default function ThreadPage() {
             <div className="flex items-center gap-3 px-4 sm:px-6 py-3">
               <button
                 onClick={() => router.back()}
-                className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-all duration-150 active:scale-90 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150 min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -605,7 +605,7 @@ export default function ThreadPage() {
                 <div className="flex items-start gap-3 mb-4">
                   <Link
                     href={`/profile/${encodeURIComponent(displayPost.author.id)}`}
-                    className="w-12 h-12 rounded-full shrink-0 hover:ring-2 hover:ring-civic/20 transition-all overflow-hidden"
+                    className="w-12 h-12 rounded-full shrink-0 hover:ring-2 hover:ring-civic/20 transition-colors overflow-hidden"
                   >
                     {displayPost.author.avatarUrl ? (
                       <img src={displayPost.author.avatarUrl} alt={displayPost.author.displayName} className="w-12 h-12 rounded-full object-cover border border-border-subtle" />
@@ -650,7 +650,7 @@ export default function ThreadPage() {
                 {displayPost.sources && displayPost.sources.length > 0 && (
                   <div className="mb-4 space-y-1.5">
                     {displayPost.sources.map((src, i) => (
-                      <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-civic-light hover:text-civic bg-surface rounded-lg px-3 py-2 border border-border-subtle hover:border-civic/30 transition-all">
+                      <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-civic-light hover:text-civic bg-surface rounded-xl px-3 py-2 border border-border-subtle hover:border-civic/30 transition-colors">
                         <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{src.domain}</span>
                         <span className={clsx('ml-auto text-xs font-mono px-1.5 py-0.5 rounded', src.trustScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light')}>
@@ -684,7 +684,7 @@ export default function ThreadPage() {
                         onClick={() => handleReaction(btn.type)}
                         disabled={reactionLoading}
                         className={clsx(
-                          'flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 active:scale-90 min-h-[44px] select-none',
+                          'flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors duration-150 min-h-[44px] select-none',
                           isActive ? `${btn.color} ${btn.bg} font-semibold` : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
                           reactionLoading && 'opacity-60',
                         )}
@@ -697,7 +697,7 @@ export default function ThreadPage() {
                   <button
                     onClick={() => setBookmarked(!bookmarked)}
                     className={clsx(
-                      'flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 active:scale-90 min-h-[44px]',
+                      'flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors duration-150 min-h-[44px]',
                       bookmarked ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
                     )}
                   >
@@ -706,7 +706,7 @@ export default function ThreadPage() {
                   </button>
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-all duration-150 active:scale-90 min-h-[44px]"
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors duration-150 min-h-[44px]"
                   >
                     <Share2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Share</span>
@@ -714,7 +714,7 @@ export default function ThreadPage() {
                   {isOwnPost && (
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
-                      className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium text-text-muted hover:text-danger-light hover:bg-danger/5 transition-all duration-150 active:scale-90 min-h-[44px]"
+                      className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-text-muted hover:text-danger-light hover:bg-danger/5 transition-colors duration-150 min-h-[44px]"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span className="hidden sm:inline">Delete</span>
@@ -733,7 +733,7 @@ export default function ThreadPage() {
                       <ChevronDown className={clsx('w-3.5 h-3.5 transition-transform duration-200', showAlgo && 'rotate-180')} />
                     </button>
                     {showAlgo && (
-                      <div className="mt-2 p-3 bg-surface rounded-lg border border-border-subtle animate-slide-up text-xs text-text-secondary">
+                      <div className="mt-2 p-3 bg-surface rounded-xl border border-border-subtle animate-slide-up text-xs text-text-secondary">
                         <p>{(displayPost as PostData).algorithm.explanation}</p>
                       </div>
                     )}
@@ -746,7 +746,7 @@ export default function ThreadPage() {
                 {canComment ? (
                   <button
                     onClick={() => setReplyOpen(true)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-surface-elevated rounded-xl border border-border-subtle text-sm text-text-muted hover:text-text-secondary hover:border-border-strong transition-all duration-150 active:scale-[0.99] min-h-[44px]"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-surface-elevated rounded-xl border border-border-subtle text-sm text-text-muted hover:text-text-secondary hover:border-border-strong transition-colors duration-150 active:scale-[0.99] min-h-[44px]"
                   >
                     <MessageSquare className="w-4 h-4" />
                     Post your reply...
@@ -762,7 +762,7 @@ export default function ThreadPage() {
               </div>
 
               {commentError && (
-                <div className="mx-4 sm:mx-6 mt-2 flex items-center gap-2 p-2.5 bg-danger/5 border border-danger/20 rounded-lg text-xs text-danger-light">
+                <div className="mx-4 sm:mx-6 mt-2 flex items-center gap-2 p-2.5 bg-danger/5 border border-danger/20 rounded-xl text-xs text-danger-light">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   {commentError}
                   <button onClick={() => setCommentError(null)} className="ml-auto text-text-muted hover:text-text-secondary p-1 min-w-[44px] min-h-[44px] flex items-center justify-center">×</button>
@@ -787,7 +787,7 @@ export default function ThreadPage() {
                   return (
                     <div key={reply.id} className="px-4 sm:px-6 py-4 border-b border-border-subtle hover:bg-surface/30 transition-colors duration-150 animate-fade-in" style={{ animationDelay: `${(comments.length + i) * 50}ms`, animationFillMode: 'forwards', opacity: 0 }}>
                       <div className="flex items-start gap-3">
-                        <Link href={`/profile/${encodeURIComponent(reply.author.id)}`} className="w-8 h-8 rounded-full shrink-0 hover:border-civic/50 transition-all overflow-hidden">
+                        <Link href={`/profile/${encodeURIComponent(reply.author.id)}`} className="w-8 h-8 rounded-full shrink-0 hover:border-civic/50 transition-colors overflow-hidden">
                           {reply.author.avatarUrl ? (
                             <img src={reply.author.avatarUrl} alt={reply.author.displayName} className="w-8 h-8 rounded-full object-cover border border-border-subtle" />
                           ) : (
@@ -826,7 +826,7 @@ export default function ThreadPage() {
                         const last = comments[comments.length - 1];
                         if (last) fetchComments(last.id);
                       }}
-                      className="text-xs text-civic-light hover:text-civic font-medium px-4 py-2.5 rounded-lg hover:bg-civic-subtle transition-all min-h-[44px]"
+                      className="text-xs text-civic-light hover:text-civic font-medium px-4 py-2.5 rounded-xl hover:bg-civic-subtle transition-colors min-h-[44px]"
                     >
                       Load more comments
                     </button>
@@ -969,7 +969,7 @@ function CommentCard({
       <div className="flex items-start gap-3">
         <Link
           href={`/profile/${encodeURIComponent(comment.author.id)}`}
-          className="w-8 h-8 rounded-full shrink-0 hover:border-civic/50 transition-all overflow-hidden"
+          className="w-8 h-8 rounded-full shrink-0 hover:border-civic/50 transition-colors overflow-hidden"
         >
           {comment.author.avatarUrl ? (
             <img src={comment.author.avatarUrl} alt={comment.author.displayName} className="w-8 h-8 rounded-full object-cover border border-border-subtle" />
@@ -993,7 +993,7 @@ function CommentCard({
             <button
               onClick={handleLike}
               className={clsx(
-                'flex items-center gap-1 text-xs transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center',
+                'flex items-center gap-1 text-xs transition-colors p-1 min-w-[44px] min-h-[44px] justify-center',
                 liked ? 'text-positive-light' : 'text-text-muted hover:text-positive-light',
               )}
             >
@@ -1003,7 +1003,7 @@ function CommentCard({
             <button
               onClick={handleDislike}
               className={clsx(
-                'flex items-center gap-1 text-xs transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center',
+                'flex items-center gap-1 text-xs transition-colors p-1 min-w-[44px] min-h-[44px] justify-center',
                 disliked ? 'text-danger-light' : 'text-text-muted hover:text-danger-light',
               )}
             >
@@ -1012,7 +1012,7 @@ function CommentCard({
             </button>
             <button
               onClick={() => onReply(comment)}
-              className="flex items-center gap-1 text-xs text-text-muted hover:text-civic-light transition-colors active:scale-90 p-1 min-w-[44px] min-h-[44px] justify-center"
+              className="flex items-center gap-1 text-xs text-text-muted hover:text-civic-light transition-colors p-1 min-w-[44px] min-h-[44px] justify-center"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               {comment.replyCount > 0 && comment.replyCount}

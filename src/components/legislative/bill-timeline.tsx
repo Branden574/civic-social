@@ -115,7 +115,7 @@ export function BillTimeline({ events, amendments = [] }: BillTimelineProps) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
                     className={clsx(
-                      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide border',
+                      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold uppercase border',
                       styles.bg,
                       styles.text,
                       styles.border
@@ -167,7 +167,7 @@ export function BillTimeline({ events, amendments = [] }: BillTimelineProps) {
               <div className="flex items-center gap-2 flex-wrap">
                 <span
                   className={clsx(
-                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide border',
+                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold uppercase border',
                     styles.bg,
                     styles.text,
                     styles.border

@@ -24,7 +24,7 @@ export function LandingNav() {
   return (
     <nav
       ref={navRef}
-      className={`fixed top-0 left-0 right-0 z-[1000] py-4 transition-all duration-200 ${
+      className={`fixed top-0 left-0 right-0 z-[1000] py-4 transition-colors duration-200 ${
         scrolled ? 'bg-bg/90 backdrop-blur-xl border-b border-border-subtle' : ''
       }`}
     >

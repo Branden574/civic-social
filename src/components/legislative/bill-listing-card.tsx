@@ -36,7 +36,7 @@ export function BillListingCard({ bill, index }: BillListingCardProps) {
       href={billLink}
       className={clsx(
         'block rounded-xl border border-border-subtle bg-surface p-4',
-        'transition-all duration-200 hover:bg-surface-hover hover:border-border hover:shadow-md',
+        'transition-colors duration-200 hover:bg-surface-hover hover:border-border hover:shadow-md',
         'animate-fade-in opacity-0',
       )}
       style={{ animationDelay: `${Math.min(index, 20) * 30}ms`, animationFillMode: 'forwards' }}
@@ -45,13 +45,13 @@ export function BillListingCard({ bill, index }: BillListingCardProps) {
       <div className="flex items-center gap-2 flex-wrap mb-2">
         <span
           className={clsx(
-            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider',
+            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold',
             chamberStyle,
           )}
         >
           {bill.displayCode}
         </span>
-        <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
+        <span className="text-xs font-medium text-text-muted uppercase">
           {bill.originChamber}
         </span>
         <span className="text-xs text-text-muted">

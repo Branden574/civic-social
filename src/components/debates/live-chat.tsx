@@ -283,7 +283,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
 
   return (
     <div className={clsx(
-      'flex flex-col bg-surface-elevated border border-border-subtle rounded-xl overflow-hidden transition-all',
+      'flex flex-col bg-surface-elevated border border-border-subtle rounded-xl overflow-hidden transition-colors',
       collapsed ? 'h-12' : 'h-[500px] lg:h-[600px]',
     )}>
       {/* ── Chat header ── */}
@@ -327,7 +327,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
           {/* ── Host settings panel ── */}
           {showSettings && isCreator && (
             <div className="px-3 py-2 border-b border-border-subtle bg-surface space-y-2 animate-fade-in shrink-0">
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Chat Settings</p>
+              <p className="text-xs font-semibold text-text-muted">Chat Settings</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => updateConfig({ enabled: !config?.enabled })}
@@ -419,7 +419,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
                   setAutoScroll(true);
                   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full text-center text-xs font-medium text-civic-light bg-civic-subtle rounded-lg py-1.5 hover:bg-civic-muted transition-colors"
+                className="w-full text-center text-xs font-medium text-civic-light bg-civic-subtle rounded-xl py-1.5 hover:bg-civic-muted transition-colors"
               >
                 <ChevronDown className="w-3 h-3 inline mr-1" />
                 New messages below
@@ -430,7 +430,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
           {/* ── Error message ── */}
           {error && (
             <div className="px-3 py-1.5 shrink-0">
-              <div className="flex items-center gap-1.5 text-xs text-danger-light bg-danger/10 px-2.5 py-1.5 rounded-lg">
+              <div className="flex items-center gap-1.5 text-xs text-danger-light bg-danger/10 px-2.5 py-1.5 rounded-xl">
                 <AlertCircle className="w-3 h-3 shrink-0" />
                 {error}
                 <button onClick={() => setError(null)} className="ml-auto"><X className="w-3 h-3" /></button>
@@ -441,17 +441,17 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
           {/* ── Input area ── */}
           <div className="px-3 py-2.5 border-t border-border-subtle bg-surface shrink-0">
             {isMuted ? (
-              <div className="flex items-center gap-2 text-xs text-danger-light bg-danger/5 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-xs text-danger-light bg-danger/5 px-3 py-2 rounded-xl">
                 <VolumeX className="w-4 h-4" />
                 You are muted in this chat.
               </div>
             ) : !config?.enabled ? (
-              <div className="flex items-center gap-2 text-xs text-text-muted bg-surface-elevated px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-xs text-text-muted bg-surface-elevated px-3 py-2 rounded-xl">
                 <MessageSquare className="w-4 h-4" />
                 Chat is currently disabled.
               </div>
             ) : isCompleted ? (
-              <div className="flex items-center gap-2 text-xs text-text-muted bg-surface-elevated px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-xs text-text-muted bg-surface-elevated px-3 py-2 rounded-xl">
                 <MessageSquare className="w-4 h-4" />
                 This debate has ended. Chat is read-only.
               </div>
@@ -459,7 +459,7 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowEmoji(!showEmoji)}
-                  className={clsx('p-1.5 rounded-lg transition-colors', showEmoji ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-primary')}
+                  className={clsx('p-1.5 rounded-xl transition-colors', showEmoji ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-primary')}
                 >
                   <Smile className="w-4 h-4" />
                 </button>
@@ -472,12 +472,12 @@ export function LiveChat({ debateId, debateStatus, isCreator, currentUserId, spe
                   placeholder="Send a message..."
                   maxLength={500}
                   disabled={chatDisabled || sending}
-                  className="flex-1 text-sm bg-surface-elevated border border-border-subtle rounded-lg px-3 py-2 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/30 focus:border-civic/50 disabled:opacity-50 transition-colors"
+                  className="flex-1 text-sm bg-surface-elevated border border-border-subtle rounded-xl px-3 py-2 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/30 focus:border-civic/50 disabled:opacity-50 transition-colors"
                 />
                 <button
                   onClick={handleSend}
                   disabled={!inputValue.trim() || sending || chatDisabled}
-                  className="p-2 rounded-lg bg-civic text-white hover:bg-civic-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-xl bg-civic text-white hover:bg-civic-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
@@ -542,7 +542,7 @@ function ChatMessageBubble({
 
   return (
     <div
-      className="group flex items-start gap-2 py-1 px-1.5 rounded-lg hover:bg-surface-hover/50 transition-colors relative"
+      className="group flex items-start gap-2 py-1 px-1.5 rounded-xl hover:bg-surface-hover/50 transition-colors relative"
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -593,7 +593,7 @@ function ChatMessageBubble({
 
       {/* Hover actions */}
       {showActions && (
-        <div className="absolute right-1 top-1 flex items-center gap-0.5 bg-surface-elevated border border-border-subtle rounded-lg shadow-md px-1 py-0.5 animate-fade-in">
+        <div className="absolute right-1 top-1 flex items-center gap-0.5 bg-surface-elevated border border-border-subtle rounded-xl shadow-md px-1 py-0.5 animate-fade-in">
           {QUICK_REACTIONS.slice(0, 4).map((emoji) => (
             <button
               key={emoji}

@@ -70,7 +70,7 @@ export default function LivePage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-5 sm:px-6 py-5">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Radio className="w-5 h-5 text-danger-light" />
@@ -164,7 +164,7 @@ export default function LivePage() {
 
                   {/* CTA */}
                   {event.status === 'live' && (
-                    <button className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-danger/10 text-danger-light text-xs font-semibold rounded-lg hover:bg-danger/20 transition-colors">
+                    <button className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-danger/10 text-danger-light text-xs font-semibold rounded-xl hover:bg-danger/20 transition-colors">
                       <Radio className="w-3.5 h-3.5" />
                       Join Live Discussion
                     </button>

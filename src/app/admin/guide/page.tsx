@@ -47,7 +47,7 @@ export default function AdminGuidePage() {
 
       {/* Roles */}
       <section className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
           <User className="w-4 h-4 text-civic-light" />
           Roles
         </h2>
@@ -57,7 +57,7 @@ export default function AdminGuidePage() {
             return (
               <div
                 key={r.role}
-                className="flex items-start gap-3 p-3 rounded-lg bg-surface/50 border border-border-subtle"
+                className="flex items-start gap-3 p-3 rounded-xl bg-surface/50 border border-border-subtle"
               >
                 <Icon className="w-5 h-5 text-civic-light shrink-0 mt-0.5" />
                 <div>
@@ -72,7 +72,7 @@ export default function AdminGuidePage() {
 
       {/* Dev / production login */}
       <section className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
           <Lock className="w-4 h-4 text-civic-light" />
           Admin Login
         </h2>
@@ -80,7 +80,7 @@ export default function AdminGuidePage() {
           In development and in production (until you integrate a real auth provider), admin access is determined by email.
         </p>
         <div className="space-y-3">
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-positive/5 border border-positive/15">
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-positive/5 border border-positive/15">
             <Mail className="w-5 h-5 text-positive-light shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-text-primary">Platform Creator (full admin)</p>
@@ -90,7 +90,7 @@ export default function AdminGuidePage() {
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-surface/50 border border-border-subtle">
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-surface/50 border border-border-subtle">
             <Key className="w-5 h-5 text-text-muted shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-text-primary">Other roles</p>
@@ -108,13 +108,13 @@ export default function AdminGuidePage() {
 
       {/* Quick links */}
       <section className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-text-primary">
           Quick Links
         </h2>
         <div className="grid gap-2">
           <Link
             href="/admin"
-            className="flex items-center justify-between p-3 rounded-lg border border-border-subtle hover:bg-surface-hover hover:border-civic/30 transition-colors group"
+            className="flex items-center justify-between p-3 rounded-xl border border-border-subtle hover:bg-surface-hover hover:border-civic/30 transition-colors group"
           >
             <span className="flex items-center gap-2 text-sm font-medium text-text-primary">
               <ShieldAlert className="w-4 h-4 text-civic-light" />
@@ -124,7 +124,7 @@ export default function AdminGuidePage() {
           </Link>
           <Link
             href="/admin/legislation"
-            className="flex items-center justify-between p-3 rounded-lg border border-border-subtle hover:bg-surface-hover hover:border-civic/30 transition-colors group"
+            className="flex items-center justify-between p-3 rounded-xl border border-border-subtle hover:bg-surface-hover hover:border-civic/30 transition-colors group"
           >
             <span className="flex items-center gap-2 text-sm font-medium text-text-primary">
               <Landmark className="w-4 h-4 text-civic-light" />
@@ -134,7 +134,7 @@ export default function AdminGuidePage() {
           </Link>
           <Link
             href="/appeals"
-            className="flex items-center justify-between p-3 rounded-lg border border-border-subtle hover:bg-surface-hover hover:border-civic/30 transition-colors group"
+            className="flex items-center justify-between p-3 rounded-xl border border-border-subtle hover:bg-surface-hover hover:border-civic/30 transition-colors group"
           >
             <span className="flex items-center gap-2 text-sm font-medium text-text-primary">
               <Scale className="w-4 h-4 text-civic-light" />

@@ -133,7 +133,7 @@ export function DeleteConfirmModal({
         <button
           onClick={onClose}
           disabled={deleting}
-          className="absolute top-3 right-3 p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-50"
+          className="absolute top-3 right-3 p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-50"
           aria-label="Close"
         >
           <X className="w-4 h-4" />
@@ -156,7 +156,7 @@ export function DeleteConfirmModal({
         </div>
 
         {/* Content preview */}
-        <div className="bg-surface/50 rounded-lg border border-border-subtle p-3">
+        <div className="bg-surface/50 rounded-xl border border-border-subtle p-3">
           <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
             {contentPreview.slice(0, 150)}
             {contentPreview.length > 150 ? '...' : ''}
@@ -164,7 +164,7 @@ export function DeleteConfirmModal({
         </div>
 
         {/* Privacy assurance */}
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-positive/5 border border-positive/15">
+        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-positive/5 border border-positive/15">
           <ShieldCheck className="w-4 h-4 text-positive-light shrink-0 mt-0.5" />
           <p className="text-xs text-text-muted leading-relaxed">
             Your content will be fully wiped from our servers. No residual data
@@ -174,7 +174,7 @@ export function DeleteConfirmModal({
 
         {/* Error message */}
         {error && (
-          <div className="p-3 rounded-lg bg-danger/10 border border-danger/20">
+          <div className="p-3 rounded-xl bg-danger/10 border border-danger/20">
             <p className="text-xs text-danger-light font-medium">{error}</p>
           </div>
         )}
@@ -192,7 +192,7 @@ export function DeleteConfirmModal({
           <button
             onClick={onConfirm}
             disabled={deleting}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold text-white bg-danger rounded-xl hover:bg-danger/80 transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-semibold text-white bg-danger rounded-xl hover:bg-danger/80 transition-colors disabled:opacity-60 cursor-pointer"
           >
             {deleting ? (
               <>

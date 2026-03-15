@@ -46,7 +46,7 @@ export function BillCard({ bill, index }: BillCardProps) {
       href={`/labs/${bill.id}`}
       className={clsx(
         'feed-item block rounded-xl border border-border-subtle bg-surface p-4',
-        'transition-all duration-200 hover:bg-surface-hover hover:border-border hover:shadow-md',
+        'transition-colors duration-200 hover:bg-surface-hover hover:border-border hover:shadow-md',
         'animate-fade-in opacity-0'
       )}
       style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
@@ -56,7 +56,7 @@ export function BillCard({ bill, index }: BillCardProps) {
         {/* Chamber & bill number */}
         <span
           className={clsx(
-            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider',
+            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold',
             bill.chamber === 'senate'
               ? 'bg-civic-muted text-civic-light'
               : 'bg-info/15 text-info-light'
@@ -66,7 +66,7 @@ export function BillCard({ bill, index }: BillCardProps) {
         </span>
 
         {/* Chamber badge */}
-        <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
+        <span className="text-xs font-medium text-text-muted uppercase">
           {bill.chamber === 'senate' ? 'Senate' : 'House'}
         </span>
 
@@ -123,7 +123,7 @@ export function BillCard({ bill, index }: BillCardProps) {
 
       {/* Inline vote result */}
       {bill.votes && (
-        <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-lg bg-surface-active/50">
+        <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-xl bg-surface-active/50">
           {bill.votes.result === 'passed' ? (
             <CheckCircle2 className="h-3.5 w-3.5 text-positive-light" />
           ) : (

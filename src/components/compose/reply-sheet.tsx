@@ -104,7 +104,7 @@ export function ReplySheet({ isOpen, onClose, onSubmit, replyingTo }: ReplySheet
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle">
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-all duration-150"
+            className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150"
           >
             <X className="w-5 h-5" />
           </button>
@@ -113,9 +113,9 @@ export function ReplySheet({ isOpen, onClose, onSubmit, replyingTo }: ReplySheet
             onClick={handleSubmit}
             disabled={!content.trim() || sending}
             className={clsx(
-              'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200',
+              'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200',
               content.trim() && !sending
-                ? 'bg-civic text-white hover:bg-civic-dark active:scale-95'
+                ? 'bg-civic text-white hover:bg-civic-dark'
                 : 'bg-surface-active text-text-muted cursor-not-allowed',
             )}
           >
@@ -133,7 +133,7 @@ export function ReplySheet({ isOpen, onClose, onSubmit, replyingTo }: ReplySheet
         {/* Replying to context */}
         {replyingTo && (
           <div className="px-4 pt-3 pb-1">
-            <div className="flex items-start gap-2 p-2.5 bg-surface rounded-lg border border-border-subtle">
+            <div className="flex items-start gap-2 p-2.5 bg-surface rounded-xl border border-border-subtle">
               <div className="w-0.5 h-full bg-civic/30 rounded-full shrink-0 self-stretch" />
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-text-muted">

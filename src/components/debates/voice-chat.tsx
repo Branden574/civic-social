@@ -638,7 +638,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
             <button
               onClick={enableVoice}
               disabled={loading || debateStatus === 'completed'}
-              className="flex items-center gap-1.5 mx-auto px-4 py-2 text-xs font-semibold bg-civic text-white rounded-lg hover:bg-civic-dark disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 mx-auto px-4 py-2 text-xs font-semibold bg-civic text-white rounded-xl hover:bg-civic-dark disabled:opacity-50 transition-colors"
             >
               {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radio className="w-3.5 h-3.5" />}
               Enable Voice Chat
@@ -657,7 +657,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   // ── Voice room enabled ──────────────────────────────────────
   return (
     <div className={clsx(
-      'bg-surface-elevated border border-border-subtle rounded-xl overflow-hidden transition-all',
+      'bg-surface-elevated border border-border-subtle rounded-xl overflow-hidden transition-colors',
       collapsed ? 'h-12' : '',
     )}>
       {/* Header */}
@@ -683,7 +683,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
         <div className="p-3 space-y-3">
           {/* ── Speakers grid ── */}
           <div>
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+            <p className="text-xs font-semibold text-text-muted mb-2">
               Speakers ({speakers.length}/{room.maxSpeakers})
             </p>
             {speakers.length > 0 ? (
@@ -709,7 +709,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
           {/* ── Request-to-speak queue (host only) ── */}
           {isCreator && pendingRequests.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-warning-light uppercase tracking-wider mb-2 flex items-center gap-1">
+              <p className="text-xs font-semibold text-warning-light mb-2 flex items-center gap-1">
                 <Hand className="w-3 h-3" />
                 Requests to Speak ({pendingRequests.length})
               </p>
@@ -718,7 +718,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                   const p = room.participants.find((pp) => pp.userId === userId);
                   if (!p) return null;
                   return (
-                    <div key={userId} className="flex items-center justify-between bg-warning/5 border border-warning/15 rounded-lg px-3 py-2">
+                    <div key={userId} className="flex items-center justify-between bg-warning/5 border border-warning/15 rounded-xl px-3 py-2">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-md bg-warning/15 flex items-center justify-center text-[9px] font-bold text-warning-light">
                           {p.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
@@ -729,13 +729,13 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                         <button
                           onClick={() => voiceAction('grant_speak', { targetUserId: userId })}
                           disabled={actionLoading === 'grant_speak'}
-                          className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-positive/15 text-positive-light hover:bg-positive/25 transition-colors"
+                          className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-positive/15 text-positive-light hover:bg-positive/25 transition-colors"
                         >
                           Grant
                         </button>
                         <button
                           onClick={() => voiceAction('revoke_speak', { targetUserId: userId })}
-                          className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-danger/10 text-danger-light hover:bg-danger/20 transition-colors"
+                          className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-danger/10 text-danger-light hover:bg-danger/20 transition-colors"
                         >
                           Deny
                         </button>
@@ -750,7 +750,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
           {/* ── Listeners ── */}
           {listeners.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+              <p className="text-xs font-semibold text-text-muted mb-2">
                 Listeners ({listeners.length})
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -775,7 +775,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
 
           {/* ── Device Settings Panel ── */}
           {joined && showDeviceSettings && (
-            <div className="bg-surface border border-border-subtle rounded-lg p-3 space-y-3">
+            <div className="bg-surface border border-border-subtle rounded-xl p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                   <Settings className="w-3.5 h-3.5 text-text-muted" />
@@ -791,7 +791,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
 
               {/* Microphone (Input) */}
               <div>
-                <label className="text-xs font-medium text-text-muted uppercase tracking-wider block mb-1.5">
+                <label className="text-xs font-medium text-text-muted block mb-1.5">
                   Microphone (Input)
                 </label>
                 <div className="relative">
@@ -799,7 +799,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                   <select
                     value={selectedInputId}
                     onChange={(e) => switchInputDevice(e.target.value)}
-                    className="w-full bg-surface-elevated border border-border-subtle rounded-lg pl-8 pr-3 py-2 text-xs text-text-primary appearance-none cursor-pointer hover:border-civic/40 focus:border-civic focus:outline-none transition-colors"
+                    className="w-full bg-surface-elevated border border-border-subtle rounded-xl pl-8 pr-3 py-2 text-xs text-text-primary appearance-none cursor-pointer hover:border-civic/40 focus:border-civic focus:outline-none transition-colors"
                   >
                     {audioInputs.length === 0 && (
                       <option value="default">Default Microphone</option>
@@ -823,7 +823,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
 
               {/* Speaker (Output) */}
               <div>
-                <label className="text-xs font-medium text-text-muted uppercase tracking-wider block mb-1.5">
+                <label className="text-xs font-medium text-text-muted block mb-1.5">
                   Speaker (Output)
                 </label>
                 <div className="relative">
@@ -832,7 +832,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                     value={selectedOutputId}
                     onChange={(e) => switchOutputDevice(e.target.value)}
                     disabled={audioOutputs.length === 0}
-                    className="w-full bg-surface-elevated border border-border-subtle rounded-lg pl-8 pr-3 py-2 text-xs text-text-primary appearance-none cursor-pointer hover:border-civic/40 focus:border-civic focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-surface-elevated border border-border-subtle rounded-xl pl-8 pr-3 py-2 text-xs text-text-primary appearance-none cursor-pointer hover:border-civic/40 focus:border-civic focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {audioOutputs.length === 0 ? (
                       <option value="default">System Default (browser-managed)</option>
@@ -866,7 +866,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                     el.play().catch(() => {});
                   }
                 }}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-text-muted bg-surface-active rounded-lg hover:bg-surface-hover transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-text-muted bg-surface-active rounded-xl hover:bg-surface-hover transition-colors"
               >
                 <Volume2 className="w-3 h-3" />
                 Test Speaker
@@ -878,7 +878,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
           <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
             {!joined && !isDebater ? (
               /* Spectators see a read-only indicator */
-              <div className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-text-muted bg-surface rounded-lg border border-border-subtle">
+              <div className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-text-muted bg-surface rounded-xl border border-border-subtle">
                 <Users className="w-3.5 h-3.5" />
                 Voice is for debaters only — you&apos;re spectating
               </div>
@@ -886,7 +886,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
               <button
                 onClick={joinRoom}
                 disabled={loading || debateStatus === 'completed'}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold bg-positive text-white rounded-lg hover:bg-positive-light disabled:opacity-50 transition-colors"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold bg-positive text-white rounded-xl hover:bg-positive-light disabled:opacity-50 transition-colors"
               >
                 {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Phone className="w-3.5 h-3.5" />}
                 Join Voice (mic required)
@@ -897,7 +897,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                 <button
                   onClick={() => voiceAction('toggle_mute')}
                   className={clsx(
-                    'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors',
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-colors',
                     isSelfMuted
                       ? 'bg-surface text-text-muted border border-border-subtle hover:bg-surface-hover'
                       : 'bg-positive/15 text-positive-light hover:bg-positive/25',
@@ -911,7 +911,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                 <button
                   onClick={toggleCamera}
                   className={clsx(
-                    'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors',
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-colors',
                     cameraEnabled
                       ? 'bg-civic-muted text-civic-light hover:bg-civic/25'
                       : 'bg-surface text-text-muted border border-border-subtle hover:bg-surface-hover',
@@ -926,7 +926,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                   <button
                     onClick={() => voiceAction('request_speak')}
                     disabled={actionLoading === 'request_speak'}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-warning/15 text-warning-light rounded-lg hover:bg-warning/25 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-warning/15 text-warning-light rounded-xl hover:bg-warning/25 transition-colors"
                   >
                     <Hand className="w-3.5 h-3.5" />
                     Raise Hand
@@ -934,7 +934,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                 )}
 
                 {isPending && (
-                  <span className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-warning-light bg-warning/10 rounded-lg">
+                  <span className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-warning-light bg-warning/10 rounded-xl">
                     <Hand className="w-3.5 h-3.5 animate-pulse" />
                     Hand raised
                   </span>
@@ -944,7 +944,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                 <button
                   onClick={() => setShowDeviceSettings(!showDeviceSettings)}
                   className={clsx(
-                    'p-2 rounded-lg transition-colors',
+                    'p-2 rounded-xl transition-colors',
                     showDeviceSettings
                       ? 'bg-civic-muted text-civic'
                       : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
@@ -957,7 +957,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                 {/* Leave */}
                 <button
                   onClick={leaveRoom}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-danger/10 text-danger-light rounded-lg hover:bg-danger/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-danger/10 text-danger-light rounded-xl hover:bg-danger/20 transition-colors"
                 >
                   <PhoneOff className="w-3.5 h-3.5" />
                   Leave
@@ -970,14 +970,14 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
               <>
                 <button
                   onClick={() => voiceAction('mute_all')}
-                  className="p-2 text-text-muted hover:text-warning-light hover:bg-warning/10 rounded-lg transition-colors"
+                  className="p-2 text-text-muted hover:text-warning-light hover:bg-warning/10 rounded-xl transition-colors"
                   title="Mute all speakers"
                 >
                   <VolumeX className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={disableVoice}
-                  className="p-2 text-text-muted hover:text-danger-light hover:bg-danger/10 rounded-lg transition-colors"
+                  className="p-2 text-text-muted hover:text-danger-light hover:bg-danger/10 rounded-xl transition-colors"
                   title="Disable voice chat"
                 >
                   <PhoneOff className="w-3.5 h-3.5" />
@@ -1047,7 +1047,7 @@ function VoiceAvatar({
           <div className="absolute inset-0 rounded-xl bg-positive/20 animate-ping" style={{ animationDuration: '1.5s' }} />
         )}
         <div className={clsx(
-          'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold relative transition-all duration-300',
+          'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold relative transition-colors duration-300',
           visualState === 'speaking'
             ? 'bg-positive/20 text-positive-light ring-2 ring-positive shadow-[0_0_12px_rgba(34,197,94,0.35)]'
             : visualState === 'silent'
@@ -1083,7 +1083,7 @@ function VoiceAvatar({
 
       {/* Host controls on hover */}
       {isCreator && !isMe && (
-        <div className="absolute -top-1 -right-1 hidden group-hover:flex items-center gap-0.5 bg-surface-elevated border border-border-subtle rounded-lg shadow-md p-0.5 z-10">
+        <div className="absolute -top-1 -right-1 hidden group-hover:flex items-center gap-0.5 bg-surface-elevated border border-border-subtle rounded-xl shadow-md p-0.5 z-10">
           <button onClick={onServerMute} className="p-0.5 text-text-muted hover:text-warning-light" title="Server mute">
             <VolumeX className="w-3 h-3" />
           </button>

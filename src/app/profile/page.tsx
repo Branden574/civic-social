@@ -222,7 +222,7 @@ export default function ProfilePage() {
         {/* Pull-to-refresh indicator */}
         {(pullY > 0 || isRefreshing) && (
           <div
-            className="absolute left-0 right-0 top-0 z-20 flex items-center justify-center overflow-hidden transition-all duration-200"
+            className="absolute left-0 right-0 top-0 z-20 flex items-center justify-center overflow-hidden transition-colors duration-200"
             style={{ height: isRefreshing ? 56 : Math.min(pullY + 8, 56) }}
           >
             <div className="flex items-center gap-2 rounded-full bg-surface-elevated/95 px-4 py-2 shadow-lg border border-border-subtle">
@@ -269,11 +269,11 @@ export default function ProfilePage() {
               <div className="flex gap-2 mb-1">
                 <Link
                   href="/settings"
-                  className="px-4 py-1.5 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors"
+                  className="px-4 py-1.5 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
                 >
                   Edit Profile
                 </Link>
-                <Link href="/settings" className="p-1.5 bg-surface-elevated border border-border-subtle rounded-lg hover:bg-surface-hover transition-colors">
+                <Link href="/settings" className="p-1.5 bg-surface-elevated border border-border-subtle rounded-xl hover:bg-surface-hover transition-colors">
                   <Settings className="w-4 h-4 text-text-secondary" />
                 </Link>
               </div>
@@ -360,13 +360,13 @@ export default function ProfilePage() {
                 <Link
                   href="/settings"
                   onClick={dismissProfileCard}
-                  className="px-3 py-1.5 bg-civic text-white text-xs font-semibold rounded-lg hover:bg-civic-dark transition-colors shrink-0"
+                  className="px-3 py-1.5 bg-civic text-white text-xs font-semibold rounded-xl hover:bg-civic-dark transition-colors shrink-0"
                 >
                   Finish
                 </Link>
                 <button
                   onClick={dismissProfileCard}
-                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors shrink-0 ml-1"
+                  className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors shrink-0 ml-1"
                   title="Dismiss"
                 >
                   <X className="w-4 h-4" />
@@ -588,7 +588,7 @@ function OverviewTab({ topics }: { topics: string[] }) {
       {topics.length > 0 && (
         <div className="px-4 sm:px-6 mt-6 mb-6">
           <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
-            <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider mb-3">
+            <h2 className="text-sm font-semibold text-text-primary mb-3">
               Active Topics
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -620,7 +620,7 @@ function OverviewTab({ topics }: { topics: string[] }) {
       {/* Privacy controls */}
       <div className="px-4 sm:px-6 mb-6">
         <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
-          <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
             Privacy & Data
           </h2>
           <div className="space-y-3">
@@ -676,7 +676,7 @@ function CredibilityTab({ score }: { score: number }) {
       <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-4 h-4 text-positive" />
-          <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-text-primary">
             Improve Your Score
           </h3>
         </div>
@@ -692,7 +692,7 @@ function CredibilityTab({ score }: { score: number }) {
 
 function ImprovementTip({ tip, impact }: { tip: string; impact: string }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border-subtle">
+    <div className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border-subtle">
       <CheckCircle2 className="w-4 h-4 shrink-0 text-text-muted" />
       <div className="flex-1">
         <p className="text-sm text-text-secondary">{tip}</p>
@@ -712,22 +712,22 @@ function DebatesTab() {
       <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
         <div className="flex items-center gap-2 mb-4">
           <MessageSquare className="w-5 h-5 text-civic-light" />
-          <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-text-primary">
             Debate Summary
           </h2>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <div className="p-3 bg-surface rounded-lg text-center">
+          <div className="p-3 bg-surface rounded-xl text-center">
             <p className="text-2xl font-bold text-text-primary">0</p>
-            <p className="text-xs text-text-muted uppercase tracking-wider">Total Debates</p>
+            <p className="text-xs text-text-muted">Total Debates</p>
           </div>
-          <div className="p-3 bg-surface rounded-lg text-center">
+          <div className="p-3 bg-surface rounded-xl text-center">
             <p className="text-2xl font-bold text-text-muted">—</p>
-            <p className="text-xs text-text-muted uppercase tracking-wider">Avg Civility</p>
+            <p className="text-xs text-text-muted">Avg Civility</p>
           </div>
-          <div className="p-3 bg-surface rounded-lg text-center">
+          <div className="p-3 bg-surface rounded-xl text-center">
             <p className="text-2xl font-bold text-text-muted">0</p>
-            <p className="text-xs text-text-muted uppercase tracking-wider">Common Ground</p>
+            <p className="text-xs text-text-muted">Common Ground</p>
           </div>
         </div>
       </div>
@@ -751,7 +751,7 @@ function ActivityTab() {
       <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="w-5 h-5 text-civic-light" />
-          <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+          <h2 className="text-sm font-semibold text-text-primary">
             Activity Breakdown
           </h2>
         </div>
@@ -780,7 +780,7 @@ function PrivacyItem({ label, enabled }: { label: string; enabled: boolean }) {
       >
         <div
           className={clsx(
-            'w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all',
+            'w-4 h-4 rounded-full bg-white absolute top-0.5 transition-colors',
           )}
           style={{ left: enabled ? '22px' : '2px' }}
         />

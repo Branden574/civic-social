@@ -91,7 +91,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       >
         <div
           className={clsx(
-            'flex items-center justify-center w-9 h-9 rounded-full border transition-all',
+            'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
             refreshing
               ? 'bg-civic-muted border-civic/30'
               : progress >= 1

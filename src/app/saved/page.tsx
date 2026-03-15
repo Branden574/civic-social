@@ -116,7 +116,7 @@ export default function SavedPage() {
           <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle">
             <div className="px-4 sm:px-6 pt-4 pb-0">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-civic-subtle flex items-center justify-center">
                   <Bookmark className="w-5 h-5 text-civic-light" />
                 </div>
                 <div>
@@ -257,7 +257,7 @@ export default function SavedPage() {
                     {/* Remove button */}
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="p-2 rounded-lg text-text-muted hover:text-danger-light hover:bg-danger/10 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                      className="p-2 rounded-xl text-text-muted hover:text-danger-light hover:bg-danger/10 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
                       title="Remove from saved"
                     >
                       <BookmarkX className="w-4 h-4" />

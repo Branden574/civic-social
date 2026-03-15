@@ -71,7 +71,7 @@ export function ReactionButton({
     <button
       onClick={handleClick}
       className={clsx(
-        'relative flex items-center gap-1 rounded-lg transition-all duration-150 active:scale-90',
+        'relative flex items-center gap-1 rounded-lg transition-colors duration-150',
         size === 'sm' ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm',
         localActive
           ? `${activeColor} font-semibold`
@@ -103,7 +103,7 @@ export function ReactionButton({
 
       {/* Count */}
       {localCount > 0 && (
-        <span className={clsx('tabular-nums transition-all duration-200', isAnimating && 'scale-110')}>
+        <span className={clsx('tabular-nums transition-colors duration-200', isAnimating && 'scale-110')}>
           {formatCompact(localCount)}
         </span>
       )}
@@ -132,7 +132,7 @@ export function BookmarkButton({ bookmarked, onToggle }: BookmarkButtonProps) {
     <button
       onClick={handleClick}
       className={clsx(
-        'p-1.5 rounded-lg transition-all duration-150 active:scale-90',
+        'p-1.5 rounded-lg transition-colors duration-150',
         bookmarked
           ? 'text-warning-light'
           : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
@@ -169,7 +169,7 @@ export function NewPostsBanner({ visible, count, onClick }: NewPostsBannerProps)
         triggerHaptic('light');
         onClick();
       }}
-      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-civic-subtle text-civic-light text-sm font-semibold border-b border-civic/20 hover:bg-civic-muted transition-all duration-200 animate-slide-down cursor-pointer active:scale-[0.99]"
+      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-civic-subtle text-civic-light text-sm font-semibold border-b border-civic/20 hover:bg-civic-muted transition-colors duration-200 animate-slide-down cursor-pointer"
     >
       <span className="w-1.5 h-1.5 rounded-full bg-civic animate-pulse" />
       {count ? `${count} new posts` : 'New posts available'}
@@ -239,7 +239,7 @@ export function AnimatedTabBar({ tabs, activeTab, onChange }: AnimatedTabBarProp
       ))}
       {/* Animated indicator */}
       <div
-        className="absolute bottom-0 h-[2px] bg-civic rounded-full transition-all duration-250"
+        className="absolute bottom-0 h-[2px] bg-civic rounded-full transition-colors duration-250"
         style={{
           left: indicatorStyle.left,
           width: indicatorStyle.width,

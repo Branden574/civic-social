@@ -122,7 +122,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
             <Swords className="w-5 h-5 text-civic-light" />
             <h2 className="text-base font-bold text-text-primary">Create a Debate</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -131,7 +131,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-danger/10 border border-danger/20 text-xs text-danger-light">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-danger/10 border border-danger/20 text-xs text-danger-light">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {error}
             </div>
@@ -139,7 +139,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-text-primary uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-text-primary mb-1.5">
               Debate Title <span className="text-danger-light">*</span>
             </label>
             <input
@@ -148,14 +148,14 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
               onChange={(e) => setTitle(e.target.value)}
               maxLength={120}
               placeholder="e.g., Should the US Adopt Universal Basic Income?"
-              className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 transition-colors"
+              className="w-full bg-surface rounded-xl border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 transition-colors"
             />
             <p className="text-xs text-text-muted mt-1">{title.length}/120 — frame it as a clear question</p>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-text-primary uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-text-primary mb-1.5">
               Description
             </label>
             <textarea
@@ -164,13 +164,13 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
               maxLength={300}
               rows={2}
               placeholder="Brief context for the debate..."
-              className="w-full bg-surface rounded-lg border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 transition-colors resize-none"
+              className="w-full bg-surface rounded-xl border border-border-subtle p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40 transition-colors resize-none"
             />
           </div>
 
           {/* Sides */}
           <div>
-            <label className="block text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-text-primary mb-2">
               Debate Sides <span className="text-danger-light">*</span>
             </label>
             <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-start">
@@ -182,19 +182,19 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                   onChange={(e) => setSideALabel(e.target.value)}
                   maxLength={40}
                   placeholder="Side A label..."
-                  className="w-full bg-surface rounded-lg border border-border-subtle p-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
+                  className="w-full bg-surface rounded-xl border border-border-subtle p-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
                 />
                 <select
                   value={sideAIdeology}
                   onChange={(e) => setSideAIdeology(e.target.value)}
-                  className="w-full bg-surface rounded-lg border border-border-subtle p-2 text-xs text-text-secondary focus:outline-none"
+                  className="w-full bg-surface rounded-xl border border-border-subtle p-2 text-xs text-text-secondary focus:outline-none"
                 >
                   {IDEOLOGY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
                 <button
                   onClick={() => setCreatorSide('A')}
                   className={clsx(
-                    'w-full text-xs font-medium py-1.5 rounded-lg border transition-colors',
+                    'w-full text-xs font-medium py-1.5 rounded-xl border transition-colors',
                     creatorSide === 'A'
                       ? 'border-civic/40 bg-civic-subtle text-civic-light'
                       : 'border-border-subtle text-text-muted hover:text-text-secondary',
@@ -218,19 +218,19 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                   onChange={(e) => setSideBLabel(e.target.value)}
                   maxLength={40}
                   placeholder="Side B label..."
-                  className="w-full bg-surface rounded-lg border border-border-subtle p-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
+                  className="w-full bg-surface rounded-xl border border-border-subtle p-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
                 />
                 <select
                   value={sideBIdeology}
                   onChange={(e) => setSideBIdeology(e.target.value)}
-                  className="w-full bg-surface rounded-lg border border-border-subtle p-2 text-xs text-text-secondary focus:outline-none"
+                  className="w-full bg-surface rounded-xl border border-border-subtle p-2 text-xs text-text-secondary focus:outline-none"
                 >
                   {IDEOLOGY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
                 <button
                   onClick={() => setCreatorSide('B')}
                   className={clsx(
-                    'w-full text-xs font-medium py-1.5 rounded-lg border transition-colors',
+                    'w-full text-xs font-medium py-1.5 rounded-xl border transition-colors',
                     creatorSide === 'B'
                       ? 'border-civic/40 bg-civic-subtle text-civic-light'
                       : 'border-border-subtle text-text-muted hover:text-text-secondary',
@@ -244,7 +244,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
 
           {/* Duration */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-text-primary mb-2">
               <Clock className="w-3.5 h-3.5" />
               Duration
             </label>
@@ -254,7 +254,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                   key={opt.value}
                   onClick={() => setDuration(opt.value)}
                   className={clsx(
-                    'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors',
+                    'px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors',
                     duration === opt.value
                       ? 'border-civic/40 bg-civic-subtle text-civic-light'
                       : 'border-border-subtle text-text-muted hover:text-text-secondary',
@@ -268,7 +268,7 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
 
           {/* Topics */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-text-primary uppercase tracking-wider mb-2">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-text-primary mb-2">
               <Tag className="w-3.5 h-3.5" />
               Topics (up to 5)
             </label>
@@ -287,12 +287,12 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
                 onChange={(e) => setTopicInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTopic(topicInput); } }}
                 placeholder="Type a topic..."
-                className="flex-1 bg-surface rounded-lg border border-border-subtle p-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
+                className="flex-1 bg-surface rounded-xl border border-border-subtle p-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-civic/40"
               />
               <button
                 onClick={() => addTopic(topicInput)}
                 disabled={!topicInput.trim() || topics.length >= 5}
-                className="p-2 rounded-lg bg-surface-elevated border border-border-subtle text-text-muted hover:text-civic-light disabled:opacity-40 transition-colors"
+                className="p-2 rounded-xl bg-surface-elevated border border-border-subtle text-text-muted hover:text-civic-light disabled:opacity-40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -315,16 +315,16 @@ export function CreateDebateModal({ isOpen, onClose, onCreated }: CreateDebateMo
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-border-subtle">
-          <button onClick={onClose} className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg transition-colors">
+          <button onClick={onClose} className="px-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-xl transition-colors">
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!isValid || submitting}
             className={clsx(
-              'flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-all',
+              'flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-colors',
               isValid && !submitting
-                ? 'bg-civic text-white hover:bg-civic-dark active:scale-[0.98]'
+                ? 'bg-civic text-white hover:bg-civic-dark'
                 : 'bg-surface-active text-text-muted cursor-not-allowed',
             )}
           >

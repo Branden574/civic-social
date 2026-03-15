@@ -78,7 +78,7 @@ export default function LegacyBillDetailPage() {
             <div className="grid gap-2">
               <Link
                 href="/legislation/US/119/hr/1"
-                className="flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-hover border border-border-subtle transition-colors group"
+                className="flex items-center justify-between p-3 rounded-xl bg-surface hover:bg-surface-hover border border-border-subtle transition-colors group"
               >
                 <div>
                   <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
@@ -93,7 +93,7 @@ export default function LegacyBillDetailPage() {
 
               <Link
                 href="/legislation/US/119/s/5"
-                className="flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-hover border border-border-subtle transition-colors group"
+                className="flex items-center justify-between p-3 rounded-xl bg-surface hover:bg-surface-hover border border-border-subtle transition-colors group"
               >
                 <div>
                   <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
@@ -108,7 +108,7 @@ export default function LegacyBillDetailPage() {
 
               <Link
                 href="/legislation/US/119/hr/22"
-                className="flex items-center justify-between p-3 rounded-lg bg-surface hover:bg-surface-hover border border-border-subtle transition-colors group"
+                className="flex items-center justify-between p-3 rounded-xl bg-surface hover:bg-surface-hover border border-border-subtle transition-colors group"
               >
                 <div>
                   <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
@@ -125,7 +125,7 @@ export default function LegacyBillDetailPage() {
             <div className="flex items-center gap-3 pt-2">
               <Link
                 href="/labs"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
               >
                 <Landmark className="w-4 h-4" />
                 Go to Live Tracker
@@ -134,7 +134,7 @@ export default function LegacyBillDetailPage() {
                 href="https://www.congress.gov/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-surface text-text-secondary text-sm font-medium rounded-lg border border-border-subtle hover:bg-surface-hover transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-surface text-text-secondary text-sm font-medium rounded-xl border border-border-subtle hover:bg-surface-hover transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />
                 Congress.gov

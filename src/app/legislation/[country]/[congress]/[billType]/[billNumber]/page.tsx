@@ -147,7 +147,7 @@ const MOCK_DISCUSSIONS = [
 function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
   if (bill.syncStatus === 'live' && (bill.source === 'congress_api' || bill.source === 'cached')) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-positive/5 border border-positive/20 rounded-lg">
+      <div className="flex items-center gap-2 px-3 py-2 bg-positive/5 border border-positive/20 rounded-xl">
         <span className="relative flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-positive opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-positive" />
@@ -161,7 +161,7 @@ function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
   }
   if (bill.syncStatus === 'stale') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-warning/5 border border-warning/20 rounded-lg">
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-warning/5 border border-warning/20 rounded-xl">
         <AlertCircle className="w-4 h-4 text-warning-light shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-warning-light font-medium">Live updates temporarily unavailable</p>
@@ -175,7 +175,7 @@ function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
   }
   if (bill.syncStatus === 'error') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-danger/5 border border-danger/20 rounded-lg">
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-danger/5 border border-danger/20 rounded-xl">
         <AlertTriangle className="w-4 h-4 text-danger-light shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-danger-light font-medium">Data issue detected</p>
@@ -186,7 +186,7 @@ function SyncStatusBanner({ bill }: { bill: OfficialBillData }) {
   }
   if (bill.source === 'demo' || bill.syncStatus === 'demo') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-info/5 border border-info/20 rounded-lg">
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-info/5 border border-info/20 rounded-xl">
         <Info className="w-4 h-4 text-info-light shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-info-light font-medium">Demo Mode — Not Official Data</p>
@@ -296,10 +296,10 @@ export default function CanonicalBillDetailPage() {
             <h1 className="text-xl font-bold text-text-primary mb-2">Unable to Load Bill Data</h1>
             <p className="text-sm text-text-muted mb-6">{error}</p>
             <div className="flex items-center gap-3 justify-center">
-              <button onClick={() => loadBill(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors">
+              <button onClick={() => loadBill(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors">
                 <RefreshCw className="w-4 h-4" /> Retry
               </button>
-              <a href={`https://www.congress.gov/bill/${canonicalKey.congress}th-congress/${canonicalKey.billType === 's' ? 'senate-bill' : 'house-bill'}/${canonicalKey.billNumber}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-surface-elevated text-text-secondary text-sm font-medium rounded-lg border border-border-subtle hover:bg-surface-hover transition-colors">
+              <a href={`https://www.congress.gov/bill/${canonicalKey.congress}th-congress/${canonicalKey.billType === 's' ? 'senate-bill' : 'house-bill'}/${canonicalKey.billNumber}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-surface-elevated text-text-secondary text-sm font-medium rounded-xl border border-border-subtle hover:bg-surface-hover transition-colors">
                 <ExternalLink className="w-4 h-4" /> View on Congress.gov
               </a>
             </div>
@@ -339,7 +339,7 @@ export default function CanonicalBillDetailPage() {
               <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold', chamberColor)}>
                 <Landmark className="w-3 h-3" /> {bill.billCode}
               </span>
-              <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{chamberInfo.chamber === 'senate' ? 'Senate' : 'House'}</span>
+              <span className="text-xs font-medium text-text-muted">{chamberInfo.chamber === 'senate' ? 'Senate' : 'House'}</span>
               <span className="text-xs text-text-muted">·</span>
               <span className="text-xs text-text-muted">{bill.congress}th Congress</span>
             </div>
@@ -363,17 +363,17 @@ export default function CanonicalBillDetailPage() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => setIsFollowing(!isFollowing)} className={clsx('inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all', isFollowing ? 'bg-civic-subtle text-civic-light border border-civic/30' : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover')}>
+              <button onClick={() => setIsFollowing(!isFollowing)} className={clsx('inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors', isFollowing ? 'bg-civic-subtle text-civic-light border border-civic/30' : 'bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover')}>
                 {isFollowing ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
-              <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover transition-colors">
+              <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover transition-colors">
                 <Share2 className="w-4 h-4" /> Share
               </button>
-              <a href={bill.officialTextUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover transition-colors">
+              <a href={bill.officialTextUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-surface-elevated text-text-secondary border border-border-subtle hover:bg-surface-hover transition-colors">
                 <ExternalLink className="w-4 h-4" /> View Official Text
               </a>
-              <button onClick={() => loadBill(true)} disabled={refreshing} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-surface-elevated text-text-muted border border-border-subtle hover:bg-surface-hover transition-colors disabled:opacity-50">
+              <button onClick={() => loadBill(true)} disabled={refreshing} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-surface-elevated text-text-muted border border-border-subtle hover:bg-surface-hover transition-colors disabled:opacity-50">
                 <RefreshCw className={clsx('w-3.5 h-3.5', refreshing && 'animate-spin')} />
                 {refreshing ? 'Syncing...' : 'Refresh'}
               </button>
@@ -387,7 +387,7 @@ export default function CanonicalBillDetailPage() {
             <div className="bg-surface-elevated rounded-xl border border-border-subtle p-4">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="w-4 h-4 text-civic-light" />
-                <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Legislative Progress</h3>
+                <h3 className="text-xs font-semibold text-text-primary">Legislative Progress</h3>
                 <span className="ml-auto text-xs text-text-muted">{STATUS_LABELS[bill.status] || bill.status}</span>
               </div>
               <BillProgress currentStatus={mapStatusForProgress(bill.status)} compact={false} />
@@ -409,7 +409,7 @@ export default function CanonicalBillDetailPage() {
                 {TABS.map((tab) => {
                   const TabIcon = tab.icon;
                   return (
-                    <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={clsx('flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap rounded-lg transition-all', activeTab === tab.key ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover')}>
+                    <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={clsx('flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap rounded-xl transition-colors', activeTab === tab.key ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover')}>
                       <TabIcon className="w-3.5 h-3.5" /> {tab.label}
                     </button>
                   );
@@ -431,13 +431,13 @@ export default function CanonicalBillDetailPage() {
                 {bill.aiSummary && (
                   <div className="bg-gradient-to-br from-civic/5 via-surface-elevated to-surface-elevated rounded-xl border border-civic/20 p-5 space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-civic-muted flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-civic-muted flex items-center justify-center shrink-0">
                         <Sparkles className="w-4 h-4 text-civic-light" />
                       </div>
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-semibold text-text-primary">AI Summary</h3>
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-civic-subtle text-civic-light">
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-civic-subtle text-civic-light">
                             {bill.aiSummary.source === 'ai' ? 'AI-Generated' : 'Auto-Extracted'}
                           </span>
                         </div>
@@ -448,7 +448,7 @@ export default function CanonicalBillDetailPage() {
                     </div>
 
                     {/* Plain-language overview */}
-                    <div className="bg-surface/60 rounded-lg p-4 border border-border-subtle">
+                    <div className="bg-surface/60 rounded-xl p-4 border border-border-subtle">
                       <p className="text-sm text-text-primary leading-relaxed font-medium">
                         {bill.aiSummary.plainLanguage}
                       </p>
@@ -457,7 +457,7 @@ export default function CanonicalBillDetailPage() {
                     {/* Key Provisions */}
                     {bill.aiSummary.keyProvisions.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                        <h4 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                           <FileText className="w-3 h-3 text-civic-light" />
                           Key Provisions
                         </h4>
@@ -476,7 +476,7 @@ export default function CanonicalBillDetailPage() {
 
                     {/* Who is affected */}
                     <div className="space-y-2">
-                      <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                         <Users className="w-3 h-3 text-civic-light" />
                         Who is affected
                       </h4>
@@ -487,7 +487,7 @@ export default function CanonicalBillDetailPage() {
 
                     {/* Current Status explained */}
                     <div className="space-y-2">
-                      <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                         <Zap className="w-3 h-3 text-civic-light" />
                         Current Status
                       </h4>
@@ -519,7 +519,7 @@ export default function CanonicalBillDetailPage() {
                 {bill.officialSummary ? (
                   <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-civic-subtle flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-civic-subtle flex items-center justify-center shrink-0">
                         <BookOpen className="w-4 h-4 text-civic-light" />
                       </div>
                       <div className="space-y-1">
@@ -530,7 +530,7 @@ export default function CanonicalBillDetailPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="bg-surface/50 rounded-lg p-4 border border-border-subtle">
+                    <div className="bg-surface/50 rounded-xl p-4 border border-border-subtle">
                       <p className="text-sm text-text-secondary leading-relaxed">
                         {showFullSummary ? bill.officialSummary : bill.officialSummary.slice(0, 500)}
                         {!showFullSummary && bill.officialSummary.length > 500 ? '...' : ''}
@@ -566,7 +566,7 @@ export default function CanonicalBillDetailPage() {
                 {/* Sponsor info card */}
                 {bill.sponsor && (
                   <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-4">
-                    <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-2">
+                    <h4 className="text-xs font-semibold text-text-primary flex items-center gap-2">
                       <Users className="w-3.5 h-3.5 text-civic-light" /> Sponsor
                     </h4>
                     <div className="flex items-center gap-3">
@@ -585,7 +585,7 @@ export default function CanonicalBillDetailPage() {
                     {/* Cosponsors */}
                     {bill.cosponsors.length > 0 && (
                       <div className="border-t border-border-subtle pt-4 space-y-2">
-                        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                        <p className="text-xs font-semibold text-text-muted">
                           Cosponsors ({bill.cosponsors.length})
                         </p>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -610,7 +610,7 @@ export default function CanonicalBillDetailPage() {
 
                 {/* Bill key stats */}
                 <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-3">
-                  <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-2">
+                  <h4 className="text-xs font-semibold text-text-primary flex items-center gap-2">
                     <Scale className="w-3.5 h-3.5 text-civic-light" /> Key Details
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-xs">
@@ -654,7 +654,7 @@ export default function CanonicalBillDetailPage() {
                     <div className="bg-surface-elevated rounded-xl border border-border-subtle p-4 space-y-2">
                       <div className="flex items-center gap-2">
                         <BookOpen className="w-4 h-4 text-civic-light" />
-                        <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                        <h4 className="text-xs font-semibold text-text-primary">
                           Analysis Methodology
                         </h4>
                       </div>
@@ -669,7 +669,7 @@ export default function CanonicalBillDetailPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-surface-elevated border border-border-subtle">
+                    <div className="flex items-start gap-2 p-3 rounded-xl bg-surface-elevated border border-border-subtle">
                       <Info className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                       <p className="text-xs text-text-muted leading-relaxed">
                         This impact analysis is generated from the official Congressional Research Service summary.
@@ -801,7 +801,7 @@ export default function CanonicalBillDetailPage() {
                 {/* ═══ Start Structured Discussion Button ═══ */}
                 <button
                   onClick={() => { setShowDiscussionModal(true); setDiscSubmitted(false); }}
-                  className="w-full py-3 px-4 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-all hover:shadow-glow active:scale-[0.99]"
+                  className="w-full py-3 px-4 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors active:scale-[0.99]"
                 >
                   Start Structured Discussion
                 </button>
@@ -823,7 +823,7 @@ export default function CanonicalBillDetailPage() {
                   </button>
                 </div>
 
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-surface-elevated border border-border-subtle">
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-surface-elevated border border-border-subtle">
                   <Info className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                   <p className="text-xs text-text-muted leading-relaxed">
                     Evidence-based comments with citations are ranked higher. All comments are scored for civility and factual accuracy.
@@ -848,7 +848,7 @@ export default function CanonicalBillDetailPage() {
                       <MessageCircle className="w-5 h-5 text-civic-light" />
                       <h2 className="text-base font-bold text-text-primary">Start Structured Discussion</h2>
                     </div>
-                    <button onClick={() => setShowDiscussionModal(false)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors">
+                    <button onClick={() => setShowDiscussionModal(false)} className="p-1.5 rounded-xl hover:bg-surface-hover transition-colors">
                       <X className="w-5 h-5 text-text-muted" />
                     </button>
                   </div>
@@ -856,7 +856,7 @@ export default function CanonicalBillDetailPage() {
                   {!discSubmitted ? (
                     <div className="p-5 space-y-5">
                       {/* Bill context */}
-                      <div className="flex items-center gap-2 px-3 py-2 bg-surface/50 rounded-lg border border-border-subtle">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-surface/50 rounded-xl border border-border-subtle">
                         <Landmark className="w-4 h-4 text-civic-light shrink-0" />
                         <span className="text-xs text-text-secondary truncate">
                           <strong>{bill.billCode}</strong> — {bill.shortTitle || bill.officialTitle}
@@ -865,7 +865,7 @@ export default function CanonicalBillDetailPage() {
 
                       {/* Position selector */}
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                        <label className="text-xs font-semibold text-text-primary">
                           Your Position <span className="text-danger-light">*</span>
                         </label>
                         <div className="grid grid-cols-3 gap-2">
@@ -881,7 +881,7 @@ export default function CanonicalBillDetailPage() {
                                 key={pos.value}
                                 onClick={() => setDiscPosition(pos.value)}
                                 className={clsx(
-                                  'flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-xs font-semibold',
+                                  'flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-colors text-xs font-semibold',
                                   isSelected
                                     ? pos.color === 'positive' ? 'border-positive bg-positive/10 text-positive-light'
                                     : pos.color === 'danger' ? 'border-danger bg-danger/10 text-danger-light'
@@ -899,7 +899,7 @@ export default function CanonicalBillDetailPage() {
 
                       {/* Argument */}
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                        <label className="text-xs font-semibold text-text-primary">
                           Your Argument <span className="text-danger-light">*</span>
                         </label>
                         <textarea
@@ -907,14 +907,14 @@ export default function CanonicalBillDetailPage() {
                           onChange={(e) => setDiscArgument(e.target.value)}
                           placeholder="Present your argument clearly and respectfully. Reference specific provisions, data, or outcomes to strengthen your position..."
                           rows={5}
-                          className="w-full px-4 py-3 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-all"
+                          className="w-full px-4 py-3 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-colors"
                         />
                         <p className="text-xs text-text-muted text-right">{discArgument.length}/2000 characters</p>
                       </div>
 
                       {/* Evidence / Citation */}
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                        <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                           <Link2 className="w-3 h-3" /> Evidence / Citation
                           <span className="text-text-muted font-normal normal-case">(optional)</span>
                         </label>
@@ -923,7 +923,7 @@ export default function CanonicalBillDetailPage() {
                           value={discEvidence}
                           onChange={(e) => setDiscEvidence(e.target.value)}
                           placeholder="https://... link to a supporting source"
-                          className="w-full px-4 py-2.5 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-all"
+                          className="w-full px-4 py-2.5 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-colors"
                         />
                         <p className="text-xs text-text-muted">
                           Comments with citations are ranked higher and earn credibility points.
@@ -931,7 +931,7 @@ export default function CanonicalBillDetailPage() {
                       </div>
 
                       {/* Civility guidelines */}
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-civic-subtle border border-civic/15">
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-civic-subtle border border-civic/15">
                         <Sparkles className="w-4 h-4 text-civic-light shrink-0 mt-0.5" />
                         <div className="text-xs text-text-muted leading-relaxed space-y-1">
                           <p className="font-semibold text-text-secondary">Discussion Guidelines</p>
@@ -955,7 +955,7 @@ export default function CanonicalBillDetailPage() {
                           setDiscSubmitted(true);
                         }}
                         disabled={!discPosition || !discArgument.trim() || discArgument.length > 2000 || discSubmitting}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-all hover:shadow-glow active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {discSubmitting ? (
                           <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
@@ -982,7 +982,7 @@ export default function CanonicalBillDetailPage() {
                             setDiscArgument('');
                             setDiscEvidence('');
                           }}
-                          className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-elevated rounded-lg border border-border-subtle hover:bg-surface-hover transition-colors"
+                          className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-elevated rounded-xl border border-border-subtle hover:bg-surface-hover transition-colors"
                         >
                           Close
                         </button>
@@ -993,7 +993,7 @@ export default function CanonicalBillDetailPage() {
                             setDiscArgument('');
                             setDiscEvidence('');
                           }}
-                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic-subtle rounded-lg border border-civic/20 hover:bg-civic-muted transition-colors"
+                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic-subtle rounded-xl border border-civic/20 hover:bg-civic-muted transition-colors"
                         >
                           Start Another
                         </button>
@@ -1020,7 +1020,7 @@ export default function CanonicalBillDetailPage() {
                       <HelpCircle className="w-5 h-5 text-civic-light" />
                       <h2 className="text-base font-bold text-text-primary">Ask an Expert</h2>
                     </div>
-                    <button onClick={() => setShowExpertModal(false)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors">
+                    <button onClick={() => setShowExpertModal(false)} className="p-1.5 rounded-xl hover:bg-surface-hover transition-colors">
                       <X className="w-5 h-5 text-text-muted" />
                     </button>
                   </div>
@@ -1028,7 +1028,7 @@ export default function CanonicalBillDetailPage() {
                   {!expertSubmitted ? (
                     <div className="p-5 space-y-5">
                       {/* Bill context */}
-                      <div className="flex items-center gap-2 px-3 py-2 bg-surface/50 rounded-lg border border-border-subtle">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-surface/50 rounded-xl border border-border-subtle">
                         <Landmark className="w-4 h-4 text-civic-light shrink-0" />
                         <span className="text-xs text-text-secondary truncate">
                           <strong>{bill.billCode}</strong> — {bill.shortTitle || bill.officialTitle}
@@ -1054,7 +1054,7 @@ export default function CanonicalBillDetailPage() {
 
                       {/* Topic category */}
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                        <label className="text-xs font-semibold text-text-primary">
                           Topic Area <span className="text-danger-light">*</span>
                         </label>
                         <div className="grid grid-cols-2 gap-2">
@@ -1070,7 +1070,7 @@ export default function CanonicalBillDetailPage() {
                               key={cat}
                               onClick={() => setExpertCategory(cat)}
                               className={clsx(
-                                'px-3 py-2 rounded-lg border text-xs font-medium transition-all text-left',
+                                'px-3 py-2 rounded-xl border text-xs font-medium transition-colors text-left',
                                 expertCategory === cat
                                   ? 'border-civic bg-civic-subtle text-civic-light'
                                   : 'border-border-subtle bg-surface text-text-muted hover:bg-surface-hover hover:border-border',
@@ -1084,7 +1084,7 @@ export default function CanonicalBillDetailPage() {
 
                       {/* Question */}
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                        <label className="text-xs font-semibold text-text-primary">
                           Your Question <span className="text-danger-light">*</span>
                         </label>
                         <textarea
@@ -1092,13 +1092,13 @@ export default function CanonicalBillDetailPage() {
                           onChange={(e) => setExpertQuestion(e.target.value)}
                           placeholder={`Ask a specific question about ${bill.billCode}. For example: "How would this bill affect small businesses in rural areas?" or "What constitutional precedent applies to Section 3?"`}
                           rows={4}
-                          className="w-full px-4 py-3 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-all"
+                          className="w-full px-4 py-3 bg-surface border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/50 transition-colors"
                         />
                         <p className="text-xs text-text-muted text-right">{expertQuestion.length}/1000 characters</p>
                       </div>
 
                       {/* Expert info */}
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-surface border border-border-subtle">
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-surface border border-border-subtle">
                         <Shield className="w-4 h-4 text-civic-light shrink-0 mt-0.5" />
                         <div className="text-xs text-text-muted leading-relaxed">
                           <p>Questions are routed to verified policy professionals — lawyers, economists, former staffers, and academics — with expertise in <strong className="text-text-secondary">{bill.policyArea || 'this policy area'}</strong>. Expect a response within 24-48 hours.</p>
@@ -1116,7 +1116,7 @@ export default function CanonicalBillDetailPage() {
                           setExpertSubmitted(true);
                         }}
                         disabled={!expertCategory || !expertQuestion.trim() || expertQuestion.length > 1000 || expertSubmitting}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-all hover:shadow-glow active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {expertSubmitting ? (
                           <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
@@ -1135,8 +1135,8 @@ export default function CanonicalBillDetailPage() {
                       <p className="text-sm text-text-muted max-w-xs mx-auto leading-relaxed">
                         Your question about <strong className="text-text-secondary">{bill.billCode}</strong> has been routed to verified experts in <strong className="text-text-secondary">{expertCategory}</strong>. You&apos;ll be notified when an answer is posted.
                       </p>
-                      <div className="bg-surface/50 rounded-lg border border-border-subtle p-3 text-left">
-                        <p className="text-xs text-text-muted mb-1 font-semibold uppercase tracking-wider">Your question</p>
+                      <div className="bg-surface/50 rounded-xl border border-border-subtle p-3 text-left">
+                        <p className="text-xs text-text-muted mb-1 font-semibold">Your question</p>
                         <p className="text-xs text-text-secondary leading-relaxed">{expertQuestion}</p>
                       </div>
                       <div className="flex items-center justify-center gap-2 pt-2">
@@ -1146,7 +1146,7 @@ export default function CanonicalBillDetailPage() {
                             setExpertQuestion('');
                             setExpertCategory('');
                           }}
-                          className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-elevated rounded-lg border border-border-subtle hover:bg-surface-hover transition-colors"
+                          className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-elevated rounded-xl border border-border-subtle hover:bg-surface-hover transition-colors"
                         >
                           Close
                         </button>
@@ -1156,7 +1156,7 @@ export default function CanonicalBillDetailPage() {
                             setExpertQuestion('');
                             setExpertCategory('');
                           }}
-                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic-subtle rounded-lg border border-civic/20 hover:bg-civic-muted transition-colors"
+                          className="px-4 py-2 text-sm font-semibold text-civic-light bg-civic-subtle rounded-xl border border-civic/20 hover:bg-civic-muted transition-colors"
                         >
                           Ask Another
                         </button>
@@ -1177,7 +1177,7 @@ export default function CanonicalBillDetailPage() {
 
                 {/* Official links */}
                 <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-3">
-                  <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Official Sources</h4>
+                  <h4 className="text-xs font-semibold text-text-primary">Official Sources</h4>
                   <div className="space-y-2">
                     <a href={bill.congressGovUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-civic-light hover:underline">
                       <ExternalLink className="w-3.5 h-3.5" /> Congress.gov Bill Page
@@ -1190,7 +1190,7 @@ export default function CanonicalBillDetailPage() {
 
                 {/* Data integrity details */}
                 <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-4">
-                  <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Data Integrity</h4>
+                  <h4 className="text-xs font-semibold text-text-primary">Data Integrity</h4>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                       <p className="text-text-muted mb-0.5">Canonical Key</p>
@@ -1221,7 +1221,7 @@ export default function CanonicalBillDetailPage() {
 
                 {/* Data provider */}
                 <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5 space-y-3">
-                  <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Data Provider</h4>
+                  <h4 className="text-xs font-semibold text-text-primary">Data Provider</h4>
                   <p className="text-sm text-text-secondary">Congressional API via api.congress.gov</p>
                   <div className="flex items-center gap-2 text-xs text-text-muted">
                     <Clock className="w-3.5 h-3.5" />
@@ -1230,7 +1230,7 @@ export default function CanonicalBillDetailPage() {
                 </div>
 
                 {/* Accuracy disclaimer */}
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-surface-elevated border border-border-subtle">
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-surface-elevated border border-border-subtle">
                   <Shield className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                   <p className="text-xs text-text-muted leading-relaxed">
                     All data sourced from official government records via the Congress.gov API.

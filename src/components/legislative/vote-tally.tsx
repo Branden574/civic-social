@@ -107,11 +107,11 @@ export function VoteTallyDisplay({ votes, chamber, compact = false }: VoteTallyD
         {/* Proportional bar */}
         <div className="relative h-3 w-full rounded-full overflow-hidden bg-surface-active">
           <div
-            className="absolute inset-y-0 left-0 bg-positive rounded-l-full transition-all duration-500"
+            className="absolute inset-y-0 left-0 bg-positive rounded-l-full transition-colors duration-500"
             style={{ width: `${yeaPercent}%` }}
           />
           <div
-            className="absolute inset-y-0 right-0 bg-danger rounded-r-full transition-all duration-500"
+            className="absolute inset-y-0 right-0 bg-danger rounded-r-full transition-colors duration-500"
             style={{ width: `${nayPercent}%` }}
           />
         </div>
@@ -145,7 +145,7 @@ export function VoteTallyDisplay({ votes, chamber, compact = false }: VoteTallyD
       {/* Party breakdown */}
       {!compact && partyBreakdown.length > 0 && (
         <div className="space-y-3 pt-2 border-t border-border-subtle">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+          <h4 className="text-xs font-semibold text-text-muted">
             Party Breakdown
           </h4>
           {partyBreakdown.map(({ party, yea: pYea, nay: pNay }) => {
@@ -165,7 +165,7 @@ export function VoteTallyDisplay({ votes, chamber, compact = false }: VoteTallyD
                 </div>
                 <div className="relative h-2 w-full rounded-full overflow-hidden bg-surface-active">
                   <div
-                    className={clsx('absolute inset-y-0 left-0 rounded-full transition-all duration-500', colors.bar)}
+                    className={clsx('absolute inset-y-0 left-0 rounded-full transition-colors duration-500', colors.bar)}
                     style={{ width: `${pYeaPercent}%` }}
                   />
                 </div>

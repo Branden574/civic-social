@@ -76,7 +76,7 @@ export function ImpactAnalysis({ impacts }: ImpactAnalysisProps) {
             <div
               key={index}
               className={clsx(
-                'rounded-xl border transition-all duration-300',
+                'rounded-xl border transition-colors duration-300',
                 isExpanded
                   ? 'bg-surface-elevated border-border'
                   : 'bg-surface border-border-subtle hover:border-border'
@@ -88,7 +88,7 @@ export function ImpactAnalysis({ impacts }: ImpactAnalysisProps) {
                 className="flex w-full items-center justify-between px-4 py-3 text-left"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-civic-subtle">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-civic-subtle">
                     <CategoryIcon className="h-4 w-4 text-civic-light" />
                   </div>
                   <span className="text-sm font-semibold text-text-primary">
@@ -106,14 +106,14 @@ export function ImpactAnalysis({ impacts }: ImpactAnalysisProps) {
               {/* Expanded content */}
               <div
                 className={clsx(
-                  'overflow-hidden transition-all duration-300',
+                  'overflow-hidden transition-colors duration-300',
                   isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
                 )}
               >
                 <div className="px-4 pb-4 space-y-4">
                   {/* Supporters argue */}
                   <div className="border-l-2 border-positive/50 pl-3 space-y-1">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-positive-light">
+                    <h4 className="text-xs font-semibold text-positive-light">
                       Supporters argue
                     </h4>
                     <p className="text-sm text-text-secondary leading-relaxed">
@@ -123,7 +123,7 @@ export function ImpactAnalysis({ impacts }: ImpactAnalysisProps) {
 
                   {/* Critics argue */}
                   <div className="border-l-2 border-danger/50 pl-3 space-y-1">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-danger-light">
+                    <h4 className="text-xs font-semibold text-danger-light">
                       Critics argue
                     </h4>
                     <p className="text-sm text-text-secondary leading-relaxed">
@@ -134,7 +134,7 @@ export function ImpactAnalysis({ impacts }: ImpactAnalysisProps) {
                   {/* Potential outcomes */}
                   {impact.potentialOutcomes.length > 0 && (
                     <div className="border-l-2 border-info/50 pl-3 space-y-1.5">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-info-light">
+                      <h4 className="text-xs font-semibold text-info-light">
                         Potential outcomes may include
                       </h4>
                       <ul className="space-y-1">

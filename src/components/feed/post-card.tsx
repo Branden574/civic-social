@@ -464,7 +464,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
               <div className="relative" ref={moreMenuRef}>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowMoreMenu(!showMoreMenu); }}
-                  className="p-2 rounded-lg text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="p-2 rounded-xl text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="More options"
                 >
                   <MoreHorizontal className="w-4 h-4" />
@@ -596,7 +596,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                   onClick={(e) => handleReaction(e, btn.type)}
                   disabled={reactionLoading}
                   className={clsx(
-                    'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-lg transition-colors duration-150 min-h-[44px] select-none',
+                    'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-xl transition-colors duration-150 min-h-[44px] select-none',
                     isActive
                       ? `${btn.color} ${btn.bgActive} font-semibold`
                       : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
@@ -619,7 +619,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 e.stopPropagation();
               }}
               className={clsx(
-                'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-lg transition-colors min-h-[44px]',
+                'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-xl transition-colors min-h-[44px]',
                 post.comment_policy === 'off' || post.is_thread_locked
                   ? 'text-text-muted/50 cursor-default'
                   : 'text-text-muted hover:text-civic-light hover:bg-surface-hover',
@@ -640,7 +640,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             <button
               onClick={(e) => { e.stopPropagation(); setBookmarked(!bookmarked); }}
               className={clsx(
-                'p-2.5 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
+                'p-2.5 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
                 bookmarked ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
               )}
               title={bookmarked ? 'Remove bookmark' : 'Save post'}
@@ -650,7 +650,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             <button
               onClick={(e) => { e.stopPropagation(); setShowReport(!showReport); }}
               className={clsx(
-                'p-2.5 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
+                'p-2.5 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
                 showReport ? 'text-danger-light bg-danger/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
               )}
               title="Report content"
@@ -659,7 +659,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             </button>
             <button
               onClick={handleShare}
-              className="p-2.5 rounded-lg text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="p-2.5 rounded-xl text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Share"
             >
               <Share2 className="w-4 h-4" />
@@ -667,7 +667,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             <button
               onClick={(e) => { e.stopPropagation(); setShowAlgorithm(!showAlgorithm); }}
               className={clsx(
-                'p-2.5 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
+                'p-2.5 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
                 showAlgorithm ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
               )}
               title="Why am I seeing this?"
@@ -782,7 +782,7 @@ function FeedbackModal({
           <p className="text-sm text-text-muted mb-4">Your input helps improve content ranking for everyone.</p>
           <button
             onClick={onSkip}
-            className="px-6 py-2.5 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors"
+            className="px-6 py-3 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
           >
             Done
           </button>
@@ -803,7 +803,7 @@ function FeedbackModal({
           </div>
           <button
             onClick={onSkip}
-            className="p-2 -mr-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="p-2 -mr-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -821,7 +821,7 @@ function FeedbackModal({
                 key={reason.id}
                 onClick={() => toggle(reason.id)}
                 className={clsx(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-all min-h-[48px] active:scale-[0.98]',
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-colors min-h-[48px]',
                   isSelected
                     ? 'bg-civic/10 border border-civic/30 text-text-primary font-medium'
                     : 'bg-surface-elevated border border-border-subtle text-text-secondary hover:bg-surface-hover',
@@ -841,7 +841,7 @@ function FeedbackModal({
           <div className="flex gap-2 pt-2">
             <button
               onClick={onSkip}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:bg-surface-hover transition-colors min-h-[44px]"
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-text-muted hover:bg-surface-hover transition-colors min-h-[44px]"
             >
               Skip
             </button>
@@ -849,7 +849,7 @@ function FeedbackModal({
               onClick={handleSubmit}
               disabled={selected.size === 0}
               className={clsx(
-                'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px]',
+                'flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors min-h-[44px]',
                 selected.size > 0
                   ? 'bg-civic text-white hover:bg-civic-dark'
                   : 'bg-surface-active text-text-muted cursor-not-allowed',
@@ -877,7 +877,7 @@ function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorit
     <div className="mt-4 p-4 bg-surface-elevated rounded-xl border border-border-subtle animate-slide-up">
       <div className="flex items-center gap-2 mb-3">
         <Info className="w-4 h-4 text-civic-light" />
-        <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Why am I seeing this?</h4>
+        <h4 className="text-xs font-semibold text-text-primary">Why am I seeing this?</h4>
       </div>
       <p className="text-sm text-text-secondary mb-4">{algorithm.explanation}</p>
       <div className="space-y-2">
@@ -895,7 +895,7 @@ function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorit
         <div className="mt-3 pt-3 border-t border-border-subtle">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-3.5 h-3.5 text-warning-light" />
-            <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+            <span className="text-xs font-semibold text-text-primary">
               Civility Issues ({Math.round(civility.score * 100)}%)
             </span>
           </div>
@@ -936,7 +936,7 @@ function SignalBar({ label, value, weight, color, isNegative }: { label: string;
     <div className="flex items-center gap-2">
       <span className="text-xs text-text-muted w-32 shrink-0 truncate">{label}</span>
       <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
-        <div className={clsx('h-full rounded-full transition-all duration-500', color)} style={{ width: `${Math.round(value * 100)}%` }} />
+        <div className={clsx('h-full rounded-full transition-colors duration-500', color)} style={{ width: `${Math.round(value * 100)}%` }} />
       </div>
       <span className={clsx('text-xs font-mono w-10 text-right', isNegative ? 'text-danger-light' : 'text-text-secondary')}>
         {isNegative ? '-' : ''}{Math.round(value * 100)}%
@@ -983,7 +983,7 @@ function InlineReportPanel({ postId, onClose }: { postId: string; onClose: () =>
           <Flag className="w-4 h-4 text-danger-light" />
           <span className="text-xs font-semibold text-text-primary">Report Content</span>
         </div>
-        <button onClick={onClose} className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+        <button onClick={onClose} className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -993,7 +993,7 @@ function InlineReportPanel({ postId, onClose }: { postId: string; onClose: () =>
             key={cat.id}
             onClick={(e) => { e.stopPropagation(); setSelected(cat.id); }}
             className={clsx(
-              'w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left text-xs transition-all min-h-[44px]',
+              'w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left text-xs transition-colors min-h-[44px]',
               selected === cat.id
                 ? 'bg-civic/10 border border-civic/30 text-text-primary'
                 : 'bg-surface border border-border-subtle text-text-secondary hover:bg-surface-hover',
@@ -1009,7 +1009,7 @@ function InlineReportPanel({ postId, onClose }: { postId: string; onClose: () =>
           onClick={(e) => { e.stopPropagation(); if (selected) setSubmitted(true); }}
           disabled={!selected}
           className={clsx(
-            'w-full mt-2 py-2.5 rounded-lg text-xs font-semibold transition-all min-h-[44px]',
+            'w-full mt-2 py-2.5 rounded-xl text-xs font-semibold transition-colors min-h-[44px]',
             selected ? 'bg-danger text-white hover:bg-danger/80' : 'bg-surface-active text-text-muted cursor-not-allowed',
           )}
         >

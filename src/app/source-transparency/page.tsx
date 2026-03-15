@@ -102,9 +102,9 @@ export default function SourceTransparencyPage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-3xl mx-auto">
           {/* ── Header ── */}
-          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle px-5 sm:px-6 py-5">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-civic-subtle flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-civic-subtle flex items-center justify-center">
                 <Shield className="w-5 h-5 text-civic-light" />
               </div>
               <div>
@@ -167,7 +167,7 @@ export default function SourceTransparencyPage() {
                       >
                         <span
                           className={clsx(
-                            'text-xs font-bold px-2 py-1 rounded-lg border shrink-0',
+                            'text-xs font-bold px-2 py-1 rounded-xl border shrink-0',
                             tier.badgeColor,
                           )}
                         >
@@ -193,7 +193,7 @@ export default function SourceTransparencyPage() {
                             {tier.sources.map((source) => (
                               <div
                                 key={source.name}
-                                className="flex items-center gap-3 px-3 py-2.5 bg-surface rounded-lg border border-border-subtle"
+                                className="flex items-center gap-3 px-3 py-2.5 bg-surface rounded-xl border border-border-subtle"
                               >
                                 <tier.icon
                                   className={clsx(
@@ -313,7 +313,7 @@ export default function SourceTransparencyPage() {
                       <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
                         <div
                           className={clsx(
-                            'h-full rounded-full transition-all duration-700',
+                            'h-full rounded-full transition-colors duration-700',
                             metric.color,
                           )}
                           style={{ width: `${metric.value}%` }}
@@ -392,35 +392,35 @@ export default function SourceTransparencyPage() {
                 </p>
                 <button
                   onClick={() => setReportOpen(!reportOpen)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-all hover:shadow-glow active:scale-[0.98]"
+                  className="flex items-center gap-2 px-4 py-3 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
                 >
                   <Flag className="w-4 h-4" />
                   Report a Source for Review
                 </button>
                 {reportOpen && (
-                  <div className="mt-4 p-4 bg-surface rounded-lg border border-border-subtle animate-fade-in">
+                  <div className="mt-4 p-4 bg-surface rounded-xl border border-border-subtle animate-fade-in">
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1 block">
+                        <label className="text-xs font-semibold text-text-muted mb-1 block">
                           Source Name
                         </label>
                         <input
                           type="text"
                           placeholder="e.g., Example News Network"
-                          className="w-full bg-surface-elevated border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40"
+                          className="w-full bg-surface-elevated border border-border-subtle rounded-xl px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1 block">
+                        <label className="text-xs font-semibold text-text-muted mb-1 block">
                           Reason
                         </label>
                         <textarea
                           rows={3}
                           placeholder="Describe why this source should be reviewed..."
-                          className="w-full bg-surface-elevated border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 resize-none"
+                          className="w-full bg-surface-elevated border border-border-subtle rounded-xl px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 resize-none"
                         />
                       </div>
-                      <button className="px-4 py-2 bg-civic text-white text-sm font-semibold rounded-lg hover:bg-civic-dark transition-colors">
+                      <button className="px-4 py-2 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors">
                         Submit Report
                       </button>
                     </div>
