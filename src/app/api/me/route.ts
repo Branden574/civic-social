@@ -200,6 +200,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Always re-check bio from DB even if state exists (bio may have been updated)
+  if (!state.profile.bio && isDbAvailable()) {
+    try {
+      const bioCheck = await prisma.user.findUnique({
+        where: { id: sessionUser.id },
+        select: { bio: true },
+      });
+      if (bioCheck?.bio) {
+        state = upsertUserState(sessionUser.id, { profile: { bio: bioCheck.bio } });
+      }
+    } catch { /* ignore */ }
+  }
+
   return NextResponse.json(
     await buildResponse(sessionUser, state.onboarding, computeProfileCompletion(state), state.profile),
   );

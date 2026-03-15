@@ -209,10 +209,10 @@ export default function ProfilePage() {
   const followingCount = stats?.followingCount ?? 0;
   const postsCount = stats?.postsCount ?? postCount;
 
-  // Profile completion: show card only if server confirmed profile is incomplete and user hasn't dismissed it.
-  // Don't gate on onboardingDone — that flickers on cold start. The server-side profileCompletion
-  // already accounts for onboarding state (it checks real fields from DB).
-  const showFinishProfile = !!profileCompletion && !profileCompletion.isComplete && !profileCardDismissed;
+  // Profile completion: show card only after auth is fully loaded, server confirmed
+  // profile is incomplete, and user hasn't dismissed it. Gate on !authLoading to
+  // prevent the card from flickering during hydration.
+  const showFinishProfile = !authLoading && !!profileCompletion && !profileCompletion.isComplete && !profileCardDismissed;
 
   return (
     <AuthGate>
