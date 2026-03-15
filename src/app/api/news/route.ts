@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllNews, getNewsByTopic, refreshNews } from '@/lib/news-store';
-import { getClientIp, tooManyRequests } from '@/lib/security/api-guard';
+import { getSessionUser, getClientIp, tooManyRequests } from '@/lib/security/api-guard';
 import { readLimiter } from '@/lib/security/rate-limiter';
 
 export async function GET(request: NextRequest) {
@@ -35,11 +35,17 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST /api/news — Force refresh from RSS feeds
+// POST /api/news — Force refresh from RSS feeds (requires authentication)
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
   const rl = readLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
+  // WARNING: Require auth to prevent unauthenticated users from triggering server-side HTTP requests
+  const user = getSessionUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
 
   const result = await refreshNews();
 

@@ -103,9 +103,8 @@ const CSP_DIRECTIVES = [
 ].join('; ');
 
 const SECURITY_HEADERS: Record<string, string> = {
-  // CSP switched to report-only to diagnose Vercel navigation issues.
-  // TODO: Switch back to 'Content-Security-Policy' once navigation is confirmed working.
-  'Content-Security-Policy-Report-Only': CSP_DIRECTIVES,
+  // WARNING: CSP enforced — blocks XSS and inline injection attempts
+  'Content-Security-Policy': CSP_DIRECTIVES,
 
   // HTTPS enforcement
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',

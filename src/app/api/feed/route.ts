@@ -115,7 +115,7 @@ async function serializeUserPost(p: PersistedPost, counts: Map<string, number>) 
   const civicRep = registryUser ? Math.max(0, Math.min(1, registryUser.credibilityScore / 100)) : 0.5;
   const authorProfile = {
     id: p.authorId,
-    displayName: registryUser?.displayName || (p.authorId === 'user-current' ? 'Branden Vincent-Walker' : 'User'),
+    displayName: registryUser?.displayName || (p.authorId === 'user-current' ? 'User' : 'User'),
     avatarUrl: registryUser?.avatarUrl || null,
     affiliations: [registryUser?.affiliation || 'center'],
     verificationLevel: registryUser?.verificationLevel || 'EMAIL_VERIFIED',

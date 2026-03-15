@@ -76,8 +76,11 @@ export async function POST(
   if (!isValidId(debateId)) return badRequest('Invalid debate ID.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
-  const userName = user?.displayName || 'Branden Vincent-Walker';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const userId = user.id;
+  const userName = user.displayName || 'User';
 
   // Rate limit chat messages
   const rl = chatLimiter.check(userId);
@@ -138,7 +141,10 @@ export async function DELETE(
   if (!isValidId(debateId)) return badRequest('Invalid debate ID.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const userId = user.id;
 
   const debate = await getDebateById(debateId);
   if (!debate) {
@@ -169,7 +175,10 @@ export async function PATCH(
   if (!isValidId(debateId)) return badRequest('Invalid debate ID.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const userId = user.id;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any;
   try {
@@ -230,7 +239,8 @@ export async function PATCH(
       if (!isCreator) return NextResponse.json({ error: 'Only the host can unmute users.' }, { status: 403 });
       const { targetUserId: unmuteTarget } = body;
       if (!unmuteTarget || !isValidId(unmuteTarget)) return badRequest('Valid targetUserId required.');
-      muteUser(debateId, unmuteTarget, userId, {});
+      // WARNING: Previously called muteUser() here — fixed to unmuteUser()
+      unmuteUser(debateId, unmuteTarget);
       return NextResponse.json({ success: true });
     }
 

@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID, randomBytes } from 'crypto';
 import { getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
-import { postLimiter } from '@/lib/security/rate-limiter';
+import { signupLimiter } from '@/lib/security/rate-limiter';
 import { validatePassword } from '@/lib/security/password';
 import { hashPassword } from '@/lib/security/hash';
 import { isDbAvailable, prisma } from '@/lib/db';
@@ -32,7 +32,7 @@ function sanitizeDisplayName(input: string): string {
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const rl = postLimiter.check(ip);
+  const rl = signupLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   let body: Record<string, unknown>;

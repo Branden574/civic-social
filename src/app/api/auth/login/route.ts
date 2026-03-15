@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
-import { postLimiter } from '@/lib/security/rate-limiter';
+import { authLimiter } from '@/lib/security/rate-limiter';
 import { verifyPassword } from '@/lib/security/hash';
 import { isDbAvailable, prisma } from '@/lib/db';
 import { secureLog } from '@/lib/security/logger';
@@ -24,7 +24,7 @@ function isValidEmail(email: string): boolean {
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const rl = postLimiter.check(ip);
+  const rl = authLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   let body: Record<string, unknown>;

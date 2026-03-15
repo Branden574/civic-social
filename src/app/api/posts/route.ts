@@ -36,7 +36,7 @@ async function getAuthorProfile(authorId: string) {
     };
   }
   return {
-    displayName: authorId === 'user-current' ? 'Branden Vincent-Walker' : 'Unknown User',
+    displayName: authorId === 'user-current' ? 'User' : 'Unknown User',
     avatarUrl: null,
     affiliations: ['center'],
     verificationLevel: 'EMAIL_VERIFIED',

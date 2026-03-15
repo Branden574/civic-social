@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getClientIp, tooManyRequests } from '@/lib/security/api-guard';
+import { getSessionUser, getClientIp, tooManyRequests } from '@/lib/security/api-guard';
 import { socialLimiter } from '@/lib/security/rate-limiter';
 import { registerUser } from '@/lib/user-registry';
 
@@ -16,6 +16,12 @@ export async function POST(request: NextRequest) {
   const rl = socialLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
+  // WARNING: Require authentication — prevent arbitrary user ID registration
+  const sessionUser = getSessionUser(request);
+  if (!sessionUser) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -23,7 +29,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
 
-  const id = body.id as string;
+  // WARNING: Force ID to match authenticated user — prevent impersonation
+  const id = sessionUser.id;
   const displayName = body.displayName as string;
   const username = body.username as string;
   const email = body.email as string;

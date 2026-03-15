@@ -71,6 +71,12 @@ export function verifySession(token: string): SessionPayload | null {
     const data = Buffer.from(b64, 'base64url').toString('utf8');
     const payload = JSON.parse(data) as SessionPayload;
     if (!payload.id || !payload.email || !payload.role || !payload.iat) return null;
+
+    // WARNING: Server-side session expiry — reject tokens older than 24 hours.
+    // Browser maxAge is not sufficient since it's client-enforced only.
+    const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+    if (Date.now() - payload.iat > SESSION_MAX_AGE_MS) return null;
+
     return payload;
   } catch {
     return null;

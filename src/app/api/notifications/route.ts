@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     if (!notificationId || !isValidId(notificationId)) {
       return badRequest('Valid notification_id required.');
     }
-    await dbMarkNotificationRead(notificationId);
+    await dbMarkNotificationRead(notificationId, currentUser);
     const unreadCount = await dbGetUnreadCount(currentUser);
     return NextResponse.json({
       success: true,
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     if (!notificationId || !isValidId(notificationId)) {
       return badRequest('Valid notification_id required.');
     }
-    const ok = deleteNotification(notificationId);
+    const ok = deleteNotification(notificationId, currentUser);
     return NextResponse.json({
       success: ok,
       unreadCount: getUnreadCount(currentUser),

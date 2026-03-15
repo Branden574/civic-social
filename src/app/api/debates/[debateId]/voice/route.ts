@@ -66,8 +66,11 @@ export async function POST(
   if (!isValidId(debateId)) return badRequest('Invalid debate ID.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
-  const userName = user?.displayName || 'Branden Vincent-Walker';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const userId = user.id;
+  const userName = user.displayName || 'User';
 
   const rl = chatLimiter.check(userId);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
@@ -139,7 +142,10 @@ export async function PATCH(
   if (!isValidId(debateId)) return badRequest('Invalid debate ID.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const userId = user.id;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any;
@@ -232,7 +238,10 @@ export async function DELETE(
   if (!isValidId(debateId)) return badRequest('Invalid debate ID.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const userId = user.id;
 
   const { searchParams } = new URL(request.url);
   const leaveOnly = searchParams.get('leave') === '1';

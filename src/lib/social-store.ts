@@ -370,8 +370,10 @@ export function getUnreadCount(recipientUserId: string): number {
   ).length;
 }
 
-export function markNotificationRead(notificationId: string): boolean {
-  const notif = getStore().notifications.find((n) => n.id === notificationId);
+export function markNotificationRead(notificationId: string, recipientUserId?: string): boolean {
+  const notif = getStore().notifications.find(
+    (n) => n.id === notificationId && (!recipientUserId || n.recipientUserId === recipientUserId),
+  );
   if (notif && !notif.readAt) {
     notif.readAt = new Date().toISOString();
     return true;
@@ -406,9 +408,11 @@ export function markAllRead(
   return { markedCount, unreadCountRemaining, serverTime };
 }
 
-export function deleteNotification(notificationId: string): boolean {
+export function deleteNotification(notificationId: string, recipientUserId: string): boolean {
   const store = getStore();
-  const idx = store.notifications.findIndex((n) => n.id === notificationId);
+  const idx = store.notifications.findIndex(
+    (n) => n.id === notificationId && n.recipientUserId === recipientUserId,
+  );
   if (idx !== -1) {
     store.notifications.splice(idx, 1);
     return true;
@@ -634,15 +638,16 @@ export async function dbMarkAllRead(recipientUserId: string): Promise<number> {
   return result.markedCount;
 }
 
-export async function dbMarkNotificationRead(notificationId: string): Promise<boolean> {
-  markNotificationRead(notificationId);
+export async function dbMarkNotificationRead(notificationId: string, recipientUserId: string): Promise<boolean> {
+  markNotificationRead(notificationId, recipientUserId);
 
   if (isDbAvailable()) {
     try {
-      await prisma.notification.updateMany({
-        where: { id: notificationId, readAt: null },
+      const updated = await prisma.notification.updateMany({
+        where: { id: notificationId, recipientUserId, readAt: null },
         data: { readAt: new Date() },
       });
+      return updated.count > 0;
     } catch (err) {
       console.error('[dbMarkNotificationRead]', err);
     }

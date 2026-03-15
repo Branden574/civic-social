@@ -92,5 +92,15 @@ export async function POST(request: NextRequest) {
     // Non-fatal — password is already updated
   }
 
-  return NextResponse.json({ success: true, message: 'Password updated. You can now log in.' });
+  // WARNING: Clear the session cookie so any existing sessions (including stolen ones)
+  // can't continue using the old credentials. User must re-login with new password.
+  const response = NextResponse.json({ success: true, message: 'Password updated. You can now log in.' });
+  response.cookies.set('civic-session', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 0,
+    path: '/',
+  });
+  return response;
 }

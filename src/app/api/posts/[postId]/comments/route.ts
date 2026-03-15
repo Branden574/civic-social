@@ -101,7 +101,10 @@ export async function POST(
 
   try {
     const user = getSessionUser(request);
-    const userId = user?.id || 'user-current';
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    const userId = user.id;
 
     // Rate limit
     const rl = postLimiter.check(userId);
@@ -289,7 +292,10 @@ export async function DELETE(
   if (!commentId || !isValidId(commentId)) return badRequest('Valid commentId required.');
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const userId = user.id;
 
   const [ok, commentCount] = await Promise.all([
     deleteComment(commentId, userId),

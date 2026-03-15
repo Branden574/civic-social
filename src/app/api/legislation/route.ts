@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
 
   // ── Health check — admin only ───────────────────────────
   if (healthCheck) {
-    // Health endpoint is admin-restricted in production
+    // WARNING: Require admin role for internal diagnostics
+    const adminResult = requireAdmin(request);
+    if (adminResult instanceof NextResponse) return adminResult;
     const health = getApiHealth();
     const syncLogLimit = clampInt(syncLogs, 1, 200, 50);
     return NextResponse.json({
