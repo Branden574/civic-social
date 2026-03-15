@@ -102,14 +102,14 @@ export function Sidebar({ onCompose }: SidebarProps) {
               className={clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-civic-subtle text-civic-light font-semibold'
+                  ? 'bg-surface-elevated text-text-primary font-semibold'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
               )}
             >
               <item.icon
                 className={clsx(
                   'w-5 h-5',
-                  isActive ? 'text-civic-light' : 'text-text-muted',
+                  isActive ? 'text-text-primary' : 'text-text-muted',
                 )}
               />
               <span>{item.label}</span>
@@ -151,11 +151,11 @@ export function Sidebar({ onCompose }: SidebarProps) {
               className={clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-civic-subtle text-civic-light font-semibold'
+                  ? 'bg-surface-elevated text-text-primary font-semibold'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
               )}
             >
-              <item.icon className={clsx('w-5 h-5', isActive ? 'text-civic-light' : 'text-text-muted')} />
+              <item.icon className={clsx('w-5 h-5', isActive ? 'text-text-primary' : 'text-text-muted')} />
               <span>{item.label}</span>
             </Link>
           );
@@ -177,7 +177,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
                   className={clsx(
                     'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-civic-subtle text-civic-light font-semibold'
+                      ? 'bg-surface-elevated text-text-primary font-semibold'
                       : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
                   )}
                 >
@@ -373,17 +373,17 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                     className={clsx(
                       'flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-150',
                       isActive
-                        ? 'bg-civic-subtle text-civic-light'
+                        ? 'bg-surface-elevated text-text-primary'
                         : 'text-text-secondary hover:bg-surface-hover',
                     )}
                   >
                     <div className={clsx(
                       'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-                      isActive ? 'bg-civic-muted' : 'bg-surface-elevated',
+                      isActive ? 'bg-surface-hover' : 'bg-surface-elevated',
                     )}>
                       <item.icon className={clsx(
                         'w-5 h-5',
-                        isActive ? 'text-civic-light' : 'text-text-muted',
+                        isActive ? 'text-text-primary' : 'text-text-muted',
                       )} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -460,7 +460,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                 href={item.href}
                 className={clsx(
                   'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-colors duration-150 relative min-w-[52px]',
-                  isActive ? 'text-civic-light' : 'text-text-muted',
+                  isActive ? 'text-text-primary' : 'text-text-muted',
                 )}
               >
                 <div className="relative">

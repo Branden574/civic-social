@@ -286,72 +286,13 @@ export function FeedView() {
       <div ref={feedTopRef} />
 
       {/* ── Sticky Header ── */}
-      <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle">
-        <div className="flex items-center justify-between px-4 sm:px-6 pt-3 pb-0">
-          <h2 className="text-lg font-bold text-text-primary lg:hidden">
-            Civic Social
-          </h2>
-          <div className="hidden lg:block" />
-          <div className="flex items-center gap-2">
-            {/* Sort mode toggle */}
-            <div className="flex items-center bg-surface-elevated rounded-xl overflow-hidden">
-              <button
-                onClick={() => setSortMode('top')}
-                className={clsx(
-                  'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 transition-colors',
-                  sortMode === 'top'
-                    ? 'bg-civic-muted text-civic-light'
-                    : 'text-text-muted hover:text-text-secondary',
-                )}
-              >
-                <Flame className="w-3 h-3" />
-                Top
-              </button>
-              <button
-                onClick={() => setSortMode('latest')}
-                className={clsx(
-                  'flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 transition-colors',
-                  sortMode === 'latest'
-                    ? 'bg-civic-muted text-civic-light'
-                    : 'text-text-muted hover:text-text-secondary',
-                )}
-              >
-                <Clock className="w-3 h-3" />
-                Latest
-              </button>
-            </div>
-
-            {/* Manual refresh button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="p-1.5 rounded-xl text-text-muted hover:text-civic-light hover:bg-surface-hover transition-colors disabled:opacity-50"
-              title="Refresh feed"
-            >
-              <RefreshCw className={clsx('w-4 h-4', isRefreshing && 'animate-spin')} />
-            </button>
-
-            <button
-              onClick={() => setShowDiversity(!showDiversity)}
-              className={clsx(
-                'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl transition-colors',
-                showDiversity
-                  ? 'bg-civic-subtle text-civic-light'
-                  : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
-              )}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Feed Health</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab switcher */}
-        <div className="flex px-4 sm:px-6 mt-2">
+      <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur-xl border-b border-border-subtle">
+        {/* Tab switcher — primary visual element */}
+        <div className="flex px-5 sm:px-6">
           <button
             onClick={() => setActiveTab('for-you')}
             className={clsx(
-              'flex-1 pb-3 text-sm font-semibold text-center transition-colors border-b-2',
+              'flex-1 py-4 text-sm font-semibold text-center transition-colors border-b-2',
               activeTab === 'for-you'
                 ? 'text-text-primary border-civic'
                 : 'text-text-muted border-transparent hover:text-text-secondary',
@@ -365,7 +306,7 @@ export function FeedView() {
           <button
             onClick={() => setActiveTab('following')}
             className={clsx(
-              'flex-1 pb-3 text-sm font-semibold text-center transition-colors border-b-2',
+              'flex-1 py-4 text-sm font-semibold text-center transition-colors border-b-2',
               activeTab === 'following'
                 ? 'text-text-primary border-civic'
                 : 'text-text-muted border-transparent hover:text-text-secondary',
@@ -374,29 +315,70 @@ export function FeedView() {
             Following
           </button>
         </div>
+
+        {/* Controls row — secondary, compact */}
+        <div className="flex items-center justify-between px-5 sm:px-6 py-2 border-t border-border-subtle/50">
+          <div className="flex items-center bg-surface rounded-xl overflow-hidden">
+            <button
+              onClick={() => setSortMode('top')}
+              className={clsx(
+                'flex items-center gap-1 text-xs font-medium px-3 py-1.5 transition-colors',
+                sortMode === 'top'
+                  ? 'bg-surface-elevated text-text-primary'
+                  : 'text-text-muted hover:text-text-secondary',
+              )}
+            >
+              <Flame className="w-3 h-3" />
+              Top
+            </button>
+            <button
+              onClick={() => setSortMode('latest')}
+              className={clsx(
+                'flex items-center gap-1 text-xs font-medium px-3 py-1.5 transition-colors',
+                sortMode === 'latest'
+                  ? 'bg-surface-elevated text-text-primary'
+                  : 'text-text-muted hover:text-text-secondary',
+              )}
+            >
+              <Clock className="w-3 h-3" />
+              Latest
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-50"
+              title="Refresh feed"
+            >
+              <RefreshCw className={clsx('w-4 h-4', isRefreshing && 'animate-spin')} />
+            </button>
+
+            <button
+              onClick={() => setShowDiversity(!showDiversity)}
+              className={clsx(
+                'flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-xl transition-colors',
+                showDiversity
+                  ? 'bg-surface-elevated text-text-primary'
+                  : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+              )}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Feed Health</span>
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* ── Sort Mode Indicator ── */}
       {!loading && feed && (
-        <div className="mx-4 sm:mx-6 mt-2.5 mb-0">
-          <div className={clsx(
-            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-            sortMode === 'top'
-              ? 'bg-civic-subtle text-civic-light'
-              : 'bg-surface-elevated text-text-muted',
-          )}>
-            {sortMode === 'top' ? (
-              <>
-                <Flame className="w-3 h-3" />
-                Ranked by engagement, civility &amp; source quality
-              </>
-            ) : (
-              <>
-                <Clock className="w-3 h-3" />
-                Showing newest first — no algorithmic ranking
-              </>
-            )}
-          </div>
+        <div className="px-5 sm:px-6 pt-3">
+          <p className="text-xs text-text-muted">
+            {sortMode === 'top'
+              ? 'Ranked by engagement, civility & source quality'
+              : 'Newest first — no algorithmic ranking'}
+          </p>
         </div>
       )}
 
@@ -500,7 +482,7 @@ export function FeedView() {
       {/* ── Post List with Pull-to-Refresh ── */}
       {!loading && feed && (
         <PullToRefresh onRefresh={handleRefresh}>
-          <div>
+          <div className="px-3 sm:px-4 pt-3">
             {mergedPosts.length === 0 ? (
               <div className="px-4 sm:px-6 py-16 text-center">
                 <TrendingUp className="w-10 h-10 text-text-muted mx-auto mb-3" />

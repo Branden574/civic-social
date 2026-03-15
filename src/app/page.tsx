@@ -97,52 +97,55 @@ function TrendingPanel() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 pt-4">
       {/* Trending */}
-      <div className="bg-surface-elevated rounded-2xl p-6">
-        <h3 className="text-sm font-medium text-text-secondary mb-3">
+      <div className="bg-surface-elevated rounded-2xl p-5">
+        <h3 className="text-xs font-semibold text-text-muted mb-4">
           Trending Topics
         </h3>
-        <div className="space-y-3">
-          {trendingTopics.map((topic) => (
+        <div className="space-y-4">
+          {trendingTopics.map((topic, i) => (
             <a
               key={topic.tag}
               href={`/hashtag/${encodeURIComponent(topic.tag)}`}
-              className="block group cursor-pointer"
+              className="flex items-start gap-3 group cursor-pointer"
             >
-              <p className="text-sm font-medium text-text-primary group-hover:text-civic-light transition-colors">
-                #{topic.tag}
-              </p>
-              {topic.posts && <p className="text-xs text-text-muted">{topic.posts}</p>}
+              <span className="text-xs text-text-muted font-medium mt-0.5 w-4">{i + 1}</span>
+              <div>
+                <p className="text-sm font-medium text-text-primary group-hover:text-text-secondary transition-colors">
+                  #{topic.tag}
+                </p>
+                {topic.posts && <p className="text-xs text-text-muted mt-0.5">{topic.posts}</p>}
+              </div>
             </a>
           ))}
         </div>
       </div>
 
       {/* Suggested */}
-      <div className="bg-surface-elevated rounded-2xl p-6">
-        <h3 className="text-sm font-medium text-text-secondary mb-3">
+      <div className="bg-surface-elevated rounded-2xl p-5">
+        <h3 className="text-xs font-semibold text-text-muted mb-4">
           Suggested Voices
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {suggestedFollows.map((user) => (
             <div
               key={user.name}
               className="flex items-center gap-3 group cursor-pointer"
             >
-              <div className="w-9 h-9 rounded-full bg-surface-active flex items-center justify-center text-text-muted text-xs font-semibold">
+              <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary text-xs font-semibold">
                 {user.name
                   .split(' ')
                   .map((n) => n[0])
                   .join('')}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate group-hover:text-civic-light transition-colors">
+                <p className="text-sm font-medium text-text-primary truncate">
                   {user.name}
                 </p>
                 <p className="text-xs text-text-muted">{user.title}</p>
               </div>
-              <span className="text-xs font-medium text-positive-light bg-positive/10 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs font-medium text-text-secondary bg-surface-hover px-2 py-0.5 rounded-full">
                 {user.badge}
               </span>
             </div>
@@ -151,10 +154,9 @@ function TrendingPanel() {
       </div>
 
       {/* Platform info */}
-      <div className="text-xs text-text-muted space-y-1 px-1">
+      <div className="text-xs text-text-muted space-y-1 px-2">
         <p>Civic Social v0.2.0</p>
-        <p>Civility-first ranking algorithm</p>
-        <p className="text-text-muted/60">
+        <p className="text-text-muted/50">
           No rage amplification · No echo chambers · No ad tracking
         </p>
       </div>

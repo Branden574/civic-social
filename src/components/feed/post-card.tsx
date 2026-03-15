@@ -372,7 +372,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
   return (
     <article
       className={clsx(
-        'feed-item animate-fade-in opacity-0 border-b border-border-subtle hover:bg-surface-elevated/40 transition-colors duration-150',
+        'feed-item animate-fade-in opacity-0 bg-surface-elevated rounded-2xl mb-3 transition-colors duration-150',
         post._optimistic && 'opacity-70',
         post._failed && 'opacity-50 border-l-2 border-l-danger',
       )}
@@ -390,17 +390,17 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           <span className="text-text-muted">— tap to retry or dismiss</span>
         </div>
       )}
-      <div className="px-4 sm:px-6 py-5">
+      <div className="px-5 sm:px-6 py-6">
         {/* ── Header ── */}
-        <div className="flex items-start gap-3 mb-3">
+        <div className="flex items-start gap-3.5 mb-3">
           <Link
             href={`/profile/${encodeURIComponent(post.author.id)}`}
-            className="w-10 h-10 rounded-full shrink-0 cursor-pointer overflow-hidden"
+            className="w-11 h-11 rounded-full shrink-0 cursor-pointer overflow-hidden"
           >
             {post.author.avatarUrl ? (
-              <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-10 h-10 rounded-full object-cover" />
+              <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-11 h-11 rounded-full object-cover" />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-sm font-semibold">
+              <div className="w-11 h-11 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary text-sm font-semibold">
                 {post.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </div>
             )}
