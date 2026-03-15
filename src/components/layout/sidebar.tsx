@@ -63,8 +63,8 @@ export function Sidebar({ onCompose }: SidebarProps) {
     <aside className="hidden lg:flex flex-col w-[240px] h-screen sticky top-0 border-r border-border-subtle bg-bg-alt">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-border-subtle">
-        <div className="w-10 h-10 rounded-xl bg-civic flex items-center justify-center">
-          <Shield className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-xl bg-surface-elevated flex items-center justify-center">
+          <Shield className="w-5 h-5 text-text-secondary" />
         </div>
         <div>
           <h1 className="text-sm font-bold text-text-primary tracking-tight">

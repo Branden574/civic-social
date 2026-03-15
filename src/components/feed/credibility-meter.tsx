@@ -135,40 +135,24 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
 
   return (
     <div className="mt-3">
-      {/* Main badge — always visible */}
+      {/* Main badge — subtle, minimal */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className={clsx(
-          'flex items-center gap-2 w-full px-3 py-2 rounded-xl border transition-colors',
-          level.bgColor,
-          level.borderColor,
-          'hover:opacity-90',
-        )}
+        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-surface-hover/50 hover:bg-surface-hover transition-colors"
       >
-        <Icon className={clsx('w-4 h-4 shrink-0', level.color)} />
+        <Icon className="w-4 h-4 shrink-0 text-text-muted" />
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-2">
-            <span className={clsx('text-xs font-semibold', level.color)}>
+            <span className="text-xs font-medium text-text-secondary">
               {level.label}
             </span>
-            <div className="flex-1 h-1.5 bg-surface-active/50 rounded-full overflow-hidden max-w-20">
+            <div className="flex-1 h-1 bg-surface-active/50 rounded-full overflow-hidden max-w-16">
               <div
-                className={clsx(
-                  'h-full rounded-full transition-colors duration-700',
-                  score >= 0.8
-                    ? 'bg-positive'
-                    : score >= 0.6
-                      ? 'bg-info'
-                      : score >= 0.4
-                        ? 'bg-warning'
-                        : score >= 0.2
-                          ? 'bg-[#FB923C]'
-                          : 'bg-danger',
-                )}
+                className="h-full rounded-full bg-text-muted/40 transition-all duration-700"
                 style={{ width: `${Math.round(score * 100)}%` }}
               />
             </div>
-            <span className={clsx('text-xs font-mono', level.color)}>
+            <span className="text-xs text-text-muted">
               {Math.round(score * 100)}%
             </span>
           </div>

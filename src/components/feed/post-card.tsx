@@ -420,7 +420,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 </span>
               )}
               {ideology && (
-                <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded-full', ideologyStyle)}>
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-surface-hover text-text-muted">
                   {ideology}
                 </span>
               )}
@@ -432,7 +432,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
               {displayType && (
                 <>
                   <span className="text-text-muted">·</span>
-                  <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded-md', displayType.color)}>
+                  <span className="text-xs text-text-muted">
                     {displayType.label}
                   </span>
                 </>
@@ -441,24 +441,13 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           </div>
 
           <div className="flex items-center gap-1">
-            <div
-              className="flex items-center gap-1 cursor-pointer"
+            <button
+              className="text-xs text-text-muted hover:text-text-secondary p-1.5 rounded-xl hover:bg-surface-hover transition-colors"
               onClick={(e) => { e.stopPropagation(); setShowAlgorithm(!showAlgorithm); }}
-              title="Click to see why this post ranks here"
+              title="Quality score"
             >
-              <div
-                className={clsx(
-                  'text-xs font-mono font-bold px-2 py-1 rounded-md',
-                  post.algorithm.qualityScore >= 0.6
-                    ? 'bg-positive/10 text-positive-light'
-                    : post.algorithm.qualityScore >= 0.3
-                      ? 'bg-warning/10 text-warning-light'
-                      : 'bg-danger/10 text-danger-light',
-                )}
-              >
-                Q: {post.algorithm.qualityScore.toFixed(3)}
-              </div>
-            </div>
+              <BarChart3 className="w-3.5 h-3.5" />
+            </button>
 
             {isOwnPost && (
               <div className="relative" ref={moreMenuRef}>
@@ -512,7 +501,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           {isLong && (
             <button
               onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="text-civic-light text-sm font-medium mt-1 hover:underline flex items-center gap-1 min-h-[44px]"
+              className="text-text-secondary text-sm font-medium mt-1 hover:text-text-primary flex items-center gap-1 min-h-[44px]"
             >
               {expanded ? (
                 <>Show less <ChevronUp className="w-3.5 h-3.5" /></>
@@ -523,12 +512,12 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           )}
 
           {post.topics.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
+            <div className="flex flex-wrap gap-2 mt-3">
               {post.topics.map((topic) => (
                 <Link
                   key={topic}
                   href={`/hashtag/${encodeURIComponent(topic)}`}
-                  className="text-xs font-medium text-civic-light bg-civic-subtle px-2 py-0.5 rounded-full hover:bg-civic-muted transition-colors cursor-pointer"
+                  className="text-xs text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
                 >
                   #{topic}
                 </Link>
@@ -552,15 +541,8 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 >
                   <ExternalLink className="w-3 h-3 text-text-muted group-hover:text-civic-light" />
                   <span className="truncate">{source.domain}</span>
-                  <span
-                    className={clsx(
-                      'text-xs font-semibold px-1 py-0.5 rounded',
-                      source.trustScore >= 0.8 ? 'bg-positive/10 text-positive-light'
-                        : source.trustScore >= 0.5 ? 'bg-warning/10 text-warning-light'
-                          : 'bg-danger/10 text-danger-light',
-                    )}
-                  >
-                    Trust: {Math.round(source.trustScore * 100)}%
+                  <span className="text-xs text-text-muted">
+                    {Math.round(source.trustScore * 100)}%
                   </span>
                 </a>
               ))}
@@ -570,14 +552,8 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           {post.thread && (
             <div className="mt-3 flex items-center gap-3 text-xs text-text-muted flex-wrap">
               <span className="flex items-center gap-1"><Users className="w-3 h-3" />{post.thread.participantCount} participants</span>
-              <span className="flex items-center gap-1">
-                Civility: <span className={clsx('font-semibold', post.thread.civilityScore >= 0.7 ? 'text-civility-high' : post.thread.civilityScore >= 0.4 ? 'text-civility-medium' : 'text-civility-low')}>
-                  {Math.round(post.thread.civilityScore * 100)}%
-                </span>
-              </span>
-              <span className="flex items-center gap-1">
-                Diversity: <span className="font-semibold text-civic-light">{Math.round(post.thread.diversityScore * 100)}%</span>
-              </span>
+              <span>Civility: {Math.round(post.thread.civilityScore * 100)}%</span>
+              <span>Diversity: {Math.round(post.thread.diversityScore * 100)}%</span>
             </div>
           )}
 
