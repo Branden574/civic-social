@@ -135,24 +135,31 @@ export function CredibilityMeter({ data, compact = false }: CredibilityMeterProp
 
   return (
     <div className="mt-3">
-      {/* Main badge — subtle, minimal */}
+      {/* Main badge — colored but restrained */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-surface-hover/50 hover:bg-surface-hover transition-colors"
+        className={clsx(
+          'flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl transition-colors',
+          level.bgColor,
+          'hover:opacity-80',
+        )}
       >
-        <Icon className="w-4 h-4 shrink-0 text-text-muted" />
+        <Icon className={clsx('w-4 h-4 shrink-0', level.color)} />
         <div className="flex-1 min-w-0 text-left">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-text-secondary">
+          <div className="flex items-center gap-2.5">
+            <span className={clsx('text-xs font-medium', level.color)}>
               {level.label}
             </span>
-            <div className="flex-1 h-1 bg-surface-active/50 rounded-full overflow-hidden max-w-16">
+            <div className="flex-1 h-1 bg-surface-active/30 rounded-full overflow-hidden max-w-20">
               <div
-                className="h-full rounded-full bg-text-muted/40 transition-all duration-700"
+                className={clsx(
+                  'h-full rounded-full transition-all duration-700 opacity-60',
+                  score >= 0.8 ? 'bg-positive' : score >= 0.6 ? 'bg-info' : score >= 0.4 ? 'bg-warning' : score >= 0.2 ? 'bg-warning' : 'bg-danger',
+                )}
                 style={{ width: `${Math.round(score * 100)}%` }}
               />
             </div>
-            <span className="text-xs text-text-muted">
+            <span className={clsx('text-xs font-medium', level.color)}>
               {Math.round(score * 100)}%
             </span>
           </div>

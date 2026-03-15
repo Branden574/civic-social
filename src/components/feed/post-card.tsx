@@ -480,7 +480,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
         </div>
 
         {/* ── Content (clickable → thread view) ── */}
-        <div className="ml-[52px]">
+        <div className="ml-[58px]">
           <div
             role="link"
             tabIndex={0}
@@ -529,19 +529,22 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           <ContextPanel topics={post.topics} />
 
           {post.sources.length > 0 && (
-            <div className="mt-3 space-y-1">
+            <div className="mt-3 space-y-1.5">
               {post.sources.map((source, i) => (
                 <a
                   key={i}
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-text-secondary hover:text-civic-light transition-colors group"
+                  className="flex items-center gap-2 text-xs text-text-muted hover:text-text-secondary transition-colors group"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <ExternalLink className="w-3 h-3 text-text-muted group-hover:text-civic-light" />
+                  <ExternalLink className="w-3 h-3" />
                   <span className="truncate">{source.domain}</span>
-                  <span className="text-xs text-text-muted">
+                  <span className={clsx(
+                    'text-xs font-medium',
+                    source.trustScore >= 0.8 ? 'text-positive-light/70' : source.trustScore >= 0.5 ? 'text-warning-light/70' : 'text-danger-light/70',
+                  )}>
                     {Math.round(source.trustScore * 100)}%
                   </span>
                 </a>
@@ -552,13 +555,13 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           {post.thread && (
             <div className="mt-3 flex items-center gap-3 text-xs text-text-muted flex-wrap">
               <span className="flex items-center gap-1"><Users className="w-3 h-3" />{post.thread.participantCount} participants</span>
-              <span>Civility: {Math.round(post.thread.civilityScore * 100)}%</span>
-              <span>Diversity: {Math.round(post.thread.diversityScore * 100)}%</span>
+              <span>Civility: <span className={clsx('font-medium', post.thread.civilityScore >= 0.7 ? 'text-positive-light/70' : post.thread.civilityScore >= 0.4 ? 'text-warning-light/70' : 'text-danger-light/70')}>{Math.round(post.thread.civilityScore * 100)}%</span></span>
+              <span>Diversity: <span className="font-medium text-text-secondary">{Math.round(post.thread.diversityScore * 100)}%</span></span>
             </div>
           )}
 
           {/* ── Reactions Bar ── */}
-          <div className="flex items-center gap-1 mt-4 flex-wrap">
+          <div className="border-t border-border-subtle/50 mt-4 pt-3 flex items-center gap-1 flex-wrap">
             {([
               { type: 'agree' as ReactionType, icon: ThumbsUp, label: 'Agree', color: 'text-positive', bgActive: 'bg-positive/15' },
               { type: 'disagree' as ReactionType, icon: ThumbsDown, label: 'Disagree', color: 'text-danger', bgActive: 'bg-danger/15' },
