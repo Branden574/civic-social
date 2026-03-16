@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import {
-  Shield,
   ChevronRight,
   Eye,
   EyeOff,
@@ -151,12 +150,15 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-bg flex">
       {/* Left — branding panel (desktop) */}
-      <div className="hidden lg:flex lg:w-[480px] bg-gradient-to-br from-civic-dark via-civic to-civic-light p-12 flex-col justify-between">
-        <div>
+      <div className="hidden lg:flex lg:w-[480px] bg-[#1a1a1a] p-12 flex-col justify-between relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute w-[400px] h-[400px] top-[20%] left-[-10%] opacity-[0.08] blur-[100px]" style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.4) 0%, transparent 70%)' }} />
+        </div>
+        <div className="relative z-10">
           <div className="flex items-center gap-3 mb-14">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-white">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+            </svg>
             <span className="text-xl font-bold text-white">Civic Social</span>
           </div>
 
@@ -192,9 +194,9 @@ export default function RegisterPage() {
         <div className="w-full max-w-[440px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <div className="w-11 h-11 rounded-2xl bg-civic flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-text-primary">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+            </svg>
             <span className="text-lg font-bold text-text-primary">Civic Social</span>
           </div>
 
@@ -473,8 +475,10 @@ export default function RegisterPage() {
           {/* ═══ COMPLETE: Welcome screen ═══ */}
           {step === 'complete' && (
             <div className="animate-fade-in text-center py-10">
-              <div className="w-18 h-18 rounded-2xl bg-positive/10 flex items-center justify-center mx-auto mb-5 w-[72px] h-[72px]">
-                <Shield className="w-9 h-9 text-positive" />
+              <div className="w-[72px] h-[72px] rounded-2xl bg-positive/10 flex items-center justify-center mx-auto mb-5">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-positive">
+                  <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+                </svg>
               </div>
               <h2 className="text-2xl font-bold text-text-primary mb-3">
                 Welcome to Civic Social
