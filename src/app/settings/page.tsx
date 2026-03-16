@@ -11,6 +11,15 @@ import { AuthGate } from '@/components/auth/auth-gate';
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
 
 export default function SettingsPage() {
+  const { refreshMe: refreshOnMount } = useAuth();
+
+  // Refresh user data on mount so avatar/banner are always up-to-date
+  // (localStorage cache may be stale when navigating from other pages)
+  useEffect(() => {
+    refreshOnMount();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <AuthGate>
     <div className="flex min-h-screen bg-bg">
