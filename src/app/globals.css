@@ -6,24 +6,24 @@
    ═══════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ── Core surfaces (maximum card-to-bg contrast) ── */
-  --color-bg: #080A12;
-  --color-bg-alt: #0C0E18;
-  --color-surface: #121522;
-  --color-surface-elevated: #1A1E30;
-  --color-surface-hover: #21263C;
-  --color-surface-active: #282E48;
+  /* ── Core surfaces (neutral warm grays — matches landing page) ── */
+  --color-bg: #141414;
+  --color-bg-alt: #191919;
+  --color-surface: #1e1e1e;
+  --color-surface-elevated: #262626;
+  --color-surface-hover: #2e2e2e;
+  --color-surface-active: #363636;
 
   /* ── Borders ── */
-  --color-border: #252C44;
-  --color-border-subtle: #1E2438;
-  --color-border-strong: #343C58;
+  --color-border: #333333;
+  --color-border-subtle: #282828;
+  --color-border-strong: #444444;
 
   /* ── Text ── */
-  --color-text-primary: #F0F1F8;
-  --color-text-secondary: #8E91AE;
-  --color-text-muted: #5A5D78;
-  --color-text-inverse: #0C0E1A;
+  --color-text-primary: #f0f0f0;
+  --color-text-secondary: #a0a0a0;
+  --color-text-muted: #666666;
+  --color-text-inverse: #141414;
 
   /* ── Brand / Civic colors ── */
   --color-civic: #6366F1;
@@ -78,19 +78,19 @@
    :root = (0,1,0), html.light = (0,1,1) — always wins.
    ────────────────────────── */
 html.light {
-  --color-bg: #F8F9FC;
-  --color-bg-alt: #F0F1F6;
-  --color-surface: #FFFFFF;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-hover: #F3F4F8;
-  --color-surface-active: #EBEDF4;
-  --color-border: #E2E4EC;
-  --color-border-subtle: #EEF0F6;
-  --color-border-strong: #CDD0DC;
-  --color-text-primary: #111318;
-  --color-text-secondary: #5C5F70;
-  --color-text-muted: #9194A4;
-  --color-text-inverse: #F0F1F8;
+  --color-bg: #f7f7f7;
+  --color-bg-alt: #f0f0f0;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-hover: #f3f3f3;
+  --color-surface-active: #ebebeb;
+  --color-border: #e0e0e0;
+  --color-border-subtle: #eeeeee;
+  --color-border-strong: #cccccc;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  --color-text-inverse: #f0f0f0;
   --color-civic-subtle: rgba(99, 102, 241, 0.05);
   --color-civic-muted: rgba(99, 102, 241, 0.10);
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);

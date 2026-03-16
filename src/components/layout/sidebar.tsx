@@ -63,9 +63,9 @@ export function Sidebar({ onCompose }: SidebarProps) {
     <aside className="hidden lg:flex flex-col w-[240px] h-screen sticky top-0 border-r border-border-subtle bg-bg-alt">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-border-subtle">
-        <div className="w-10 h-10 rounded-xl bg-civic/15 flex items-center justify-center">
-          <Shield className="w-5 h-5 text-civic-light/80" />
-        </div>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-text-primary shrink-0">
+          <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+        </svg>
         <div>
           <h1 className="text-sm font-bold text-text-primary tracking-tight">
             Civic Social
@@ -342,7 +342,9 @@ export function MobileNav({ onCompose }: MobileNavProps) {
             {/* Handle + header */}
             <div className="flex items-center justify-between px-5 pt-3 pb-2">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-civic-light" />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-text-primary">
+                  <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+                </svg>
                 <span className="text-sm font-semibold text-text-primary">More</span>
               </div>
               <button
