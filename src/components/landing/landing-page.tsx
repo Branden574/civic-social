@@ -6,149 +6,137 @@ import { LandingNav } from '@/components/landing/landing-nav';
 /* ─── Landing Page ────────────────────────────────────── */
 export function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-bg text-text-primary font-sans">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#1a1a1a] text-white font-sans">
       {/* NAV */}
       <LandingNav />
 
-      {/* ── HERO ───────────────────────────────────────────── */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden pt-20 sm:pt-24">
-        {/* Subtle static gradient — no animation */}
+      {/* ── Smoke/fog background effect ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse 70% 50% at 30% 40%, rgba(99,102,241,.08) 0%, transparent 60%), radial-gradient(ellipse 50% 60% at 75% 30%, rgba(99,102,241,.05) 0%, transparent 50%)',
-          }}
+          className="absolute w-[800px] h-[600px] top-[10%] left-[5%] opacity-[0.12] blur-[100px]"
+          style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.4) 0%, transparent 70%)' }}
         />
+        <div
+          className="absolute w-[600px] h-[500px] top-[20%] right-[10%] opacity-[0.08] blur-[80px]"
+          style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.5) 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute w-[500px] h-[400px] top-[40%] left-[30%] opacity-[0.06] blur-[120px]"
+          style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.3) 0%, transparent 70%)' }}
+        />
+      </div>
 
-        <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-8 py-12 sm:py-20 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center z-10">
-          {/* Copy */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-bold uppercase bg-civic-subtle border border-civic/20 text-civic-light">
-              <span className="w-1.5 h-1.5 rounded-full bg-positive inline-block" />
-              Now in early access
+      {/* ── HERO ───────────────────────────────────────────── */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-16 px-4 sm:px-8">
+        {/* Early Access Badge */}
+        <div className="inline-flex items-center px-6 py-3 rounded-full mb-8 bg-white/[0.12] border border-white/[0.18] backdrop-blur-lg">
+          <span className="text-base text-white/90">Now in Early Access</span>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-center mb-2">
+          <span className="block text-[clamp(40px,8vw,80px)] font-light tracking-[-2px] leading-[1.1] text-white">
+            Civic Social
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="text-center text-[clamp(32px,7vw,72px)] font-light tracking-[-1.5px] leading-[1.1] text-white mb-10">
+          Conversations meet context.
+        </p>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-12">
+          <Link
+            href="/register"
+            className="px-8 py-4 rounded-lg text-base font-medium bg-white text-[#1a1a1a] hover:bg-white/90 transition-colors text-center"
+          >
+            Create Account
+          </Link>
+          <Link
+            href="/login"
+            className="px-8 py-4 rounded-lg text-base font-medium bg-white/10 border border-white/30 text-white backdrop-blur-sm hover:bg-white/[0.15] transition-colors text-center"
+          >
+            Sign In
+          </Link>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="flex flex-col md:flex-row gap-4 max-w-[1000px] w-full justify-center px-4">
+          {/* Card 1 - User Post */}
+          <div className="w-full md:w-[260px] bg-[rgba(40,40,40,0.9)] border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-[#3b5998] shrink-0" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-semibold text-white">Sarah Chen</span>
+                  <span className="px-1.5 py-0.5 bg-[#fbbf24] rounded text-[10px] font-medium text-[#1a1a1a]">Expert</span>
+                </div>
+                <div className="text-xs text-[#a0a0a0]">Policy Analyst · 2m ago</div>
+              </div>
             </div>
-
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] mb-6 text-text-primary">
-              Civic Social — Where Conversations Meet{' '}
-              <span className="text-civic-light">Context.</span>
-            </h1>
-
-            <p className="max-w-[480px] text-base sm:text-lg text-text-secondary mb-8 leading-relaxed">
-              Post freely. Stay informed. Track real legislation in real time — without the noise.
+            <p className="text-[13px] leading-[18px] text-white mb-3">
+              The infrastructure bill just passed committee — here&apos;s what it actually means for broadband access in rural counties...
             </p>
-
-            <div className="flex gap-4 flex-wrap mb-4">
-              <Link
-                href="/register"
-                className="inline-flex items-center px-8 py-3.5 font-semibold text-white bg-civic rounded-xl hover:bg-civic-dark transition-colors text-base"
-              >
-                Create Account
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center px-8 py-3.5 font-semibold rounded-xl border border-border-strong text-text-primary hover:bg-surface-hover transition-colors text-base"
-              >
-                Sign In
-              </Link>
+            <div className="flex gap-4 text-xs text-[#a0a0a0]">
+              <span>214 agree</span>
+              <span>88 replies</span>
+              <span>1.2k insight</span>
             </div>
-
-            <p className="text-xs text-text-muted">
-              Free to join &bull; No credit card required
-            </p>
           </div>
 
-          {/* Static product preview cards (no float animation) */}
-          <div className="relative hidden lg:block" style={{ height: 520 }}>
-            {/* Feed card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 280, top: 20, left: 0 }}>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-civic-muted shrink-0" />
-                <div>
-                  <div className="font-semibold text-sm">Sarah Chen <span className="text-civic-light text-xs ml-1">Expert</span></div>
-                  <div className="text-xs text-text-muted">Policy Analyst · 2m ago</div>
-                </div>
-              </div>
-              <p className="text-sm text-text-secondary leading-relaxed mb-3">
-                The infrastructure bill just passed committee — here&apos;s what it actually means for broadband access in rural counties...
-              </p>
-              <div className="flex gap-4 text-xs text-text-muted">
-                <span>214 agree</span>
-                <span>88 replies</span>
-                <span>1.2k insightful</span>
-              </div>
+          {/* Card 2 - Bill Update */}
+          <div className="w-full md:w-[260px] bg-[rgba(40,40,40,0.9)] border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
+              <span className="text-[11px] font-semibold text-[#a0a0a0] tracking-wider uppercase">Live Bill Update</span>
             </div>
-
-            {/* Context card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 240, top: 80, right: 0 }}>
-              <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase text-text-muted">
-                <span className="w-1.5 h-1.5 rounded-full bg-positive inline-block" />
-                Context Panel
-              </div>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <div className="font-semibold">S.1234 Infrastructure Act</div>
-                  <div className="text-xs text-text-muted">Passed Senate 67–32 · Nov 2025</div>
-                </div>
-                <div>
-                  <div className="font-semibold">3 Primary Sources</div>
-                  <div className="text-xs text-text-muted">CBO · Congress.gov · Reuters</div>
-                </div>
-              </div>
+            <h3 className="text-[15px] font-semibold text-white mb-4 leading-snug">
+              H.R. 5892 — Clean Energy Transition
+            </h3>
+            <div className="flex gap-1.5 flex-wrap mb-3">
+              <span className="px-2 py-1 bg-[#22c55e] rounded text-[10px] font-medium text-white">Introduced</span>
+              <span className="px-2 py-1 bg-[#22c55e] rounded text-[10px] font-medium text-white">Committee</span>
+              <span className="px-2 py-1 bg-[#3b82f6] rounded text-[10px] font-medium text-white">Floor Vote</span>
+              <span className="px-2 py-1 bg-[#6b7280] rounded text-[10px] font-medium text-white">Enacted</span>
             </div>
+            <p className="text-xs text-[#f97316]">Vote expected this week</p>
+          </div>
 
-            {/* Bill tracker card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 260, bottom: 80, left: 30 }}>
-              <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase text-text-muted">
-                <span className="w-1.5 h-1.5 rounded-full bg-warning inline-block" />
-                Live Bill Update
-              </div>
-              <div className="font-semibold text-sm mb-3 leading-snug">
-                H.R. 5892 — Clean Energy Transition
-              </div>
-              <div className="flex gap-1 mb-3">
-                {['Introduced', 'Committee', 'Floor Vote', 'Enacted'].map((s, i) => (
-                  <div
-                    key={s}
-                    className={`flex-1 text-center py-1 rounded-md text-xs font-medium ${
-                      i < 2
-                        ? 'bg-positive/10 text-positive-light'
-                        : i === 2
-                          ? 'bg-warning/10 text-warning-light'
-                          : 'bg-surface-active text-text-muted'
-                    }`}
-                  >
-                    {s}
-                  </div>
-                ))}
-              </div>
-              <div className="text-xs text-warning-light">Vote expected this week</div>
+          {/* Card 3 - Trending */}
+          <div className="w-full md:w-[220px] bg-[rgba(40,40,40,0.9)] border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+            <div className="flex items-center gap-1.5 mb-4">
+              <span className="w-2 h-2 rounded-full bg-[#fbbf24]" />
+              <span className="text-[11px] font-semibold text-[#a0a0a0] tracking-wider uppercase">Trending</span>
             </div>
-
-            {/* Trending card */}
-            <div className="absolute bg-surface-elevated rounded-2xl p-5" style={{ width: 200, bottom: 60, right: 20 }}>
-              <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase text-text-muted">
-                <span className="w-1.5 h-1.5 rounded-full bg-civic inline-block" />
-                Trending
-              </div>
+            <div className="space-y-3">
               {[
                 ['#ClimatePolicy', '42.1k'],
                 ['#HealthcareReform', '31.8k'],
                 ['#HousingAct', '19.4k'],
               ].map(([tag, cnt]) => (
-                <div key={tag} className="flex justify-between mb-1 text-sm">
-                  <span className="text-civic-light font-medium">{tag}</span>
-                  <span className="text-text-muted">{cnt}</span>
+                <div key={tag} className="flex justify-between items-center">
+                  <span className="text-sm font-semibold text-[#f97316]">{tag}</span>
+                  <span className="text-[13px] text-[#a0a0a0]">{cnt}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
+
+        {/* Scroll indicator */}
+        <div className="flex items-center gap-2 mt-10 text-sm text-[#a0a0a0]">
+          <span>Scroll down</span>
+          <div className="w-6 h-10 border-2 border-[#a0a0a0] rounded-xl relative">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1 h-2 bg-[#a0a0a0] rounded-full" />
+          </div>
+          <span>to see projects</span>
+        </div>
       </section>
 
       {/* ── PROOF STRIP ─────────────────────────────────────── */}
-      <div className="border-t border-b border-border-subtle bg-surface/30 py-5">
-        <div className="flex flex-wrap justify-center items-center gap-0 max-w-6xl mx-auto px-4 sm:px-8">
+      <div className="relative z-10 flex justify-center px-4 sm:px-8 -mt-4 mb-16">
+        <div className="flex flex-wrap justify-center gap-0 max-w-[800px] w-full bg-[rgba(40,40,40,0.8)] border border-white/10 rounded-xl backdrop-blur-xl py-4 px-6">
           {[
             'Built for civil discourse',
             'Context-first design',
@@ -156,12 +144,12 @@ export function LandingPage() {
             'Community moderation tools',
           ].map((txt, i, arr) => (
             <div key={txt} className="flex items-center">
-              <div className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-text-secondary whitespace-nowrap">
-                <span className="text-civic-light">·</span>
+              <div className="flex items-center gap-2 px-4 sm:px-6 py-1 text-sm text-white whitespace-nowrap">
+                <span className="text-[#a0a0a0]">•</span>
                 {txt}
               </div>
               {i < arr.length - 1 && (
-                <div className="w-px h-5 bg-border-subtle hidden sm:block" />
+                <div className="w-px h-4 bg-white/10 hidden sm:block" />
               )}
             </div>
           ))}
@@ -169,16 +157,16 @@ export function LandingPage() {
       </div>
 
       {/* ── FEATURES ────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="features">
-        <p className="text-civic-light text-xs font-bold uppercase mb-4">
+      <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="features">
+        <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
           Core Features
         </p>
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-4">
+        <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
           Built different.
           <br />
           Because the stakes are different.
         </h2>
-        <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
+        <p className="text-[#a0a0a0] max-w-xl text-base leading-relaxed mb-10">
           Every feature is designed to surface signal, reduce noise, and keep discourse grounded in fact.
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -192,12 +180,12 @@ export function LandingPage() {
           ].map(([title, desc]) => (
             <div
               key={title}
-              className="bg-surface-elevated rounded-2xl p-6 hover:bg-surface-hover transition-colors duration-200"
+              className="bg-[rgba(40,40,40,0.6)] border border-white/10 rounded-xl p-6 hover:bg-[rgba(50,50,50,0.8)] transition-colors duration-200 backdrop-blur-sm"
             >
-              <h3 className="text-base font-semibold mb-2 tracking-tight">
+              <h3 className="text-base font-semibold mb-2 tracking-tight text-white">
                 {title}
               </h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
+              <p className="text-sm text-[#a0a0a0] leading-relaxed">
                 {desc}
               </p>
             </div>
@@ -206,11 +194,11 @@ export function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="how-it-works">
-        <p className="text-civic-light text-xs font-bold uppercase mb-4">
+      <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="how-it-works">
+        <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
           How It Works
         </p>
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-10">
+        <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
           Three steps.
           <br />
           Infinite clarity.
@@ -222,13 +210,13 @@ export function LandingPage() {
             ['03', 'Track posts & policy updates', 'One feed. Posts, bill alerts, context panels, and community notes — unified and chronologically honest.'],
           ].map(([num, title, desc]) => (
             <div key={num}>
-              <div className="text-5xl font-black tracking-tighter text-civic-subtle mb-3">
+              <div className="text-5xl font-light tracking-tighter text-white/10 mb-3">
                 {num}
               </div>
-              <h3 className="text-lg font-semibold mb-2 tracking-tight">
+              <h3 className="text-lg font-semibold mb-2 tracking-tight text-white">
                 {title}
               </h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
+              <p className="text-sm text-[#a0a0a0] leading-relaxed">
                 {desc}
               </p>
             </div>
@@ -237,16 +225,16 @@ export function LandingPage() {
       </section>
 
       {/* ── TRUST ───────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
-        <p className="text-civic-light text-xs font-bold uppercase mb-4">
+      <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
+        <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
           Trust &amp; Safety
         </p>
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-4">
+        <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
           Neutral by design.
           <br />
           Safe by default.
         </h2>
-        <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
+        <p className="text-[#a0a0a0] max-w-xl text-base leading-relaxed mb-10">
           We built the principles before we built the product. That&apos;s not a tagline — it&apos;s the architecture.
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -258,12 +246,12 @@ export function LandingPage() {
           ].map(([title, desc]) => (
             <div
               key={title}
-              className="bg-surface-elevated rounded-2xl p-6 hover:bg-surface-hover transition-colors duration-200"
+              className="bg-[rgba(40,40,40,0.6)] border border-white/10 rounded-xl p-6 hover:bg-[rgba(50,50,50,0.8)] transition-colors duration-200 backdrop-blur-sm"
             >
-              <h3 className="text-sm font-semibold mb-2 tracking-tight">
+              <h3 className="text-sm font-semibold mb-2 tracking-tight text-white">
                 {title}
               </h3>
-              <p className="text-xs text-text-secondary leading-relaxed">
+              <p className="text-xs text-[#a0a0a0] leading-relaxed">
                 {desc}
               </p>
             </div>
@@ -272,7 +260,7 @@ export function LandingPage() {
         <div className="text-center">
           <Link
             href="/safety"
-            className="text-sm font-medium text-text-muted hover:text-civic-light transition-colors"
+            className="text-sm font-medium text-[#a0a0a0] hover:text-white transition-colors"
           >
             Read our Principles →
           </Link>
@@ -280,26 +268,26 @@ export function LandingPage() {
       </section>
 
       {/* ── PRICING ─────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-8" id="pricing">
+      <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8" id="pricing">
         <div className="max-w-6xl mx-auto">
-          <p className="text-civic-light text-xs font-bold uppercase mb-4">
+          <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
             Plans
           </p>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-10">
+          <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
             Start free.
             <br />
             Go deeper with Pro.
           </h2>
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Free */}
-            <div className="bg-surface-elevated rounded-2xl p-8">
-              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-civic-subtle text-civic-light text-xs font-bold uppercase">
+            <div className="bg-[rgba(40,40,40,0.6)] border border-white/10 rounded-xl p-8 backdrop-blur-sm">
+              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-white/10 text-white/80 text-xs font-semibold uppercase">
                 Free
               </div>
-              <div className="text-2xl font-black tracking-tight mb-1">
+              <div className="text-2xl font-light tracking-tight mb-1 text-white">
                 Civic
               </div>
-              <div className="text-sm text-text-muted mb-6">Always free</div>
+              <div className="text-sm text-[#a0a0a0] mb-6">Always free</div>
               <ul className="space-y-2 mb-8">
                 {[
                   'Full posting & reading',
@@ -308,28 +296,28 @@ export function LandingPage() {
                   'Live feed & trending',
                   'Community notes',
                 ].map((f) => (
-                  <li key={f} className="text-sm text-text-secondary flex items-center gap-2">
-                    <span className="text-positive-light">✓</span> {f}
+                  <li key={f} className="text-sm text-[#a0a0a0] flex items-center gap-2">
+                    <span className="text-[#22c55e]">✓</span> {f}
                   </li>
                 ))}
               </ul>
               <Link
                 href="/register"
-                className="block text-center py-3 rounded-xl font-semibold border border-border-strong text-text-primary hover:bg-surface-hover transition-colors"
+                className="block text-center py-3 rounded-lg font-medium border border-white/20 text-white hover:bg-white/10 transition-colors"
               >
                 Join Free
               </Link>
             </div>
 
             {/* Pro */}
-            <div className="bg-surface-elevated rounded-2xl p-8 border border-civic/20">
-              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-civic-muted text-civic-light text-xs font-bold uppercase">
+            <div className="bg-[rgba(40,40,40,0.6)] border border-white/20 rounded-xl p-8 backdrop-blur-sm">
+              <div className="inline-block px-3 py-1 rounded-full mb-5 bg-white/15 text-white text-xs font-semibold uppercase">
                 Pro
               </div>
-              <div className="text-2xl font-black tracking-tight mb-1">
+              <div className="text-2xl font-light tracking-tight mb-1 text-white">
                 Civic Pro
               </div>
-              <div className="text-sm text-text-muted mb-6">Coming soon</div>
+              <div className="text-sm text-[#a0a0a0] mb-6">Coming soon</div>
               <ul className="space-y-2 mb-8">
                 {[
                   'Everything in Free',
@@ -339,14 +327,14 @@ export function LandingPage() {
                   'Creator & analyst tools',
                   'Verified profile badge',
                 ].map((f) => (
-                  <li key={f} className="text-sm text-text-secondary flex items-center gap-2">
-                    <span className="text-civic-light">✦</span> {f}
+                  <li key={f} className="text-sm text-[#a0a0a0] flex items-center gap-2">
+                    <span className="text-white">✦</span> {f}
                   </li>
                 ))}
               </ul>
               <Link
                 href="/register"
-                className="block text-center py-3 rounded-xl font-bold bg-civic text-white hover:bg-civic-dark transition-colors"
+                className="block text-center py-3 rounded-lg font-medium bg-white text-[#1a1a1a] hover:bg-white/90 transition-colors"
               >
                 Get Early Pro Access
               </Link>
@@ -356,30 +344,23 @@ export function LandingPage() {
       </section>
 
       {/* ── FINAL CTA ─────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-8 text-center">
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(99,102,241,.06) 0%, transparent 60%)',
-          }}
-        />
-        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] mb-5 text-text-primary relative z-10">
+      <section className="relative z-10 py-20 sm:py-28 px-4 sm:px-8 text-center">
+        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight leading-[1.05] mb-5 text-white">
           Build better conversations.
         </h2>
-        <p className="text-base text-text-secondary mb-8 relative z-10">
+        <p className="text-base text-[#a0a0a0] mb-8">
           Join thousands waiting for a civic platform that takes the public seriously.
         </p>
-        <div className="flex gap-4 justify-center flex-wrap relative z-10">
+        <div className="flex gap-4 justify-center flex-wrap">
           <Link
             href="/register"
-            className="inline-flex items-center px-10 py-4 font-semibold text-white bg-civic rounded-xl hover:bg-civic-dark transition-colors text-base"
+            className="inline-flex items-center px-10 py-4 font-medium text-[#1a1a1a] bg-white rounded-lg hover:bg-white/90 transition-colors text-base"
           >
             Create Account
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center px-10 py-4 font-semibold rounded-xl border border-border-strong text-text-primary hover:bg-surface-hover transition-colors text-base"
+            className="inline-flex items-center px-10 py-4 font-medium rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors text-base"
           >
             Sign In
           </Link>
@@ -387,10 +368,13 @@ export function LandingPage() {
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
-      <footer className="border-t border-border-subtle py-8">
+      <footer className="relative z-10 border-t border-white/10 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 mr-auto font-bold text-base tracking-tight">
-            <span className="text-civic-light text-lg">◈</span> Civic Social
+          <div className="flex items-center gap-2 mr-auto font-semibold text-base tracking-tight text-white">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+            </svg>
+            Civic Social
           </div>
           <nav className="flex gap-7 flex-wrap">
             {[
@@ -402,13 +386,13 @@ export function LandingPage() {
               <Link
                 key={label}
                 href={href}
-                className="text-sm text-text-muted hover:text-text-secondary transition-colors"
+                className="text-sm text-[#a0a0a0] hover:text-white transition-colors"
               >
                 {label}
               </Link>
             ))}
           </nav>
-          <p className="w-full text-right text-xs text-text-muted/60">
+          <p className="w-full text-right text-xs text-[#a0a0a0]/60">
             &copy; 2026 Civic Social. All rights reserved.
           </p>
         </div>
