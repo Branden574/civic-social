@@ -124,14 +124,6 @@ export function LandingPage() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="flex items-center gap-2 mt-10 text-sm text-[#a0a0a0]">
-          <span>Scroll down</span>
-          <div className="w-6 h-10 border-2 border-[#a0a0a0] rounded-xl relative">
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1 h-2 bg-[#a0a0a0] rounded-full" />
-          </div>
-          <span>to see projects</span>
-        </div>
       </section>
 
       {/* ── PROOF STRIP ─────────────────────────────────────── */}
