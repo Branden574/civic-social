@@ -209,10 +209,12 @@ export default function ProfilePage() {
   const followingCount = stats?.followingCount ?? 0;
   const postsCount = stats?.postsCount ?? postCount;
 
-  // Profile completion: show card only after auth is fully loaded, server confirmed
-  // profile is incomplete, and user hasn't dismissed it. Gate on !authLoading to
-  // prevent the card from flickering during hydration.
-  const showFinishProfile = !authLoading && !!profileCompletion && !profileCompletion.isComplete && !profileCardDismissed;
+  // Profile completion: show card only after the SERVER has responded with
+  // authoritative profile data (stats is only set from server response).
+  // This prevents flickering when localStorage cache doesn't have bio but
+  // the server does — we wait for the server round-trip before showing.
+  const serverHasResponded = !!stats;
+  const showFinishProfile = !authLoading && serverHasResponded && !!profileCompletion && !profileCompletion.isComplete && !profileCardDismissed;
 
   return (
     <AuthGate>

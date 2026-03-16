@@ -110,14 +110,24 @@ export async function POST(
       }
 
       const isDebateParticipant = debate.participants.some((p) => p.userId === userId);
+
+      // Spectators can join as listen-only (no mic, receive streams only).
+      // Debaters can join as speakers or listeners.
+      // Cap spectator listeners to prevent mesh explosion (max 10 spectator listeners).
       if (!isDebateParticipant) {
-        return NextResponse.json(
-          { error: 'Voice chat is available to debate participants only.' },
-          { status: 403 },
+        const spectatorListeners = room.participants.filter(
+          (p) => p.role === 'listener' && !debate.participants.some((dp) => dp.userId === p.userId),
         );
+        if (spectatorListeners.length >= 10) {
+          return NextResponse.json(
+            { error: 'Listener slots are full. Try again later.' },
+            { status: 400 },
+          );
+        }
       }
 
-      const asListener = body.asListener !== false;
+      // Spectators always join as listeners; debaters can choose
+      const asListener = !isDebateParticipant || body.asListener !== false;
       const participant = await joinVoiceRoom(debateId, userId, userName, asListener);
 
       if (!participant) {

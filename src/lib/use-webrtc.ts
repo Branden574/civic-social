@@ -31,6 +31,8 @@ interface PeerState {
   pc: RTCPeerConnection;
   makingOffer: boolean;
   ignoreOffer: boolean;
+  iceRestarts: number;
+  iceRestartTimer: ReturnType<typeof setTimeout> | null;
 }
 
 interface SignalMessage {
@@ -42,12 +44,34 @@ interface SignalMessage {
 
 // ─── Constants ──────────────────────────────────────────────────
 
-const ICE_SERVERS: RTCIceServer[] = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-];
+function getIceServers(): RTCIceServer[] {
+  const servers: RTCIceServer[] = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ];
+
+  // TURN server for reliable NAT traversal (required for ~20% of users
+  // behind symmetric NATs, corporate firewalls, or mobile carriers).
+  // Set NEXT_PUBLIC_TURN_URL, NEXT_PUBLIC_TURN_USERNAME, NEXT_PUBLIC_TURN_CREDENTIAL
+  // in .env to enable. Providers: Twilio, Xirsys, Cloudflare, or self-hosted coturn.
+  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
+  const turnUser = process.env.NEXT_PUBLIC_TURN_USERNAME;
+  const turnCred = process.env.NEXT_PUBLIC_TURN_CREDENTIAL;
+
+  if (turnUrl && turnUser && turnCred) {
+    servers.push({
+      urls: turnUrl,
+      username: turnUser,
+      credential: turnCred,
+    });
+  }
+
+  return servers;
+}
 
 const SIGNAL_POLL_MS = 1500;
+const ICE_RESTART_DELAY_MS = 2000;
+const MAX_ICE_RESTARTS = 3;
 
 // ─── Hook ───────────────────────────────────────────────────────
 
@@ -86,12 +110,14 @@ export function useWebRTC(
 
   // ── Create a peer connection for a remote user ─────────────
   const createPeer = useCallback((remoteUserId: string): PeerState => {
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({ iceServers: getIceServers() });
 
     const peerState: PeerState = {
       pc,
       makingOffer: false,
       ignoreOffer: false,
+      iceRestarts: 0,
+      iceRestartTimer: null,
     };
 
     // Add local tracks to outgoing connection
@@ -141,7 +167,39 @@ export function useWebRTC(
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+      if (pc.connectionState === 'failed') {
+        // Attempt ICE restart before giving up
+        if (peerState.iceRestarts < MAX_ICE_RESTARTS) {
+          peerState.iceRestarts++;
+          peerState.iceRestartTimer = setTimeout(async () => {
+            try {
+              const offer = await pc.createOffer({ iceRestart: true });
+              await pc.setLocalDescription(offer);
+              sendSignal(remoteUserId, 'offer', {
+                type: pc.localDescription!.type,
+                sdp: pc.localDescription!.sdp,
+              });
+            } catch {
+              // ICE restart failed — remove stream
+              setRemoteStreams((prev) => {
+                const next = new Map(prev);
+                next.delete(remoteUserId);
+                return next;
+              });
+            }
+          }, ICE_RESTART_DELAY_MS);
+        } else {
+          // Max restarts exceeded — clean up
+          setRemoteStreams((prev) => {
+            const next = new Map(prev);
+            next.delete(remoteUserId);
+            return next;
+          });
+        }
+      } else if (pc.connectionState === 'connected') {
+        // Reset restart counter on successful connection
+        peerState.iceRestarts = 0;
+      } else if (pc.connectionState === 'closed') {
         setRemoteStreams((prev) => {
           const next = new Map(prev);
           next.delete(remoteUserId);
@@ -290,6 +348,7 @@ export function useWebRTC(
 
     // Send hangup to all peers and close connections
     for (const [peerId, peerState] of peersRef.current) {
+      if (peerState.iceRestartTimer) clearTimeout(peerState.iceRestartTimer);
       sendSignal(peerId, 'hangup', {});
       peerState.pc.close();
     }
@@ -306,6 +365,7 @@ export function useWebRTC(
         activeRef.current = false;
         if (pollRef.current) clearInterval(pollRef.current);
         for (const [, peerState] of peersRef.current) {
+          if (peerState.iceRestartTimer) clearTimeout(peerState.iceRestartTimer);
           peerState.pc.close();
         }
         peersRef.current.clear();

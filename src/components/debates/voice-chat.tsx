@@ -574,6 +574,43 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     }
   }, [debateId, selectedInputId]);
 
+  /**
+   * Join as listen-only spectator (no mic permission needed).
+   * Establishes receive-only WebRTC connections to hear/see speakers.
+   */
+  const listenIn = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}/voice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'join', asListener: true }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRoom(data.room);
+        setJoined(true);
+        startWebRTC();
+        // Connect to speakers to receive their streams (no local tracks sent)
+        if (data.room?.participants) {
+          const speakerIds = data.room.participants
+            .filter((p: VoiceParticipant) => p.role === 'speaker')
+            .map((p: VoiceParticipant) => p.userId)
+            .filter((id: string) => id !== currentUserId);
+          connectToPeers(speakerIds);
+        }
+      } else {
+        setError(data.error || 'Could not join as listener.');
+      }
+    } catch {
+      setError('Network error.');
+    } finally {
+      setLoading(false);
+    }
+  }, [debateId, currentUserId, startWebRTC, connectToPeers]);
+
   const leaveRoom = useCallback(async () => {
     stopWebRTC();
     stopMicStream();
@@ -626,8 +663,8 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
 
         {!isDebater ? (
           <div className="text-center">
-            <p className="text-xs text-text-muted">
-              Voice chat is available to debate participants only. Join a side to access voice.
+            <p className="text-xs text-text-muted mb-3">
+              Voice chat is not enabled yet. The host can enable it.
             </p>
           </div>
         ) : isCreator ? (
@@ -877,11 +914,15 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
           {/* ── Controls ── */}
           <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
             {!joined && !isDebater ? (
-              /* Spectators see a read-only indicator */
-              <div className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-text-muted bg-surface rounded-xl border border-border-subtle">
-                <Users className="w-3.5 h-3.5" />
-                Voice is for debaters only — you&apos;re spectating
-              </div>
+              /* Spectators can listen in (receive-only, no mic needed) */
+              <button
+                onClick={listenIn}
+                disabled={loading || debateStatus === 'completed'}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold bg-civic-subtle text-civic-light rounded-xl hover:bg-civic-muted disabled:opacity-50 transition-colors"
+              >
+                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Volume2 className="w-3.5 h-3.5" />}
+                Listen In (no mic needed)
+              </button>
             ) : !joined ? (
               <button
                 onClick={joinRoom}

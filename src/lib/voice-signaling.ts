@@ -389,27 +389,31 @@ export async function postSignal(
 export async function getSignals(debateId: string, forUserId: string): Promise<SignalingMessage[]> {
   if (isDbAvailable()) {
     try {
-      // Get unconsumed signals for this user
-      const rows = await prisma.voiceSignal.findMany({
-        where: {
-          debateId,
-          consumed: false,
-          toUserId: { in: [forUserId, 'all'] },
-          NOT: { fromUserId: forUserId },
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 50,
-      });
-
-      if (rows.length > 0) {
-        // Mark as consumed
-        await prisma.voiceSignal.updateMany({
+      // Use a transaction to atomically fetch and mark signals as consumed,
+      // preventing race conditions when multiple serverless instances poll simultaneously.
+      const rows = await prisma.$transaction(async (tx) => {
+        const signals = await tx.voiceSignal.findMany({
           where: {
-            id: { in: rows.map((r) => r.id) },
+            debateId,
+            consumed: false,
+            toUserId: { in: [forUserId, 'all'] },
+            NOT: { fromUserId: forUserId },
           },
-          data: { consumed: true },
+          orderBy: { createdAt: 'asc' },
+          take: 50,
         });
-      }
+
+        if (signals.length > 0) {
+          await tx.voiceSignal.updateMany({
+            where: {
+              id: { in: signals.map((r) => r.id) },
+            },
+            data: { consumed: true },
+          });
+        }
+
+        return signals;
+      });
 
       return rows.map((r) => ({
         id: r.id,
