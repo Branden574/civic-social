@@ -603,3 +603,64 @@ a:focus-visible {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLL REVEAL — Landing page entrance animations
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes scrollReveal {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Base: elements start hidden */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+/* CSS scroll-driven animation (Chrome, Edge, Safari) */
+@supports (animation-timeline: view()) {
+  .scroll-reveal {
+    animation: scrollReveal 1s var(--ease-decel) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+}
+
+/* Intersection Observer fallback (Firefox + older browsers) */
+@supports not (animation-timeline: view()) {
+  .scroll-reveal.in-view {
+    animation: scrollReveal 0.6s var(--ease-decel) both;
+  }
+}
+
+/* Stagger delays for scroll-revealed groups */
+.scroll-reveal-delay-1 { animation-delay: 80ms; }
+.scroll-reveal-delay-2 { animation-delay: 160ms; }
+.scroll-reveal-delay-3 { animation-delay: 240ms; }
+.scroll-reveal-delay-4 { animation-delay: 320ms; }
+.scroll-reveal-delay-5 { animation-delay: 400ms; }
+
+/* Hero load animations (immediate on page load, not scroll) */
+.hero-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: scrollReveal 0.7s var(--ease-decel) both;
+}
+.hero-reveal-delay-1 { animation-delay: 100ms; }
+.hero-reveal-delay-2 { animation-delay: 200ms; }
+.hero-reveal-delay-3 { animation-delay: 300ms; }
+.hero-reveal-delay-4 { animation-delay: 400ms; }
+.hero-reveal-delay-5 { animation-delay: 500ms; }
+.hero-reveal-delay-6 { animation-delay: 600ms; }
+
+/* Reduced motion: skip all reveal animations */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal,
+  .hero-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

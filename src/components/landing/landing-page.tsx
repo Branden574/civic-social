@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { LandingNav } from '@/components/landing/landing-nav';
+import { ScrollRevealObserver } from '@/components/landing/scroll-reveal';
 
 /* ─── Landing Page ────────────────────────────────────── */
 export function LandingPage() {
@@ -9,6 +10,7 @@ export function LandingPage() {
     <div className="relative min-h-screen overflow-x-hidden bg-bg-alt text-white font-sans">
       {/* NAV */}
       <LandingNav />
+      <ScrollRevealObserver />
 
       {/* ── Smoke/fog background effect ── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -29,24 +31,24 @@ export function LandingPage() {
       {/* ── HERO ───────────────────────────────────────────── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-16 px-4 sm:px-8">
         {/* Early Access Badge */}
-        <div className="inline-flex items-center px-6 py-3 rounded-full mb-8 bg-white/[0.12] border border-white/[0.18] backdrop-blur-lg">
+        <div className="hero-reveal inline-flex items-center px-6 py-3 rounded-full mb-8 bg-white/[0.12] border border-white/[0.18] backdrop-blur-lg">
           <span className="text-base text-white/90">Now in Early Access</span>
         </div>
 
         {/* Title */}
-        <h1 className="text-center mb-2">
+        <h1 className="hero-reveal hero-reveal-delay-1 text-center mb-2">
           <span className="block text-[clamp(40px,8vw,80px)] font-light tracking-[-2px] leading-[1.1] text-white">
             Civic Social
           </span>
         </h1>
 
         {/* Subtitle */}
-        <p className="text-center text-[clamp(32px,7vw,72px)] font-light tracking-[-1.5px] leading-[1.1] text-white mb-10">
+        <p className="hero-reveal hero-reveal-delay-2 text-center text-[clamp(32px,7vw,72px)] font-light tracking-[-1.5px] leading-[1.1] text-white mb-10">
           Conversations meet context.
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-12">
+        <div className="hero-reveal hero-reveal-delay-3 flex flex-col sm:flex-row gap-4 mb-12">
           <Link
             href="/register"
             className="px-8 py-4 rounded-lg text-base font-medium bg-white text-text-inverse hover:bg-white/90 transition-colors text-center"
@@ -64,7 +66,7 @@ export function LandingPage() {
         {/* Feature Cards */}
         <div className="flex flex-col md:flex-row gap-4 max-w-[1000px] w-full justify-center px-4">
           {/* Card 1 - User Post */}
-          <div className="w-full md:w-[260px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+          <div className="hero-reveal hero-reveal-delay-4 w-full md:w-[260px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-full bg-civic-dark shrink-0" />
               <div>
@@ -86,7 +88,7 @@ export function LandingPage() {
           </div>
 
           {/* Card 2 - Bill Update */}
-          <div className="w-full md:w-[260px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+          <div className="hero-reveal hero-reveal-delay-5 w-full md:w-[260px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
             <div className="flex items-center gap-1.5 mb-3">
               <span className="w-2 h-2 rounded-full bg-positive" />
               <span className="text-[11px] font-semibold text-text-secondary tracking-wider uppercase">Live Bill Update</span>
@@ -104,7 +106,7 @@ export function LandingPage() {
           </div>
 
           {/* Card 3 - Trending */}
-          <div className="w-full md:w-[220px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+          <div className="hero-reveal hero-reveal-delay-6 w-full md:w-[220px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
             <div className="flex items-center gap-1.5 mb-4">
               <span className="w-2 h-2 rounded-full bg-warning-light" />
               <span className="text-[11px] font-semibold text-text-secondary tracking-wider uppercase">Trending</span>
@@ -127,7 +129,7 @@ export function LandingPage() {
       </section>
 
       {/* ── PROOF STRIP ─────────────────────────────────────── */}
-      <div className="relative z-10 flex justify-center px-4 sm:px-8 -mt-4 mb-16">
+      <div className="scroll-reveal relative z-10 flex justify-center px-4 sm:px-8 -mt-4 mb-16">
         <div className="flex flex-wrap justify-center gap-0 max-w-[800px] w-full bg-surface-elevated/80 border border-white/10 rounded-xl backdrop-blur-xl py-4 px-6">
           {[
             'Built for civil discourse',
@@ -150,17 +152,19 @@ export function LandingPage() {
 
       {/* ── FEATURES ────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="features">
-        <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
-          Core Features
-        </p>
-        <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
-          Built different.
-          <br />
-          Because the stakes are different.
-        </h2>
-        <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
-          Every feature is designed to surface signal, reduce noise, and keep discourse grounded in fact.
-        </p>
+        <div className="scroll-reveal">
+          <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
+            Core Features
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
+            Built different.
+            <br />
+            Because the stakes are different.
+          </h2>
+          <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
+            Every feature is designed to surface signal, reduce noise, and keep discourse grounded in fact.
+          </p>
+        </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             ['Context Panels', 'Context that follows the conversation. Every post can surface sources, summaries, and linked legislation automatically.'],
@@ -169,10 +173,10 @@ export function LandingPage() {
             ['Civility Controls', 'Tools that keep discourse human. Conversation health scores, auto de-escalation nudges, and cooling-off features.'],
             ['Verified Profiles', 'A trust layer that means something. Human verification tied to professional credentials, not just payment.'],
             ['Community Notes', 'Citation-based, community-driven corrections. Neutral, source-first, and visible to all — not buried.'],
-          ].map(([title, desc]) => (
+          ].map(([title, desc], i) => (
             <div
               key={title}
-              className="bg-surface-elevated/60 border border-white/10 rounded-xl p-6 hover:bg-surface-active/80 transition-colors duration-200 backdrop-blur-sm"
+              className={`scroll-reveal scroll-reveal-delay-${Math.min(i + 1, 5)} bg-surface-elevated/60 border border-white/10 rounded-xl p-6 hover:bg-surface-active/80 transition-colors duration-200 backdrop-blur-sm`}
             >
               <h3 className="text-base font-semibold mb-2 tracking-tight text-white">
                 {title}
@@ -187,21 +191,23 @@ export function LandingPage() {
 
       {/* ── HOW IT WORKS ────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="how-it-works">
-        <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
-          How It Works
-        </p>
-        <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
-          Three steps.
-          <br />
-          Infinite clarity.
-        </h2>
+        <div className="scroll-reveal">
+          <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
+            How It Works
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
+            Three steps.
+            <br />
+            Infinite clarity.
+          </h2>
+        </div>
         <div className="grid md:grid-cols-3 gap-10">
           {[
             ['01', 'Pick topics you care about', 'Select policy areas, committees, and communities. Your feed builds itself around what matters to you — not what drives engagement.'],
             ['02', 'Follow people & communities', 'Follow verified experts, journalists, legislators, and citizens. Community circles let you filter signal from noise.'],
             ['03', 'Track posts & policy updates', 'One feed. Posts, bill alerts, context panels, and community notes — unified and chronologically honest.'],
-          ].map(([num, title, desc]) => (
-            <div key={num}>
+          ].map(([num, title, desc], i) => (
+            <div key={num} className={`scroll-reveal scroll-reveal-delay-${Math.min(i + 1, 5)}`}>
               <div className="text-5xl font-light tracking-tighter text-white/10 mb-3">
                 {num}
               </div>
@@ -218,27 +224,29 @@ export function LandingPage() {
 
       {/* ── TRUST ───────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
-        <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
-          Trust &amp; Safety
-        </p>
-        <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
-          Neutral by design.
-          <br />
-          Safe by default.
-        </h2>
-        <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
-          We built the principles before we built the product. That&apos;s not a tagline — it&apos;s the architecture.
-        </p>
+        <div className="scroll-reveal">
+          <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
+            Trust &amp; Safety
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
+            Neutral by design.
+            <br />
+            Safe by default.
+          </h2>
+          <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
+            We built the principles before we built the product. That&apos;s not a tagline — it&apos;s the architecture.
+          </p>
+        </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             ['Neutral by Design', 'No algorithmic amplification of outrage. No partisan weighting. Feed ranking is documented and auditable.'],
             ['Transparent Ranking', 'Every ranking signal is published. You choose what drives your feed — not a black box.'],
             ['Anti-Harassment', 'Proactive protections, not reactive bans. Conversation health monitoring and tiered reporting tools.'],
             ['Source-First Info', 'Primary sources surface before opinions. Context panels link to the original document, not a summary of a summary.'],
-          ].map(([title, desc]) => (
+          ].map(([title, desc], i) => (
             <div
               key={title}
-              className="bg-surface-elevated/60 border border-white/10 rounded-xl p-6 hover:bg-surface-active/80 transition-colors duration-200 backdrop-blur-sm"
+              className={`scroll-reveal scroll-reveal-delay-${Math.min(i + 1, 5)} bg-surface-elevated/60 border border-white/10 rounded-xl p-6 hover:bg-surface-active/80 transition-colors duration-200 backdrop-blur-sm`}
             >
               <h3 className="text-sm font-semibold mb-2 tracking-tight text-white">
                 {title}
@@ -249,7 +257,7 @@ export function LandingPage() {
             </div>
           ))}
         </div>
-        <div className="text-center">
+        <div className="scroll-reveal text-center">
           <Link
             href="/safety"
             className="text-sm font-medium text-text-secondary hover:text-white transition-colors"
@@ -262,17 +270,19 @@ export function LandingPage() {
       {/* ── PRICING ─────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8" id="pricing">
         <div className="max-w-6xl mx-auto">
-          <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
-            Plans
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
-            Start free.
-            <br />
-            Go deeper with Pro.
-          </h2>
+          <div className="scroll-reveal">
+            <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
+              Plans
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
+              Start free.
+              <br />
+              Go deeper with Pro.
+            </h2>
+          </div>
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Free */}
-            <div className="bg-surface-elevated/60 border border-white/10 rounded-xl p-8 backdrop-blur-sm">
+            <div className="scroll-reveal scroll-reveal-delay-1 bg-surface-elevated/60 border border-white/10 rounded-xl p-8 backdrop-blur-sm">
               <div className="inline-block px-3 py-1 rounded-full mb-5 bg-white/10 text-white/80 text-xs font-semibold uppercase">
                 Free
               </div>
@@ -302,7 +312,7 @@ export function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className="bg-surface-elevated/60 border border-white/20 rounded-xl p-8 backdrop-blur-sm">
+            <div className="scroll-reveal scroll-reveal-delay-2 bg-surface-elevated/60 border border-white/20 rounded-xl p-8 backdrop-blur-sm">
               <div className="inline-block px-3 py-1 rounded-full mb-5 bg-white/15 text-white text-xs font-semibold uppercase">
                 Pro
               </div>
@@ -337,13 +347,13 @@ export function LandingPage() {
 
       {/* ── FINAL CTA ─────────────────────────────────────── */}
       <section className="relative z-10 py-20 sm:py-28 px-4 sm:px-8 text-center">
-        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight leading-[1.05] mb-5 text-white">
+        <h2 className="scroll-reveal text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight leading-[1.05] mb-5 text-white">
           Build better conversations.
         </h2>
-        <p className="text-base text-text-secondary mb-8">
+        <p className="scroll-reveal scroll-reveal-delay-1 text-base text-text-secondary mb-8">
           Join thousands waiting for a civic platform that takes the public seriously.
         </p>
-        <div className="flex gap-4 justify-center flex-wrap">
+        <div className="scroll-reveal scroll-reveal-delay-2 flex gap-4 justify-center flex-wrap">
           <Link
             href="/register"
             className="inline-flex items-center px-10 py-4 font-medium text-text-inverse bg-white rounded-lg hover:bg-white/90 transition-colors text-base"
@@ -360,7 +370,7 @@ export function LandingPage() {
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
-      <footer className="relative z-10 border-t border-white/10 py-8">
+      <footer className="scroll-reveal relative z-10 border-t border-white/10 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 mr-auto font-semibold text-base tracking-tight text-white">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
