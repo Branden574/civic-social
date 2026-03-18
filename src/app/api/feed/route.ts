@@ -58,6 +58,7 @@ async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, 
           diversityScore: c.thread.diversityScore,
         }
       : null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sources: c.post.sources.map((s: any) => ({
       url: s.url,
       domain: s.domain,
@@ -352,6 +353,7 @@ async function serializeRankedPost(rp: any, counts: Map<string, number>) {
           diversityScore: rp.candidate.thread.diversityScore,
         }
       : null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sources: rp.candidate.post.sources.map((s: any) => ({
       url: s.url,
       domain: s.domain,

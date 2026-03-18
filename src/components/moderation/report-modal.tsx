@@ -91,11 +91,11 @@ const SEVERITY_STYLES: Record<string, { dot: string; label: string; bg: string; 
     border: 'border-warning/20',
   },
   yellow: {
-    dot: 'bg-[#EAB308]',
+    dot: 'bg-warning-light',
     label: 'Standard Review',
-    bg: 'bg-[#EAB308]/5',
-    text: 'text-[#EAB308]',
-    border: 'border-[#EAB308]/20',
+    bg: 'bg-warning-light/5',
+    text: 'text-warning-light',
+    border: 'border-warning-light/20',
   },
 };
 

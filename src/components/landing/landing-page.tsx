@@ -6,7 +6,7 @@ import { LandingNav } from '@/components/landing/landing-nav';
 /* ─── Landing Page ────────────────────────────────────── */
 export function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#1a1a1a] text-white font-sans">
+    <div className="relative min-h-screen overflow-x-hidden bg-bg-alt text-white font-sans">
       {/* NAV */}
       <LandingNav />
 
@@ -49,7 +49,7 @@ export function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-4 mb-12">
           <Link
             href="/register"
-            className="px-8 py-4 rounded-lg text-base font-medium bg-white text-[#1a1a1a] hover:bg-white/90 transition-colors text-center"
+            className="px-8 py-4 rounded-lg text-base font-medium bg-white text-text-inverse hover:bg-white/90 transition-colors text-center"
           >
             Create Account
           </Link>
@@ -64,21 +64,21 @@ export function LandingPage() {
         {/* Feature Cards */}
         <div className="flex flex-col md:flex-row gap-4 max-w-[1000px] w-full justify-center px-4">
           {/* Card 1 - User Post */}
-          <div className="w-full md:w-[260px] bg-[rgba(40,40,40,0.9)] border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+          <div className="w-full md:w-[260px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-[#3b5998] shrink-0" />
+              <div className="w-9 h-9 rounded-full bg-civic-dark shrink-0" />
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-semibold text-white">Sarah Chen</span>
-                  <span className="px-1.5 py-0.5 bg-[#fbbf24] rounded text-[10px] font-medium text-[#1a1a1a]">Expert</span>
+                  <span className="px-1.5 py-0.5 bg-warning-light rounded text-[10px] font-medium text-text-inverse">Expert</span>
                 </div>
-                <div className="text-xs text-[#a0a0a0]">Policy Analyst · 2m ago</div>
+                <div className="text-xs text-text-secondary">Policy Analyst · 2m ago</div>
               </div>
             </div>
             <p className="text-[13px] leading-[18px] text-white mb-3">
               The infrastructure bill just passed committee — here&apos;s what it actually means for broadband access in rural counties...
             </p>
-            <div className="flex gap-4 text-xs text-[#a0a0a0]">
+            <div className="flex gap-4 text-xs text-text-secondary">
               <span>214 agree</span>
               <span>88 replies</span>
               <span>1.2k insight</span>
@@ -86,28 +86,28 @@ export function LandingPage() {
           </div>
 
           {/* Card 2 - Bill Update */}
-          <div className="w-full md:w-[260px] bg-[rgba(40,40,40,0.9)] border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+          <div className="w-full md:w-[260px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
             <div className="flex items-center gap-1.5 mb-3">
-              <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
-              <span className="text-[11px] font-semibold text-[#a0a0a0] tracking-wider uppercase">Live Bill Update</span>
+              <span className="w-2 h-2 rounded-full bg-positive" />
+              <span className="text-[11px] font-semibold text-text-secondary tracking-wider uppercase">Live Bill Update</span>
             </div>
             <h3 className="text-[15px] font-semibold text-white mb-4 leading-snug">
               H.R. 5892 — Clean Energy Transition
             </h3>
             <div className="flex gap-1.5 flex-wrap mb-3">
-              <span className="px-2 py-1 bg-[#22c55e] rounded text-[10px] font-medium text-white">Introduced</span>
-              <span className="px-2 py-1 bg-[#22c55e] rounded text-[10px] font-medium text-white">Committee</span>
-              <span className="px-2 py-1 bg-[#3b82f6] rounded text-[10px] font-medium text-white">Floor Vote</span>
-              <span className="px-2 py-1 bg-[#6b7280] rounded text-[10px] font-medium text-white">Enacted</span>
+              <span className="px-2 py-1 bg-positive rounded text-[10px] font-medium text-white">Introduced</span>
+              <span className="px-2 py-1 bg-positive rounded text-[10px] font-medium text-white">Committee</span>
+              <span className="px-2 py-1 bg-info rounded text-[10px] font-medium text-white">Floor Vote</span>
+              <span className="px-2 py-1 bg-text-muted rounded text-[10px] font-medium text-white">Enacted</span>
             </div>
-            <p className="text-xs text-[#f97316]">Vote expected this week</p>
+            <p className="text-xs text-warning">Vote expected this week</p>
           </div>
 
           {/* Card 3 - Trending */}
-          <div className="w-full md:w-[220px] bg-[rgba(40,40,40,0.9)] border border-white/10 rounded-xl p-4 backdrop-blur-xl">
+          <div className="w-full md:w-[220px] bg-surface-elevated/90 border border-white/10 rounded-xl p-4 backdrop-blur-xl">
             <div className="flex items-center gap-1.5 mb-4">
-              <span className="w-2 h-2 rounded-full bg-[#fbbf24]" />
-              <span className="text-[11px] font-semibold text-[#a0a0a0] tracking-wider uppercase">Trending</span>
+              <span className="w-2 h-2 rounded-full bg-warning-light" />
+              <span className="text-[11px] font-semibold text-text-secondary tracking-wider uppercase">Trending</span>
             </div>
             <div className="space-y-3">
               {[
@@ -116,8 +116,8 @@ export function LandingPage() {
                 ['#HousingAct', '19.4k'],
               ].map(([tag, cnt]) => (
                 <div key={tag} className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-[#f97316]">{tag}</span>
-                  <span className="text-[13px] text-[#a0a0a0]">{cnt}</span>
+                  <span className="text-sm font-semibold text-warning">{tag}</span>
+                  <span className="text-[13px] text-text-secondary">{cnt}</span>
                 </div>
               ))}
             </div>
@@ -128,7 +128,7 @@ export function LandingPage() {
 
       {/* ── PROOF STRIP ─────────────────────────────────────── */}
       <div className="relative z-10 flex justify-center px-4 sm:px-8 -mt-4 mb-16">
-        <div className="flex flex-wrap justify-center gap-0 max-w-[800px] w-full bg-[rgba(40,40,40,0.8)] border border-white/10 rounded-xl backdrop-blur-xl py-4 px-6">
+        <div className="flex flex-wrap justify-center gap-0 max-w-[800px] w-full bg-surface-elevated/80 border border-white/10 rounded-xl backdrop-blur-xl py-4 px-6">
           {[
             'Built for civil discourse',
             'Context-first design',
@@ -137,7 +137,7 @@ export function LandingPage() {
           ].map((txt, i, arr) => (
             <div key={txt} className="flex items-center">
               <div className="flex items-center gap-2 px-4 sm:px-6 py-1 text-sm text-white whitespace-nowrap">
-                <span className="text-[#a0a0a0]">•</span>
+                <span className="text-text-secondary">•</span>
                 {txt}
               </div>
               {i < arr.length - 1 && (
@@ -150,7 +150,7 @@ export function LandingPage() {
 
       {/* ── FEATURES ────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="features">
-        <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
+        <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
           Core Features
         </p>
         <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
@@ -158,7 +158,7 @@ export function LandingPage() {
           <br />
           Because the stakes are different.
         </h2>
-        <p className="text-[#a0a0a0] max-w-xl text-base leading-relaxed mb-10">
+        <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
           Every feature is designed to surface signal, reduce noise, and keep discourse grounded in fact.
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -172,12 +172,12 @@ export function LandingPage() {
           ].map(([title, desc]) => (
             <div
               key={title}
-              className="bg-[rgba(40,40,40,0.6)] border border-white/10 rounded-xl p-6 hover:bg-[rgba(50,50,50,0.8)] transition-colors duration-200 backdrop-blur-sm"
+              className="bg-surface-elevated/60 border border-white/10 rounded-xl p-6 hover:bg-surface-active/80 transition-colors duration-200 backdrop-blur-sm"
             >
               <h3 className="text-base font-semibold mb-2 tracking-tight text-white">
                 {title}
               </h3>
-              <p className="text-sm text-[#a0a0a0] leading-relaxed">
+              <p className="text-sm text-text-secondary leading-relaxed">
                 {desc}
               </p>
             </div>
@@ -187,7 +187,7 @@ export function LandingPage() {
 
       {/* ── HOW IT WORKS ────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto" id="how-it-works">
-        <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
+        <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
           How It Works
         </p>
         <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
@@ -208,7 +208,7 @@ export function LandingPage() {
               <h3 className="text-lg font-semibold mb-2 tracking-tight text-white">
                 {title}
               </h3>
-              <p className="text-sm text-[#a0a0a0] leading-relaxed">
+              <p className="text-sm text-text-secondary leading-relaxed">
                 {desc}
               </p>
             </div>
@@ -218,7 +218,7 @@ export function LandingPage() {
 
       {/* ── TRUST ───────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8 max-w-6xl mx-auto">
-        <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
+        <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
           Trust &amp; Safety
         </p>
         <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-4 text-white">
@@ -226,7 +226,7 @@ export function LandingPage() {
           <br />
           Safe by default.
         </h2>
-        <p className="text-[#a0a0a0] max-w-xl text-base leading-relaxed mb-10">
+        <p className="text-text-secondary max-w-xl text-base leading-relaxed mb-10">
           We built the principles before we built the product. That&apos;s not a tagline — it&apos;s the architecture.
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -238,12 +238,12 @@ export function LandingPage() {
           ].map(([title, desc]) => (
             <div
               key={title}
-              className="bg-[rgba(40,40,40,0.6)] border border-white/10 rounded-xl p-6 hover:bg-[rgba(50,50,50,0.8)] transition-colors duration-200 backdrop-blur-sm"
+              className="bg-surface-elevated/60 border border-white/10 rounded-xl p-6 hover:bg-surface-active/80 transition-colors duration-200 backdrop-blur-sm"
             >
               <h3 className="text-sm font-semibold mb-2 tracking-tight text-white">
                 {title}
               </h3>
-              <p className="text-xs text-[#a0a0a0] leading-relaxed">
+              <p className="text-xs text-text-secondary leading-relaxed">
                 {desc}
               </p>
             </div>
@@ -252,7 +252,7 @@ export function LandingPage() {
         <div className="text-center">
           <Link
             href="/safety"
-            className="text-sm font-medium text-[#a0a0a0] hover:text-white transition-colors"
+            className="text-sm font-medium text-text-secondary hover:text-white transition-colors"
           >
             Read our Principles →
           </Link>
@@ -262,7 +262,7 @@ export function LandingPage() {
       {/* ── PRICING ─────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-8" id="pricing">
         <div className="max-w-6xl mx-auto">
-          <p className="text-[#a0a0a0] text-xs font-semibold uppercase tracking-wider mb-4">
+          <p className="text-text-secondary text-xs font-semibold uppercase tracking-wider mb-4">
             Plans
           </p>
           <h2 className="text-3xl sm:text-4xl font-light tracking-tight leading-tight mb-10 text-white">
@@ -272,14 +272,14 @@ export function LandingPage() {
           </h2>
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Free */}
-            <div className="bg-[rgba(40,40,40,0.6)] border border-white/10 rounded-xl p-8 backdrop-blur-sm">
+            <div className="bg-surface-elevated/60 border border-white/10 rounded-xl p-8 backdrop-blur-sm">
               <div className="inline-block px-3 py-1 rounded-full mb-5 bg-white/10 text-white/80 text-xs font-semibold uppercase">
                 Free
               </div>
               <div className="text-2xl font-light tracking-tight mb-1 text-white">
                 Civic
               </div>
-              <div className="text-sm text-[#a0a0a0] mb-6">Always free</div>
+              <div className="text-sm text-text-secondary mb-6">Always free</div>
               <ul className="space-y-2 mb-8">
                 {[
                   'Full posting & reading',
@@ -288,8 +288,8 @@ export function LandingPage() {
                   'Live feed & trending',
                   'Community notes',
                 ].map((f) => (
-                  <li key={f} className="text-sm text-[#a0a0a0] flex items-center gap-2">
-                    <span className="text-[#22c55e]">✓</span> {f}
+                  <li key={f} className="text-sm text-text-secondary flex items-center gap-2">
+                    <span className="text-positive">✓</span> {f}
                   </li>
                 ))}
               </ul>
@@ -302,14 +302,14 @@ export function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className="bg-[rgba(40,40,40,0.6)] border border-white/20 rounded-xl p-8 backdrop-blur-sm">
+            <div className="bg-surface-elevated/60 border border-white/20 rounded-xl p-8 backdrop-blur-sm">
               <div className="inline-block px-3 py-1 rounded-full mb-5 bg-white/15 text-white text-xs font-semibold uppercase">
                 Pro
               </div>
               <div className="text-2xl font-light tracking-tight mb-1 text-white">
                 Civic Pro
               </div>
-              <div className="text-sm text-[#a0a0a0] mb-6">Coming soon</div>
+              <div className="text-sm text-text-secondary mb-6">Coming soon</div>
               <ul className="space-y-2 mb-8">
                 {[
                   'Everything in Free',
@@ -319,14 +319,14 @@ export function LandingPage() {
                   'Creator & analyst tools',
                   'Verified profile badge',
                 ].map((f) => (
-                  <li key={f} className="text-sm text-[#a0a0a0] flex items-center gap-2">
+                  <li key={f} className="text-sm text-text-secondary flex items-center gap-2">
                     <span className="text-white">✦</span> {f}
                   </li>
                 ))}
               </ul>
               <Link
                 href="/register"
-                className="block text-center py-3 rounded-lg font-medium bg-white text-[#1a1a1a] hover:bg-white/90 transition-colors"
+                className="block text-center py-3 rounded-lg font-medium bg-white text-text-inverse hover:bg-white/90 transition-colors"
               >
                 Get Early Pro Access
               </Link>
@@ -340,13 +340,13 @@ export function LandingPage() {
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight leading-[1.05] mb-5 text-white">
           Build better conversations.
         </h2>
-        <p className="text-base text-[#a0a0a0] mb-8">
+        <p className="text-base text-text-secondary mb-8">
           Join thousands waiting for a civic platform that takes the public seriously.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link
             href="/register"
-            className="inline-flex items-center px-10 py-4 font-medium text-[#1a1a1a] bg-white rounded-lg hover:bg-white/90 transition-colors text-base"
+            className="inline-flex items-center px-10 py-4 font-medium text-text-inverse bg-white rounded-lg hover:bg-white/90 transition-colors text-base"
           >
             Create Account
           </Link>
@@ -378,13 +378,13 @@ export function LandingPage() {
               <Link
                 key={label}
                 href={href}
-                className="text-sm text-[#a0a0a0] hover:text-white transition-colors"
+                className="text-sm text-text-secondary hover:text-white transition-colors"
               >
                 {label}
               </Link>
             ))}
           </nav>
-          <p className="w-full text-right text-xs text-[#a0a0a0]/60">
+          <p className="w-full text-right text-xs text-text-secondary/60">
             &copy; 2026 Civic Social. All rights reserved.
           </p>
         </div>

@@ -34,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-5 sm:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-bg-alt flex items-center justify-center p-5 sm:p-8 relative overflow-hidden">
       {/* Smoke/fog background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute w-[600px] h-[500px] top-[10%] left-[10%] opacity-[0.06] blur-[100px]" style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.4) 0%, transparent 70%)' }} />
@@ -50,13 +50,13 @@ export default function LoginPage() {
           <h1 className="text-2xl font-light text-white tracking-tight">
             Login to your Account
           </h1>
-          <p className="text-sm text-[#a0a0a0] mt-2">
+          <p className="text-sm text-text-secondary mt-2">
             Welcome back — enter your credentials below
           </p>
         </div>
 
         {/* ── Card ── */}
-        <div className="bg-[rgba(40,40,40,0.8)] border border-white/10 rounded-2xl p-7 sm:p-8 backdrop-blur-xl">
+        <div className="bg-surface-elevated/80 border border-white/10 rounded-2xl p-7 sm:p-8 backdrop-blur-xl">
           {/* Error banner */}
           {error && (
             <div className="flex items-center gap-3 p-3.5 mb-6 bg-danger/10 rounded-xl animate-fade-in">
@@ -69,7 +69,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-[#a0a0a0] mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 Email
               </label>
               <input
@@ -78,14 +78,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-[#666] focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-colors"
+                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/60 transition-colors"
                 autoComplete="email"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-[#a0a0a0] mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 Password
               </label>
               <div className="relative">
@@ -96,13 +96,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min. 8 characters"
-                  className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-[#666] focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-colors pr-12"
+                  className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic/60 transition-colors pr-12"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666] hover:text-[#a0a0a0] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -123,7 +123,7 @@ export default function LoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-white/20 bg-white/5 text-white focus:ring-white/30 accent-white"
                 />
-                <span className="text-sm text-[#a0a0a0]">Remember me</span>
+                <span className="text-sm text-text-secondary">Remember me</span>
               </label>
               <Link
                 href="/forgot-password"
@@ -140,8 +140,8 @@ export default function LoginPage() {
               className={clsx(
                 'w-full flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-semibold rounded-xl transition-colors mt-2',
                 isLoading
-                  ? 'bg-white/40 text-[#1a1a1a]/70 cursor-not-allowed'
-                  : 'bg-white text-[#1a1a1a] hover:bg-white/90',
+                  ? 'bg-white/40 text-text-inverse/70 cursor-not-allowed'
+                  : 'bg-white text-text-inverse hover:bg-white/90',
               )}
             >
               {isLoading ? (
@@ -158,7 +158,7 @@ export default function LoginPage() {
           {/* ── Divider ── */}
           <div className="flex items-center gap-3 my-7">
             <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-[#666] font-medium">
+            <span className="text-xs text-text-muted font-medium">
               or continue with
             </span>
             <div className="flex-1 h-px bg-white/10" />
@@ -168,7 +168,7 @@ export default function LoginPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               disabled
-              className="flex items-center justify-center gap-2.5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-[#666] cursor-not-allowed opacity-40 transition-colors"
+              className="flex items-center justify-center gap-2.5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-text-muted cursor-not-allowed opacity-40 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -193,7 +193,7 @@ export default function LoginPage() {
 
             <button
               disabled
-              className="flex items-center justify-center gap-2.5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-[#666] cursor-not-allowed opacity-40 transition-colors"
+              className="flex items-center justify-center gap-2.5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-text-muted cursor-not-allowed opacity-40 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
@@ -204,7 +204,7 @@ export default function LoginPage() {
         </div>
 
         {/* ── Footer ── */}
-        <p className="text-sm text-[#a0a0a0] text-center mt-8">
+        <p className="text-sm text-text-secondary text-center mt-8">
           Don&apos;t have an account?{' '}
           <Link
             href="/register"

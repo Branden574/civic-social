@@ -92,9 +92,9 @@ function getTrustLevel(score: number): TrustLevel {
       label: 'Low Credibility',
       shortLabel: 'Low',
       description: 'Limited sources, low author reputation, or flagged content',
-      color: 'text-[#FB923C]',
-      bgColor: 'bg-[#FB923C]/10',
-      borderColor: 'border-[#FB923C]/25',
+      color: 'text-warning',
+      bgColor: 'bg-warning/10',
+      borderColor: 'border-warning/25',
       icon: ShieldAlert,
     };
   }
