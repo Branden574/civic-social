@@ -17,6 +17,7 @@ import { registerUser, getUserById, ensureUserRecord } from '@/lib/user-registry
 import { secureLog } from '@/lib/security/logger';
 import { signSession, sessionCookieOptions } from '@/lib/security/session';
 import { sendVerificationEmail } from '@/lib/email';
+import { validateDisplayName } from '@/lib/display-name-validator';
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && email.length <= 254;
@@ -57,16 +58,30 @@ export async function POST(request: NextRequest) {
 
   const displayName = sanitizeDisplayName(rawDisplayName || '');
   if (!displayName || displayName.length < 2) {
-    return badRequest('Display name must be at least 2 characters.');
+    return badRequest('Display name is required (at least 2 characters).');
+  }
+
+  // Check for profanity, slurs, and hate speech in display name
+  const nameCheck = validateDisplayName(displayName);
+  if (!nameCheck.valid) {
+    return NextResponse.json({ error: nameCheck.error }, { status: 400 });
   }
 
   const username = displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
 
-  // Check for existing email if DB is available
+  // Check for existing email and display name if DB is available
   if (isDbAvailable()) {
-    const existing = await prisma.searchableUser.findFirst({ where: { email } });
-    if (existing) {
+    const [existingEmail, existingName] = await Promise.all([
+      prisma.searchableUser.findFirst({ where: { email } }),
+      prisma.searchableUser.findFirst({
+        where: { displayNameNorm: displayName.toLowerCase() },
+      }),
+    ]);
+    if (existingEmail) {
       return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 });
+    }
+    if (existingName) {
+      return NextResponse.json({ error: 'This display name is already taken. Please choose another.' }, { status: 409 });
     }
   }
 

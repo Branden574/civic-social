@@ -19,6 +19,7 @@ import { countries, getPartiesForCountry, type Party } from '@/lib/data/countrie
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { validateDisplayName } from '@/lib/display-name-validator';
 
 // ─── Topics for feed personalization ─────────────────────────
 
@@ -97,6 +98,13 @@ export default function RegisterPage() {
 
   const handleCreateAccount = useCallback(async () => {
     setSignupError('');
+
+    // Validate display name (required + profanity check)
+    const nameCheck = validateDisplayName(displayName);
+    if (!nameCheck.valid) {
+      setSignupError(nameCheck.error || 'Please enter a valid display name.');
+      return;
+    }
     if (!email || !email.includes('@')) {
       setSignupError('Please enter a valid email address.');
       return;
@@ -108,7 +116,7 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      const name = displayName.trim() || email.split('@')[0];
+      const name = displayName.trim();
       const result = await auth.signup(email, password, name);
       if (!result.success) {
         setSignupError(result.error || 'Something went wrong.');
@@ -144,7 +152,7 @@ export default function RegisterPage() {
 
   // ─── Derived state ────────────────────────────────────────
 
-  const canCreateAccount = email.includes('@') && password.length >= 8;
+  const canCreateAccount = displayName.trim().length >= 2 && email.includes('@') && password.length >= 8;
   const topicCount = selectedTopics.length;
 
   return (
@@ -213,20 +221,20 @@ export default function RegisterPage() {
                 Create your Account
               </h2>
               <p className="text-sm text-text-muted mb-8">
-                Fast signup — just email and password. Your data is encrypted and never sold.
+                Choose a display name, email, and password. Your data is encrypted and never sold.
               </p>
 
               <div className="space-y-5">
                 {/* Display name */}
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-2">
-                    Display Name <span className="text-text-muted">(optional)</span>
+                    Display Name
                   </label>
                   <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Your name (or skip — we'll use your email)"
+                    placeholder="Your display name"
                     className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic transition-colors"
                   />
                 </div>

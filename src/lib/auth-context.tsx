@@ -327,8 +327,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
-        // Step 2b: No local data — try recovering session from HttpOnly cookie
-        // Skip if user just logged out (avoids ~2s flash while /api/me returns 401)
+        // No local data — show content immediately (don't block on network).
+        // This prevents the splash screen from lingering for logged-out visitors.
+        if (!cancelled) setIsLoading(false);
+
+        // Step 2b: Try recovering session from HttpOnly cookie IN THE BACKGROUND.
+        // Skip if user just logged out (avoids unnecessary 401 roundtrip).
         let justLoggedOut = false;
         try {
           if (sessionStorage.getItem('civic-just-logged-out')) {
@@ -370,6 +374,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           }
         } catch { /* Server unreachable — stay logged out */ }
+
+        return; // isLoading already set above
       }
 
       if (!cancelled) setIsLoading(false);
