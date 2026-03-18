@@ -311,9 +311,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (hydratedUser) {
-        if (!cancelled) setUser(hydratedUser);
+        if (!cancelled) {
+          setUser(hydratedUser);
+          // Show content immediately — don't block on network.
+          // This prevents the splash screen from lingering.
+          setIsLoading(false);
+        }
 
-        // Step 2: Fetch server bootstrap for authoritative state
+        // Step 2: Fetch server bootstrap for authoritative state IN THE BACKGROUND
         bootstrapInFlight.current = true;
         const serverData = await fetchBootstrap(hydratedUser);
         bootstrapInFlight.current = false;
@@ -326,6 +331,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setBootstrap(clientFallbackBootstrap(hydratedUser));
           }
         }
+
+        return; // isLoading already set above
       } else {
         // No local data — show content immediately (don't block on network).
         // This prevents the splash screen from lingering for logged-out visitors.

@@ -53,6 +53,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupError, setSignupError] = useState('');
+  const [displayNameError, setDisplayNameError] = useState('');
 
   // ─── Step 2: Personalization fields ────────────────────────
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -152,7 +153,7 @@ export default function RegisterPage() {
 
   // ─── Derived state ────────────────────────────────────────
 
-  const canCreateAccount = displayName.trim().length >= 2 && email.includes('@') && password.length >= 8;
+  const canCreateAccount = displayName.trim().length >= 2 && !displayNameError && email.includes('@') && password.length >= 8;
   const topicCount = selectedTopics.length;
 
   return (
@@ -233,10 +234,27 @@ export default function RegisterPage() {
                   <input
                     type="text"
                     value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    onChange={(e) => {
+                      setDisplayName(e.target.value);
+                      // Real-time validation as user types
+                      if (e.target.value.trim().length > 0) {
+                        const check = validateDisplayName(e.target.value);
+                        setDisplayNameError(check.valid ? '' : (check.error || ''));
+                      } else {
+                        setDisplayNameError('');
+                      }
+                    }}
                     placeholder="Your display name"
-                    className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic transition-colors"
+                    className={clsx(
+                      'w-full px-4 py-3.5 bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 transition-colors',
+                      displayNameError
+                        ? 'border-danger focus:ring-danger/40 focus:border-danger'
+                        : 'border-border focus:ring-civic/40 focus:border-civic',
+                    )}
                   />
+                  {displayNameError && (
+                    <p className="text-xs text-danger-light mt-1.5 animate-fade-in">{displayNameError}</p>
+                  )}
                 </div>
 
                 {/* Email */}
