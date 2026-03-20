@@ -13,18 +13,17 @@ import { ContainerScroll } from '@/components/ui/container-scroll-animation';
 export function LandingPage() {
   const [showSplash, setShowSplash] = useState(true);
 
-  return (
-    <>
-      {/* Phase 1: Video splash screen */}
-      {showSplash && (
-        <VideoSplash
-          videoSrc="/video/hero.mp4"
-          minDisplayTime={2500}
-          onComplete={() => setShowSplash(false)}
-        />
-      )}
+  if (showSplash) {
+    return (
+      <VideoSplash
+        videoSrc="/video/hero.mp4"
+        minDisplayTime={2500}
+        onComplete={() => setShowSplash(false)}
+      />
+    );
+  }
 
-      {/* Phase 2: Landing page (renders behind splash, revealed on complete) */}
+  return (
       <div className="landing-gradient-shift relative min-h-screen overflow-x-hidden bg-bg-alt text-white font-sans scroll-snap-landing">
         {/* Scroll-linked ambient glow */}
         <div className="landing-ambient-glow" />
@@ -415,6 +414,5 @@ export function LandingPage() {
           </div>
         </footer>
       </div>
-    </>
   );
 }
