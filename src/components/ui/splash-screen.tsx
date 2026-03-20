@@ -137,15 +137,16 @@ export function VideoSplash({
     }, 800);
   }, [onComplete]);
 
-  // After minDisplayTime, dismiss if video already ended/failed, or just let safety handle it
+  // Only used as fallback when video fails — dismiss after minDisplayTime
   useEffect(() => {
+    if (!videoFailed) return;
     const timer = setTimeout(startFadeOut, minDisplayTime);
     return () => clearTimeout(timer);
-  }, [minDisplayTime, startFadeOut]);
+  }, [videoFailed, minDisplayTime, startFadeOut]);
 
-  // Hard safety: always dismiss after 5s no matter what
+  // Hard safety: always dismiss after 15s (in case video is very long or hangs)
   useEffect(() => {
-    const safety = setTimeout(startFadeOut, 5000);
+    const safety = setTimeout(startFadeOut, 15000);
     return () => clearTimeout(safety);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
