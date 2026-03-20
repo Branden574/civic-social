@@ -123,51 +123,96 @@ export function VideoSplash({
   onComplete,
   className,
 }: VideoSplashProps) {
-  const [isFading, setIsFading] = useState(false);
-  const [minTimePassed, setMinTimePassed] = useState(false);
-  const [videoEnded, setVideoEnded] = useState(false);
+  const [phase, setPhase] = useState<'playing' | 'fading' | 'done'>('playing');
+  const [videoFailed, setVideoFailed] = useState(false);
+  const fadingRef = React.useRef(false);
 
   const startFadeOut = useCallback(() => {
-    if (isFading) return;
-    setIsFading(true);
-    setTimeout(onComplete, 800);
-  }, [isFading, onComplete]);
+    if (fadingRef.current) return;
+    fadingRef.current = true;
+    setPhase('fading');
+    setTimeout(() => {
+      setPhase('done');
+      onComplete();
+    }, 800);
+  }, [onComplete]);
 
+  // After minDisplayTime, dismiss if video already ended/failed, or just let safety handle it
   useEffect(() => {
-    const timer = setTimeout(() => setMinTimePassed(true), minDisplayTime);
+    const timer = setTimeout(startFadeOut, minDisplayTime);
     return () => clearTimeout(timer);
-  }, [minDisplayTime]);
+  }, [minDisplayTime, startFadeOut]);
 
+  // Hard safety: always dismiss after 5s no matter what
   useEffect(() => {
-    if (minTimePassed && videoEnded) startFadeOut();
-  }, [minTimePassed, videoEnded, startFadeOut]);
-
-  // Safety: auto-dismiss after 6s
-  useEffect(() => {
-    const safety = setTimeout(startFadeOut, 6000);
+    const safety = setTimeout(startFadeOut, 5000);
     return () => clearTimeout(safety);
-  }, [startFadeOut]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (phase === 'done') return null;
 
   return (
     <div
       className={cn(
         'fixed inset-0 z-[9999] flex items-center justify-center bg-bg transition-opacity duration-700',
-        isFading ? 'opacity-0 pointer-events-none' : 'opacity-100',
+        phase === 'fading' ? 'opacity-0 pointer-events-none' : 'opacity-100',
         className
       )}
       role="status"
       aria-label="Loading Civic Social"
     >
-      <video
-        src={videoSrc}
-        autoPlay
-        muted
-        playsInline
-        onEnded={() => setVideoEnded(true)}
-        onError={() => setVideoEnded(true)}
-        className="w-full h-full object-cover"
-      />
+      {/* Video layer — hidden if it fails to load */}
+      {!videoFailed && (
+        <video
+          src={videoSrc}
+          autoPlay
+          muted
+          playsInline
+          onEnded={startFadeOut}
+          onError={() => setVideoFailed(true)}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
 
+      {/* Fallback: logo animation (shown if video fails or while loading) */}
+      {videoFailed && (
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <svg
+              width="56" height="56" viewBox="0 0 56 56" fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M28 4L6 14v14c0 12.4 9.4 23.6 22 26 12.6-2.4 22-13.6 22-26V14L28 4z"
+                className="fill-civic/20 stroke-civic"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              />
+              <path
+                d="M18 28l7 7 13-13"
+                className="stroke-civic-light"
+                strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                style={{
+                  strokeDasharray: 40,
+                  strokeDashoffset: 40,
+                  animation: 'splash-check 0.6s 0.3s ease-out forwards',
+                }}
+              />
+            </svg>
+          </div>
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-text-primary tracking-tight">
+              Civic Social
+            </h1>
+            <p className="text-xs text-text-muted mt-1">
+              Civil discourse, evidence-based debate
+            </p>
+          </div>
+          <div className="w-32 h-1 rounded-full overflow-hidden bg-surface-elevated">
+            <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-civic/0 via-civic to-civic/0 splash-shimmer" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
