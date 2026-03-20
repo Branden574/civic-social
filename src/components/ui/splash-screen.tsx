@@ -1,15 +1,12 @@
 'use client';
 
-// ═══════════════════════════════════════════════════════════════
-// Civic Social — Premium Splash Screen
-// ═══════════════════════════════════════════════════════════════
-//
-// Shows during cold start while auth session loads and the first
-// feed request is in flight. Crossfades smoothly into content.
-// Dark/light mode aware. Reduced-motion safe.
-// ═══════════════════════════════════════════════════════════════
+import React, { useState, useEffect, useCallback } from 'react';
+import { cn } from '@/lib/utils';
 
-import { useState, useEffect } from 'react';
+/* ═══════════════════════════════════════════════════════════════
+   App Shell Splash Screen (wrapper-style)
+   Used by AppShell to show loading state during cold start.
+   ═══════════════════════════════════════════════════════════════ */
 
 interface SplashScreenProps {
   /** Set to true once the app is ready (auth resolved, initial data loaded) */
@@ -22,11 +19,9 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
 
   useEffect(() => {
     if (phase === 'splash' && ready) {
-      // Start crossfade
       setPhase('fading');
     }
     if (phase === 'fading') {
-      // Complete transition after crossfade animation
       const timer = setTimeout(() => setPhase('done'), 500);
       return () => clearTimeout(timer);
     }
@@ -44,16 +39,14 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
 
   return (
     <>
-      {/* Content layer (behind splash, already rendering) */}
       <div
         className="transition-opacity duration-500 ease-out"
         style={{ opacity: phase === 'fading' ? 1 : 0 }}
-        aria-hidden={phase === 'splash'}
+        aria-hidden
       >
         {children}
       </div>
 
-      {/* Splash overlay */}
       <div
         className={`fixed inset-0 z-[9998] flex items-center justify-center bg-bg transition-opacity duration-500 ease-out ${
           phase === 'fading' ? 'opacity-0 pointer-events-none' : 'opacity-100'
@@ -62,7 +55,6 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
         aria-label="Loading Civic Social"
       >
         <div className="flex flex-col items-center gap-6">
-          {/* Brand mark — animated */}
           <div className="splash-logo relative">
             <svg
               width="56"
@@ -72,7 +64,6 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
               xmlns="http://www.w3.org/2000/svg"
               className="splash-logo-svg"
             >
-              {/* Shield shape */}
               <path
                 d="M28 4L6 14v14c0 12.4 9.4 23.6 22 26 12.6-2.4 22-13.6 22-26V14L28 4z"
                 className="fill-civic/20 stroke-civic"
@@ -80,7 +71,6 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {/* Checkmark inside shield */}
               <path
                 d="M18 28l7 7 13-13"
                 className="stroke-civic-light"
@@ -94,12 +84,9 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
                 }}
               />
             </svg>
-
-            {/* Glow ring */}
             <div className="absolute inset-0 rounded-full splash-glow" />
           </div>
 
-          {/* Brand text */}
           <div className="text-center splash-text">
             <h1 className="text-xl font-bold text-text-primary tracking-tight">
               Civic Social
@@ -109,12 +96,78 @@ export function SplashScreen({ ready, children }: SplashScreenProps) {
             </p>
           </div>
 
-          {/* Loading shimmer bar */}
           <div className="w-32 h-1 rounded-full overflow-hidden bg-surface-elevated">
             <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-civic/0 via-civic to-civic/0 splash-shimmer" />
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Video Splash Screen (standalone)
+   Used on the landing page for a cinematic intro.
+   ═══════════════════════════════════════════════════════════════ */
+
+interface VideoSplashProps {
+  videoSrc?: string;
+  minDisplayTime?: number;
+  onComplete: () => void;
+  className?: string;
+}
+
+export function VideoSplash({
+  videoSrc = '/video/hero.mp4',
+  minDisplayTime = 2500,
+  onComplete,
+  className,
+}: VideoSplashProps) {
+  const [isFading, setIsFading] = useState(false);
+  const [minTimePassed, setMinTimePassed] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
+
+  const startFadeOut = useCallback(() => {
+    if (isFading) return;
+    setIsFading(true);
+    setTimeout(onComplete, 800);
+  }, [isFading, onComplete]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimePassed(true), minDisplayTime);
+    return () => clearTimeout(timer);
+  }, [minDisplayTime]);
+
+  useEffect(() => {
+    if (minTimePassed && videoEnded) startFadeOut();
+  }, [minTimePassed, videoEnded, startFadeOut]);
+
+  // Safety: auto-dismiss after 6s
+  useEffect(() => {
+    const safety = setTimeout(startFadeOut, 6000);
+    return () => clearTimeout(safety);
+  }, [startFadeOut]);
+
+  return (
+    <div
+      className={cn(
+        'fixed inset-0 z-[9999] flex items-center justify-center bg-bg transition-opacity duration-700',
+        isFading ? 'opacity-0 pointer-events-none' : 'opacity-100',
+        className
+      )}
+      role="status"
+      aria-label="Loading Civic Social"
+    >
+      <video
+        src={videoSrc}
+        autoPlay
+        muted
+        playsInline
+        onEnded={() => setVideoEnded(true)}
+        onError={() => setVideoEnded(true)}
+        className="w-full h-full object-cover"
+      />
+
+    </div>
   );
 }

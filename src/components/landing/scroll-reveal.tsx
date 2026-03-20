@@ -23,7 +23,7 @@ export function ScrollRevealObserver() {
       { threshold: 0.1 },
     );
 
-    document.querySelectorAll('.scroll-reveal').forEach((el) => observer.observe(el));
+    document.querySelectorAll('.scroll-reveal, .feature-card, .pricing-card').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
