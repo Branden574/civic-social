@@ -655,9 +655,13 @@ export default function UserProfilePage() {
                   src={profile.avatarUrl}
                   alt={profile.displayName}
                   className="w-24 h-24 rounded-2xl border-4 border-bg shadow-lg object-cover"
+                  style={{ viewTransitionName: `avatar-${profile.id}` }}
                 />
               ) : (
-                <div className="w-24 h-24 rounded-2xl bg-surface-elevated border-4 border-bg flex items-center justify-center text-2xl font-bold text-civic-light shadow-lg">
+                <div
+                  className="w-24 h-24 rounded-2xl bg-surface-elevated border-4 border-bg flex items-center justify-center text-2xl font-bold text-civic-light shadow-lg"
+                  style={{ viewTransitionName: `avatar-${profile.id}` }}
+                >
                   {initials}
                 </div>
               )}
@@ -706,7 +710,10 @@ export default function UserProfilePage() {
             {/* Name + verification */}
             <div className="mb-3">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-text-primary">
+                <h1
+                  className="text-xl font-bold text-text-primary"
+                  style={{ viewTransitionName: `author-name-${profile.id}` }}
+                >
                   {profile.displayName}
                 </h1>
                 {badge && (

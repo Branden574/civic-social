@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { TransitionLink, useViewTransitionRouter } from '@/lib/view-transitions';
 import {
   ThumbsUp,
   ThumbsDown,
@@ -184,6 +185,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 
 export const PostCard = memo(function PostCard({ post, index, onDelete }: { post: PostData; index: number; onDelete?: (postId: string) => void }) {
   const { isAuthenticated, user } = useAuth();
+  const vtRouter = useViewTransitionRouter();
   const [expanded, setExpanded] = useState(false);
   const [showAlgorithm, setShowAlgorithm] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
@@ -393,8 +395,10 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
       <div className="px-5 sm:px-6 py-6">
         {/* ── Header ── */}
         <div className="flex items-start gap-3.5 mb-3">
-          <Link
+          <TransitionLink
             href={`/profile/${encodeURIComponent(post.author.id)}`}
+            transitionType="avatar-morph"
+            viewTransitionName={`avatar-${post.author.id}`}
             className="w-11 h-11 rounded-full shrink-0 cursor-pointer overflow-hidden"
           >
             {post.author.avatarUrl ? (
@@ -404,16 +408,18 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 {post.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </div>
             )}
-          </Link>
+          </TransitionLink>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Link
+              <TransitionLink
                 href={`/profile/${encodeURIComponent(post.author.id)}`}
+                transitionType="avatar-morph"
+                viewTransitionName={`author-name-${post.author.id}`}
                 className="font-semibold text-sm text-text-primary hover:text-civic-light hover:underline transition-colors"
               >
                 {post.author.displayName}
-              </Link>
+              </TransitionLink>
               {verification && (
                 <span title={verification.label}>
                   <verification.icon className={clsx('w-3.5 h-3.5', verification.color)} />
@@ -487,11 +493,11 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             onClick={(e) => {
               // Don't navigate if user clicked a link inside (e.g. @mention)
               if ((e.target as HTMLElement).closest('a')) return;
-              window.location.href = `/post/${encodeURIComponent(post.id)}`;
+              vtRouter.push(`/post/${encodeURIComponent(post.id)}`, { transitionType: 'post-expand' });
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !(e.target as HTMLElement).closest('a')) {
-                window.location.href = `/post/${encodeURIComponent(post.id)}`;
+                vtRouter.push(`/post/${encodeURIComponent(post.id)}`, { transitionType: 'post-expand' });
               }
             }}
             className="block text-sm leading-relaxed text-text-primary whitespace-pre-line hover:text-text-primary/90 transition-colors cursor-pointer"
@@ -591,8 +597,9 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
 
             <div className="flex-1" />
 
-            <Link
+            <TransitionLink
               href={`/post/${post.id}`}
+              transitionType="post-expand"
               onClick={(e) => {
                 if (post.comment_policy === 'off' || post.is_thread_locked) e.preventDefault();
                 e.stopPropagation();
@@ -614,7 +621,7 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 const count = post.comment_count ?? post.replies?.length ?? 0;
                 return count > 0 ? count : 'Reply';
               })()}
-            </Link>
+            </TransitionLink>
 
             <button
               onClick={(e) => { e.stopPropagation(); setBookmarked(!bookmarked); }}

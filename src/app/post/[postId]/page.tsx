@@ -606,6 +606,7 @@ export default function ThreadPage() {
                   <Link
                     href={`/profile/${encodeURIComponent(displayPost.author.id)}`}
                     className="w-12 h-12 rounded-full shrink-0 hover:ring-2 hover:ring-civic/20 transition-colors overflow-hidden"
+                    style={{ viewTransitionName: `avatar-${displayPost.author.id}-${postId}` }}
                   >
                     {displayPost.author.avatarUrl ? (
                       <img src={displayPost.author.avatarUrl} alt={displayPost.author.displayName} className="w-12 h-12 rounded-full object-cover border border-border-subtle" />
@@ -617,7 +618,11 @@ export default function ThreadPage() {
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <Link href={`/profile/${encodeURIComponent(displayPost.author.id)}`} className="text-base font-semibold text-text-primary hover:text-civic-light transition-colors">
+                      <Link
+                        href={`/profile/${encodeURIComponent(displayPost.author.id)}`}
+                        className="text-base font-semibold text-text-primary hover:text-civic-light transition-colors"
+                        style={{ viewTransitionName: `author-name-${displayPost.author.id}-${postId}` }}
+                      >
                         {displayPost.author.displayName}
                       </Link>
                       {verification && <VerifIcon className={clsx('w-4 h-4', verification.color)} />}

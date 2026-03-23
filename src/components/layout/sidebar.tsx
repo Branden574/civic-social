@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { TransitionLink, getNavTransitionType } from '@/lib/view-transitions';
 import {
   Home,
   Newspaper,
@@ -60,7 +61,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
   const { unreadCount } = useNotifications();
 
   return (
-    <aside className="hidden lg:flex flex-col w-[240px] h-screen sticky top-0 border-r border-border-subtle bg-bg-alt">
+    <aside className="hidden lg:flex flex-col w-[240px] h-screen sticky top-0 border-r border-border-subtle bg-bg-alt" style={{ viewTransitionName: 'sidebar' }}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-border-subtle">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-text-primary shrink-0">
@@ -96,9 +97,10 @@ export function Sidebar({ onCompose }: SidebarProps) {
             pathname === item.href ||
             (item.href === '/' && pathname === '/');
           return (
-            <Link
+            <TransitionLink
               key={item.href}
               href={item.href}
+              transitionType={getNavTransitionType(pathname, item.href)}
               className={clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 isActive
@@ -132,7 +134,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
                   </span>
                 ) : null;
               })()}
-            </Link>
+            </TransitionLink>
           );
         })}
 
@@ -145,9 +147,10 @@ export function Sidebar({ onCompose }: SidebarProps) {
         {secondaryItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
-            <Link
+            <TransitionLink
               key={item.href}
               href={item.href}
+              transitionType={getNavTransitionType(pathname, item.href)}
               className={clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 isActive
@@ -157,7 +160,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
             >
               <item.icon className={clsx('w-5 h-5', isActive ? 'text-text-primary' : 'text-text-muted')} />
               <span>{item.label}</span>
-            </Link>
+            </TransitionLink>
           );
         })}
 
@@ -171,9 +174,10 @@ export function Sidebar({ onCompose }: SidebarProps) {
             {adminItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link
+                <TransitionLink
                   key={item.href}
                   href={item.href}
+                  transitionType={getNavTransitionType(pathname, item.href)}
                   className={clsx(
                     'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                     isActive
@@ -183,7 +187,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
                 >
                   <item.icon className="w-5 h-5" />
                   <span>{item.label}</span>
-                </Link>
+                </TransitionLink>
               );
             })}
           </>

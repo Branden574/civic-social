@@ -31,6 +31,7 @@ export function CivicLanding() {
   const [loading, setLoading] = useState(true);
   const [loadPct, setLoadPct] = useState(0);
   const [isTouch, setIsTouch] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -41,6 +42,16 @@ export function CivicLanding() {
   useEffect(() => {
     setIsTouch(window.matchMedia('(pointer: coarse)').matches);
   }, []);
+
+  /* ── Lock body scroll when mobile menu is open ── */
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
 
   /* ── Hero parallax + nav hide on scroll ── */
   useEffect(() => {
@@ -151,8 +162,42 @@ export function CivicLanding() {
               Create Account
             </Link>
           </div>
+          {/* Hamburger — visible only on mobile */}
+          <button
+            className={`civic-hamburger ${mobileMenuOpen ? 'is-open' : ''}`}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="civic-hamburger-line" />
+            <span className="civic-hamburger-line" />
+            <span className="civic-hamburger-line" />
+          </button>
         </div>
       </nav>
+
+      {/* ── Mobile Menu Overlay ── */}
+      <div
+        className={`civic-mobile-menu ${mobileMenuOpen ? 'is-open' : ''}`}
+        onClick={(e) => { if (e.target === e.currentTarget) setMobileMenuOpen(false); }}
+      >
+        <div className="civic-mobile-menu-content">
+          <div className="civic-mobile-menu-links">
+            <Link href="#features" className="civic-mobile-link" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+            <Link href="#how-it-works" className="civic-mobile-link" onClick={() => setMobileMenuOpen(false)}>Workflow</Link>
+            <Link href="#trust" className="civic-mobile-link" onClick={() => setMobileMenuOpen(false)}>Trust</Link>
+            <Link href="#pricing" className="civic-mobile-link" onClick={() => setMobileMenuOpen(false)}>Access</Link>
+          </div>
+          <div className="civic-mobile-menu-auth">
+            <Link href="/login" className="civic-btn civic-btn-outline w-full justify-center" onClick={() => setMobileMenuOpen(false)}>
+              Sign In
+            </Link>
+            <Link href="/register" className="civic-btn w-full justify-center" onClick={() => setMobileMenuOpen(false)}>
+              Create Account
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {/* ══════════════════════════════════════════════════════
           PAGE CONTENT — Scrolls over the hero

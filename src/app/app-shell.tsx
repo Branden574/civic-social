@@ -15,6 +15,7 @@ import { SplashScreen } from '@/components/ui/splash-screen';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { NotificationPermissionPrompt } from '@/components/ui/notification-permission-prompt';
 import { PerfProvider, PerfPanel } from '@/lib/performance';
+import { ViewTransitionProvider } from '@/lib/view-transitions';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/lib/notification-context';
 
@@ -24,9 +25,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <PerfProvider>
-      <SplashScreen ready={!isLoading}>
-        {children}
-      </SplashScreen>
+      <ViewTransitionProvider>
+        <SplashScreen ready={!isLoading}>
+          {children}
+        </SplashScreen>
+      </ViewTransitionProvider>
       <PerfPanel />
 
       {/* In-app notification toast (foreground alerts) */}
