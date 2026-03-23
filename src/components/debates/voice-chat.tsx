@@ -314,21 +314,41 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   }, [localVideoStream]);
 
   // ── Sync local tracks (mic + camera) to WebRTC ────────────
+  // Use a stable MediaStream ref so addTrack always passes the same stream
+  // to pc.addTrack — this ensures the remote ontrack events share one stream.
+  const combinedStreamRef = useRef<MediaStream>(new MediaStream());
+
   useEffect(() => {
     if (!joined) return;
-    const combinedStream = new MediaStream();
+    const stable = combinedStreamRef.current;
+
+    // Remove tracks that are no longer present
+    for (const existing of stable.getTracks()) {
+      const stillHaveAudio = micStream?.getAudioTracks().some((t) => t.id === existing.id);
+      const stillHaveVideo = localVideoStream?.getVideoTracks().some((t) => t.id === existing.id);
+      if (!stillHaveAudio && !stillHaveVideo) {
+        stable.removeTrack(existing);
+      }
+    }
+
+    // Add new tracks that aren't already on the stable stream
     if (micStream) {
       for (const track of micStream.getAudioTracks()) {
-        combinedStream.addTrack(track);
+        if (!stable.getTrackById(track.id)) {
+          stable.addTrack(track);
+        }
       }
     }
     if (localVideoStream) {
       for (const track of localVideoStream.getVideoTracks()) {
-        combinedStream.addTrack(track);
+        if (!stable.getTrackById(track.id)) {
+          stable.addTrack(track);
+        }
       }
     }
-    setLocalStream(combinedStream.getTracks().length > 0 ? combinedStream : null);
-    onLocalStreamChange?.(combinedStream.getTracks().length > 0 ? combinedStream : null);
+
+    setLocalStream(stable.getTracks().length > 0 ? stable : null);
+    onLocalStreamChange?.(stable.getTracks().length > 0 ? stable : null);
   }, [micStream, localVideoStream, joined, setLocalStream, onLocalStreamChange]);
 
   // Notify parent of camera state changes
@@ -352,11 +372,14 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     .sort()
     .join(',') ?? '';
 
+  // Only connect to peers after local stream is ready (mic at minimum)
+  // so the initial offer includes media lines
+  const hasLocalStream = !!micStream || !!localVideoStream;
   useEffect(() => {
-    if (!joined || !peerIdKey) return;
+    if (!joined || !peerIdKey || !hasLocalStream) return;
     const peerIds = peerIdKey.split(',');
     if (peerIds.length > 0) connectToPeers(peerIds);
-  }, [joined, peerIdKey, connectToPeers]);
+  }, [joined, peerIdKey, hasLocalStream, connectToPeers]);
 
   // Current user's participant state
   const myParticipant = room?.participants.find((p) => p.userId === currentUserId) ?? null;
@@ -406,12 +429,18 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     if (!myParticipant) return;
 
     (async () => {
-      // Speakers need mic; listeners only need WebRTC receive
+      // Speakers need mic BEFORE starting WebRTC so offers include media
       if (myParticipant.role === 'speaker') {
         const mic = await requestMicPermission();
         if (mic.granted && mic.stream) {
           setMicPermission('granted');
           setMicStream(mic.stream);
+          // Eagerly add mic to stable stream so peers created during startWebRTC include audio
+          const stable = combinedStreamRef.current;
+          for (const t of mic.stream.getAudioTracks()) {
+            if (!stable.getTrackById(t.id)) stable.addTrack(t);
+          }
+          setLocalStream(stable);
         }
       }
       startWebRTC();
@@ -528,6 +557,15 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     setMicPermission('granted');
     setMicStream(mic.stream);
 
+    // Eagerly add mic to stable stream so peers created during startWebRTC include audio
+    if (mic.stream) {
+      const stable = combinedStreamRef.current;
+      for (const t of mic.stream.getAudioTracks()) {
+        if (!stable.getTrackById(t.id)) stable.addTrack(t);
+      }
+      setLocalStream(stable);
+    }
+
     // Step 2: Enable voice on server
     try {
       const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}/voice`, {
@@ -553,7 +591,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     } finally {
       setLoading(false);
     }
-  }, [debateId, selectedInputId]);
+  }, [debateId, selectedInputId, setLocalStream]);
 
   /**
    * Request mic permission, then join the voice room (debaters only).
@@ -572,6 +610,15 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     }
     setMicPermission('granted');
     setMicStream(mic.stream);
+
+    // Eagerly add mic to stable stream so peers created during startWebRTC include audio
+    if (mic.stream) {
+      const stable = combinedStreamRef.current;
+      for (const t of mic.stream.getAudioTracks()) {
+        if (!stable.getTrackById(t.id)) stable.addTrack(t);
+      }
+      setLocalStream(stable);
+    }
 
     // Step 2: Join voice room on server
     try {
@@ -604,7 +651,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     } finally {
       setLoading(false);
     }
-  }, [debateId, selectedInputId]);
+  }, [debateId, selectedInputId, setLocalStream]);
 
   /**
    * Join as listen-only spectator (no mic permission needed).

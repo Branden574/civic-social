@@ -315,7 +315,7 @@ export function useWebRTC(
     localStreamRef.current = stream;
 
     // Update tracks on all existing peer connections
-    for (const [, peerState] of peersRef.current) {
+    for (const [peerId, peerState] of peersRef.current) {
       const { pc } = peerState;
       const senders = pc.getSenders();
 
@@ -327,13 +327,27 @@ export function useWebRTC(
         continue;
       }
 
+      const newTrackKinds = new Set(stream.getTracks().map((t) => t.kind));
+
+      // Remove senders for track kinds no longer in the stream
+      // (e.g. video sender when camera is turned off)
+      for (const sender of senders) {
+        if (sender.track && !newTrackKinds.has(sender.track.kind)) {
+          console.log(`[WebRTC] Removing ${sender.track.kind} sender for ${peerId} (track no longer in stream)`);
+          try { pc.removeTrack(sender); } catch { /* already removed */ }
+        }
+      }
+
+      // Add or replace tracks that are in the new stream
       for (const track of stream.getTracks()) {
-        const existingSender = senders.find((s) => s.track?.kind === track.kind);
+        // Re-fetch senders after possible removal above
+        const currentSenders = pc.getSenders();
+        const existingSender = currentSenders.find((s) => s.track?.kind === track.kind);
         if (existingSender) {
-          console.log(`[WebRTC] Replacing ${track.kind} track on existing sender`);
+          console.log(`[WebRTC] Replacing ${track.kind} track on existing sender for ${peerId}`);
           existingSender.replaceTrack(track).catch(() => {});
         } else {
-          console.log(`[WebRTC] Adding new ${track.kind} track to peer connection`);
+          console.log(`[WebRTC] Adding new ${track.kind} track to peer ${peerId}`);
           pc.addTrack(track, stream);
         }
       }
