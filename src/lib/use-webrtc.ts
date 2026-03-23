@@ -125,10 +125,14 @@ export function useWebRTC(
       for (const track of localStreamRef.current.getTracks()) {
         pc.addTrack(track, localStreamRef.current);
       }
+      console.log(`[WebRTC] Added ${localStreamRef.current.getTracks().length} local tracks to peer ${remoteUserId}`);
+    } else {
+      console.warn(`[WebRTC] No local stream when creating peer ${remoteUserId} — tracks will be added later via setLocalStream`);
     }
 
     // Collect remote tracks
     pc.ontrack = (event) => {
+      console.log(`[WebRTC] Received remote track from ${remoteUserId}:`, event.track.kind);
       const [remoteStream] = event.streams;
       if (remoteStream) {
         setRemoteStreams((prev) => {
@@ -167,6 +171,7 @@ export function useWebRTC(
     };
 
     pc.onconnectionstatechange = () => {
+      console.log(`[WebRTC] Connection state for ${remoteUserId}: ${pc.connectionState}`);
       if (pc.connectionState === 'failed') {
         // Attempt ICE restart before giving up
         if (peerState.iceRestarts < MAX_ICE_RESTARTS) {
@@ -245,7 +250,11 @@ export function useWebRTC(
     if (type === 'offer') {
       const offerCollision = makingOffer || pc.signalingState !== 'stable';
       peerState.ignoreOffer = !polite && offerCollision;
-      if (peerState.ignoreOffer) return;
+      if (peerState.ignoreOffer) {
+        console.log(`[WebRTC] Ignoring offer from ${fromUserId} (collision, impolite)`);
+        return;
+      }
+      console.log(`[WebRTC] Processing offer from ${fromUserId}`);
 
       await pc.setRemoteDescription(new RTCSessionDescription(parsed));
       await pc.setLocalDescription();
@@ -254,6 +263,7 @@ export function useWebRTC(
         sdp: pc.localDescription!.sdp,
       });
     } else if (type === 'answer') {
+      console.log(`[WebRTC] Processing answer from ${fromUserId}`);
       await pc.setRemoteDescription(new RTCSessionDescription(parsed));
     } else if (type === 'ice-candidate') {
       try {
