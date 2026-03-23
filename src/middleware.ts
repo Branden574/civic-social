@@ -20,7 +20,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 120; // requests per window
+const RATE_LIMIT_MAX = 600; // requests per window (supports real-time debate polling from multiple tabs)
 
 // Cleanup stale entries periodically (best-effort in edge)
 function cleanupRateLimits() {
