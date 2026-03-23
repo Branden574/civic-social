@@ -355,6 +355,7 @@ export async function postSignal(
         },
       });
       signal.id = row.id;
+      console.log(`[voice] postSignal OK: ${type} from ${fromUserId.slice(-8)} to ${toUserId.slice(-8)} (${payload.length} chars)`);
 
       // Cleanup: delete consumed signals older than 30 seconds
       // Fire-and-forget to keep the table small
@@ -369,8 +370,10 @@ export async function postSignal(
 
       return signal;
     } catch (err) {
-      console.error('[voice] postSignal DB error:', err);
+      console.error('[voice] postSignal DB FAILED:', err);
     }
+  } else {
+    console.warn('[voice] postSignal: DB not available, using in-memory fallback');
   }
 
   // Fallback: in-memory
