@@ -979,10 +979,28 @@ function ThemeToggleSetting() {
 
 // ─── Data / Account Deletion Section ─────────────────────────
 
+function generateDeletePhrase(): string {
+  const words = [
+    'confirm', 'delete', 'remove', 'erase', 'purge', 'clear',
+    'alpha', 'bravo', 'civic', 'delta', 'echo', 'forum',
+    'gamma', 'honor', 'ivory', 'judge', 'kappa', 'lunar',
+    'maple', 'noble', 'omega', 'prime', 'quota', 'rover',
+    'sigma', 'torch', 'ultra', 'valor', 'widen', 'xenon',
+  ];
+  const picked: string[] = [];
+  while (picked.join('-').length < 16) {
+    picked.push(words[Math.floor(Math.random() * words.length)]);
+  }
+  return picked.join('-').slice(0, 20);
+}
+
 function DataSection() {
   const { logout } = useAuth();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<'closed' | 'password' | 'phrase'>('closed');
   const [deletePassword, setDeletePassword] = useState('');
+  const [confirmPhrase, setConfirmPhrase] = useState('');
+  const [generatedPhrase, setGeneratedPhrase] = useState('');
+  const [phraseInput, setPhraseInput] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
@@ -1006,9 +1024,42 @@ function DataSection() {
     setExportLoading(false);
   }, []);
 
-  const handleDelete = useCallback(async () => {
+  const openDeleteFlow = useCallback(() => {
+    setDeleteStep('password');
+    setDeletePassword('');
+    setDeleteError('');
+    setPhraseInput('');
+  }, []);
+
+  const closeDeleteFlow = useCallback(() => {
+    setDeleteStep('closed');
+    setDeletePassword('');
+    setDeleteError('');
+    setPhraseInput('');
+    setGeneratedPhrase('');
+  }, []);
+
+  // Step 1: verify password, then move to phrase step
+  const handlePasswordStep = useCallback(async () => {
     if (!deletePassword) {
       setDeleteError('Please enter your password.');
+      return;
+    }
+    setDeleteLoading(true);
+    setDeleteError('');
+    // We'll verify password server-side during the actual delete.
+    // For now, move to phrase step (password is sent with final delete request).
+    const phrase = generateDeletePhrase();
+    setGeneratedPhrase(phrase);
+    setConfirmPhrase(phrase);
+    setDeleteStep('phrase');
+    setDeleteLoading(false);
+  }, [deletePassword]);
+
+  // Step 2: verify phrase match, then delete
+  const handleFinalDelete = useCallback(async () => {
+    if (phraseInput !== confirmPhrase) {
+      setDeleteError('Phrase does not match. Please type it exactly as shown.');
       return;
     }
     setDeleteLoading(true);
@@ -1024,14 +1075,13 @@ function DataSection() {
         setDeleteError(data.error || 'Failed to delete account.');
         return;
       }
-      // Account deleted — log out and redirect
       logout();
     } catch {
       setDeleteError('Network error. Please try again.');
     } finally {
       setDeleteLoading(false);
     }
-  }, [deletePassword, logout]);
+  }, [phraseInput, confirmPhrase, deletePassword, logout]);
 
   return (
     <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
@@ -1048,7 +1098,7 @@ function DataSection() {
           Export all your data (GDPR)
         </button>
         <button
-          onClick={() => setShowDeleteConfirm(true)}
+          onClick={openDeleteFlow}
           className="flex items-center gap-2 text-sm text-danger-light hover:underline"
         >
           <Trash2 className="w-4 h-4" />
@@ -1059,8 +1109,8 @@ function DataSection() {
         Data deletion is permanent and irrecoverable. All your posts will be removed.
       </p>
 
-      {/* Delete confirmation dialog */}
-      {showDeleteConfirm && (
+      {/* Step 1: Password confirmation */}
+      {deleteStep === 'password' && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-surface-elevated border border-border-subtle rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
             <h3 className="text-base font-semibold text-text-primary mb-2">
@@ -1071,7 +1121,7 @@ function DataSection() {
             </p>
             <div className="mb-4">
               <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                Enter your password to confirm
+                Enter your password to continue
               </label>
               <input
                 type="password"
@@ -1080,7 +1130,7 @@ function DataSection() {
                 placeholder="Your password"
                 className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-danger/40 focus:border-danger transition-colors"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter' && deletePassword) handleDelete(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && deletePassword) handlePasswordStep(); }}
               />
               {deleteError && (
                 <p className="text-xs text-danger-light mt-1.5">{deleteError}</p>
@@ -1088,17 +1138,77 @@ function DataSection() {
             </div>
             <div className="flex gap-2 justify-end">
               <button
-                onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); setDeleteError(''); }}
+                onClick={closeDeleteFlow}
                 className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl hover:bg-surface-hover transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={handleDelete}
+                onClick={handlePasswordStep}
                 disabled={deleteLoading || !deletePassword}
                 className="px-4 py-2 text-sm font-semibold rounded-xl bg-danger text-white hover:bg-danger/80 transition-colors disabled:opacity-50"
               >
-                {deleteLoading ? 'Deleting...' : 'Delete my account'}
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Confirmation phrase */}
+      {deleteStep === 'phrase' && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-surface-elevated border border-border-subtle rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 className="text-base font-semibold text-text-primary mb-2">
+              Final confirmation
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              To confirm deletion, type the following phrase exactly as shown:
+            </p>
+            <div className="mb-4 px-4 py-3 bg-surface rounded-xl border border-border-subtle select-all">
+              <p className="text-sm font-mono font-semibold text-danger-light tracking-wide text-center">
+                {confirmPhrase}
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                Type the phrase above to delete your account
+              </label>
+              <input
+                type="text"
+                value={phraseInput}
+                onChange={(e) => { setPhraseInput(e.target.value); setDeleteError(''); }}
+                placeholder="Enter the deletion phrase"
+                className={`w-full px-3 py-2.5 bg-surface border rounded-xl text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-danger/40 focus:border-danger transition-colors ${
+                  phraseInput && phraseInput !== confirmPhrase ? 'border-danger/50' : 'border-border'
+                }`}
+                autoFocus
+                autoComplete="off"
+                spellCheck={false}
+                onKeyDown={(e) => { if (e.key === 'Enter' && phraseInput === confirmPhrase) handleFinalDelete(); }}
+              />
+              {deleteError && (
+                <p className="text-xs text-danger-light mt-1.5">{deleteError}</p>
+              )}
+              {phraseInput && phraseInput === confirmPhrase && (
+                <p className="text-xs text-positive-light mt-1.5 flex items-center gap-1">
+                  <Check className="w-3 h-3" /> Phrase matches
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={closeDeleteFlow}
+                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl hover:bg-surface-hover transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleFinalDelete}
+                disabled={deleteLoading || phraseInput !== confirmPhrase}
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-danger text-white hover:bg-danger/80 transition-colors disabled:opacity-50"
+              >
+                {deleteLoading ? 'Deleting...' : 'Permanently delete my account'}
               </button>
             </div>
           </div>
