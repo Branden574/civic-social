@@ -250,7 +250,7 @@ export async function PATCH(
       const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
       if (payloadStr.length > 65_000) return badRequest('Payload too large.');
       const signal = await postSignal(debateId, userId, toUserId, signalType, payloadStr);
-      return NextResponse.json({ success: true, signal });
+      return NextResponse.json({ success: true, signal, _dbWrite: signal.id?.startsWith('sig-') ? 'MEMORY_FALLBACK' : 'DB_OK' });
     }
 
     default:

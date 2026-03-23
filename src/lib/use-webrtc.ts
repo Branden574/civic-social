@@ -107,6 +107,13 @@ export function useWebRTC(
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         console.error(`[WebRTC] Signal send FAILED (${res.status}):`, signalType, 'to', toUserId, err);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (data._dbWrite === 'MEMORY_FALLBACK') {
+          console.error(`[WebRTC] Signal went to MEMORY not DB!`, signalType, 'to', toUserId);
+        } else if (signalType === 'offer' || signalType === 'answer') {
+          console.log(`[WebRTC] Signal sent OK (${data._dbWrite}):`, signalType, 'to', toUserId.slice(-8));
+        }
       }
     } catch (err) {
       console.error(`[WebRTC] Signal send ERROR:`, signalType, 'to', toUserId, err);
@@ -315,7 +322,7 @@ export function useWebRTC(
       const data = await res.json();
       const signals: SignalMessage[] = data.signals || [];
       // Log first 5 polls and whenever signals arrive
-      if (pollCountRef.current <= 5 || signals.length > 0) {
+      if (pollCountRef.current <= 15 || signals.length > 0) {
         const d = data._debug;
         console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}` +
           (d ? ` | myId=${d.myId}, unconsumed=${d.totalUnconsumed}, forMe=${d.forMe}` : ''));
