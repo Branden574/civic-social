@@ -287,6 +287,7 @@ export default function RegisterPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimum 8 characters"
+                      autoComplete="new-password"
                       className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic transition-colors pr-12"
                     />
                     <button
@@ -304,20 +305,30 @@ export default function RegisterPage() {
                   <label className="block text-sm font-medium text-text-secondary mb-2">
                     Confirm Password
                   </label>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter your password"
-                    className={`w-full px-4 py-3.5 bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic transition-colors ${
-                      confirmPassword && confirmPassword !== password
-                        ? 'border-danger/50'
-                        : 'border-border'
-                    }`}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && canCreateAccount) handleCreateAccount();
-                    }}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter your password"
+                      autoComplete="new-password"
+                      className={`w-full px-4 py-3.5 bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic transition-colors pr-12 ${
+                        confirmPassword && confirmPassword !== password
+                          ? 'border-danger/50'
+                          : 'border-border'
+                      }`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && canCreateAccount) handleCreateAccount();
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+                    </button>
+                  </div>
                   {confirmPassword && confirmPassword !== password && (
                     <p className="text-xs text-danger-light mt-1.5">Passwords do not match</p>
                   )}
