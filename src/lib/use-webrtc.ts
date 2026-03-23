@@ -128,37 +128,20 @@ export function useWebRTC(
       iceRestartTimer: null,
     };
 
-    // Pre-allocate audio and video transceivers so the initial SDP always
-    // includes both m-lines.  This lets us toggle camera on/off later via
-    // replaceTrack without renegotiation.
-    const localStream = localStreamRef.current;
-    const audioTrack = localStream?.getAudioTracks()[0] ?? null;
-    const videoTrack = localStream?.getVideoTracks()[0] ?? null;
-
-    pc.addTransceiver('audio', {
-      direction: 'sendrecv',
-      ...(audioTrack && localStream ? { streams: [localStream] } : {}),
-    });
-    pc.addTransceiver('video', {
-      direction: 'sendrecv',
-      ...(videoTrack && localStream ? { streams: [localStream] } : {}),
-    });
-
-    // Set initial tracks on the transceivers
-    const transceivers = pc.getTransceivers();
-    for (const t of transceivers) {
-      const kind = t.receiver.track.kind;
-      const track = kind === 'audio' ? audioTrack : videoTrack;
-      if (track) {
-        t.sender.replaceTrack(track).catch(() => {});
+    // Add available local tracks via addTrack (creates transceivers implicitly).
+    // Do NOT use addTransceiver — both sides would create duplicate transceivers
+    // causing offer collisions that never resolve with polling-based signaling.
+    if (localStreamRef.current) {
+      for (const track of localStreamRef.current.getTracks()) {
+        pc.addTrack(track, localStreamRef.current);
       }
+      console.log(`[WebRTC] Added ${localStreamRef.current.getTracks().length} local tracks to peer ${remoteUserId}`);
+    } else {
+      console.log(`[WebRTC] No local stream when creating peer ${remoteUserId} — tracks will be added via setLocalStream`);
     }
-    console.log(`[WebRTC] Created peer ${remoteUserId} with transceivers (audio: ${!!audioTrack}, video: ${!!videoTrack})`);
-
 
     // Collect remote tracks into a single MediaStream per peer.
-    // With pre-allocated transceivers, ontrack fires for both audio and video.
-    // We accumulate tracks into one stream so the UI has a single source.
+    // We accumulate tracks so the UI has a single source per remote user.
     const peerRemoteStream = new MediaStream();
     pc.ontrack = (event) => {
       console.log(`[WebRTC] Received remote track from ${remoteUserId}:`, event.track.kind);
@@ -332,7 +315,8 @@ export function useWebRTC(
   pollSignalsRef.current = pollSignals;
 
   // ── Set local stream (called by VoiceChat when mic/camera changes) ──
-  // Uses replaceTrack on pre-allocated transceivers — no renegotiation needed.
+  // Strategy: use replaceTrack on existing senders (no renegotiation),
+  // addTrack only for brand-new track kinds (one-time renegotiation).
   const setLocalStream = useCallback((stream: MediaStream | null) => {
     localStreamRef.current = stream;
 
@@ -342,16 +326,35 @@ export function useWebRTC(
     for (const [peerId, peerState] of peersRef.current) {
       const { pc } = peerState;
 
-      for (const transceiver of pc.getTransceivers()) {
-        const kind = transceiver.receiver.track.kind;
-        const desired = kind === 'audio' ? audioTrack : videoTrack;
-        const current = transceiver.sender.track;
+      // Build a map of existing transceiver senders by kind
+      // (transceiver.receiver.track.kind is always set, even if sender.track is null)
+      const senderByKind = new Map<string, RTCRtpSender>();
+      for (const t of pc.getTransceivers()) {
+        senderByKind.set(t.receiver.track.kind, t.sender);
+      }
 
-        // Only replace if the track actually changed
-        if (current?.id !== desired?.id) {
-          console.log(`[WebRTC] ${desired ? 'Setting' : 'Clearing'} ${kind} track for ${peerId}`);
-          transceiver.sender.replaceTrack(desired).catch(() => {});
+      // Audio: replace if sender exists, add if not
+      const audioSender = senderByKind.get('audio');
+      if (audioSender) {
+        if (audioSender.track?.id !== audioTrack?.id) {
+          console.log(`[WebRTC] ${audioTrack ? 'Replacing' : 'Clearing'} audio track for ${peerId}`);
+          audioSender.replaceTrack(audioTrack).catch(() => {});
         }
+      } else if (audioTrack && stream) {
+        console.log(`[WebRTC] Adding audio track to peer ${peerId}`);
+        pc.addTrack(audioTrack, stream);
+      }
+
+      // Video: replace if sender exists, add if not
+      const videoSender = senderByKind.get('video');
+      if (videoSender) {
+        if (videoSender.track?.id !== videoTrack?.id) {
+          console.log(`[WebRTC] ${videoTrack ? 'Replacing' : 'Clearing'} video track for ${peerId}`);
+          videoSender.replaceTrack(videoTrack).catch(() => {});
+        }
+      } else if (videoTrack && stream) {
+        console.log(`[WebRTC] Adding video track to peer ${peerId}`);
+        pc.addTrack(videoTrack, stream);
       }
     }
   }, []);

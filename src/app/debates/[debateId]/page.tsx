@@ -967,13 +967,22 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
   const sideAParticipants = participants.filter((p) => p.side === 'A');
   const sideBParticipants = participants.filter((p) => p.side === 'B');
 
-  // Re-render when remote video tracks mute/unmute (camera toggled via replaceTrack)
+  // Re-render when remote video tracks change (mute/unmute from replaceTrack,
+  // or new tracks added via addTrack renegotiation)
   const [, forceUpdate] = useState(0);
   useEffect(() => {
     const cleanup: Array<() => void> = [];
     const onTrackChange = () => forceUpdate((n) => n + 1);
 
     for (const stream of remoteStreams.values()) {
+      // Listen for new tracks added to stream
+      stream.addEventListener('addtrack', onTrackChange);
+      stream.addEventListener('removetrack', onTrackChange);
+      cleanup.push(() => {
+        stream.removeEventListener('addtrack', onTrackChange);
+        stream.removeEventListener('removetrack', onTrackChange);
+      });
+      // Listen for mute/unmute on existing video tracks
       for (const track of stream.getVideoTracks()) {
         track.addEventListener('mute', onTrackChange);
         track.addEventListener('unmute', onTrackChange);
