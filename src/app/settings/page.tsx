@@ -50,21 +50,25 @@ export default function SettingsPage() {
                 description="All direct messages are encrypted by default"
                 enabled={true}
                 locked
+                settingKey="e2e-dms"
               />
               <ToggleSetting
                 label="Anonymous browsing mode"
                 description="Browse without recording engagement data"
                 enabled={false}
+                settingKey="anonymous-browsing"
               />
               <ToggleSetting
                 label="Two-factor authentication"
                 description="Add an extra layer of security"
                 enabled={true}
+                settingKey="two-factor"
               />
               <ToggleSetting
                 label="Show political affiliation"
                 description="Display your affiliation on your profile"
                 enabled={true}
+                settingKey="show-affiliation"
               />
             </SettingsSection>
 
@@ -75,21 +79,25 @@ export default function SettingsPage() {
                 label="Cross-party replies"
                 description="When someone from a different perspective replies to you"
                 enabled={true}
+                settingKey="cross-party-replies"
               />
               <ToggleSetting
                 label="Thread civility alerts"
                 description="When a thread you're in drops in civility"
                 enabled={true}
+                settingKey="civility-alerts"
               />
               <ToggleSetting
                 label="Policy lab updates"
                 description="When proposals you follow are refined"
                 enabled={true}
+                settingKey="policy-lab-updates"
               />
               <ToggleSetting
                 label="Live event reminders"
                 description="Before civic events you've shown interest in"
                 enabled={false}
+                settingKey="event-reminders"
               />
             </SettingsSection>
 
@@ -99,16 +107,19 @@ export default function SettingsPage() {
                 label="Show algorithm explanation"
                 description="Display 'Why am I seeing this?' on every post"
                 enabled={true}
+                settingKey="algo-explanation"
               />
               <ToggleSetting
                 label="Viewpoint diversity boost"
                 description="Actively surface perspectives different from yours"
                 enabled={true}
+                settingKey="diversity-boost"
               />
               <ToggleSetting
                 label="Show quality scores"
                 description="Display the algorithm's quality score on posts"
                 enabled={true}
+                settingKey="quality-scores"
               />
             </SettingsSection>
 
@@ -177,13 +188,31 @@ function ToggleSetting({
   description,
   enabled: initialEnabled,
   locked,
+  settingKey,
 }: {
   label: string;
   description: string;
   enabled: boolean;
   locked?: boolean;
+  settingKey?: string;
 }) {
-  const [enabled, setEnabled] = useState(initialEnabled);
+  const storageKey = settingKey ? `civic-setting-${settingKey}` : null;
+  const [enabled, setEnabled] = useState(() => {
+    if (storageKey && typeof window !== 'undefined') {
+      const stored = localStorage.getItem(storageKey);
+      if (stored !== null) return stored === 'true';
+    }
+    return initialEnabled;
+  });
+
+  const handleToggle = () => {
+    if (locked) return;
+    const next = !enabled;
+    setEnabled(next);
+    if (storageKey) {
+      localStorage.setItem(storageKey, String(next));
+    }
+  };
 
   return (
     <div className="flex items-center justify-between py-3">
@@ -192,7 +221,7 @@ function ToggleSetting({
         <p className="text-xs text-text-muted">{description}</p>
       </div>
       <button
-        onClick={() => !locked && setEnabled(!enabled)}
+        onClick={handleToggle}
         className={clsx(
           'w-10 h-5 rounded-full transition-colors relative shrink-0',
           enabled ? 'bg-civic' : 'bg-surface-active',

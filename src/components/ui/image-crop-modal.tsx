@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { X, ZoomIn, ZoomOut, Check, RotateCcw } from 'lucide-react';
+import { X, Check, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
 
 interface ImageCropModalProps {
@@ -39,6 +39,7 @@ export function ImageCropModal({
 
   // Pan & zoom state
   const [zoom, setZoom] = useState(1);
+  const [minZoom, setMinZoom] = useState(0.1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, startOffX: 0, startOffY: 0 });
 
@@ -65,6 +66,7 @@ export function ImageCropModal({
         const scaleX = cropW / img.width;
         const scaleY = cropH / img.height;
         const fitZoom = Math.max(scaleX, scaleY);
+        setMinZoom(fitZoom);
         setZoom(fitZoom);
         setOffset({ x: 0, y: 0 });
       }
@@ -120,20 +122,15 @@ export function ImageCropModal({
   }, []);
 
   // Zoom with scroll wheel
+  const maxZoom = Math.max(minZoom * 5, 3);
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    setZoom((prev) => Math.max(0.1, Math.min(5, prev - e.deltaY * 0.001)));
-  }, []);
+    setZoom((prev) => Math.max(minZoom, Math.min(maxZoom, prev - e.deltaY * 0.001)));
+  }, [minZoom, maxZoom]);
 
-  const handleZoomIn = () => setZoom((z) => Math.min(5, z * 1.2));
-  const handleZoomOut = () => setZoom((z) => Math.max(0.1, z / 1.2));
   const handleReset = () => {
-    if (!imageEl || !containerRef.current) return;
-    const cropW = containerRef.current.clientWidth;
-    const cropH = cropW / aspectRatio;
-    const scaleX = cropW / imageEl.width;
-    const scaleY = cropH / imageEl.height;
-    setZoom(Math.max(scaleX, scaleY));
+    setZoom(minZoom);
     setOffset({ x: 0, y: 0 });
   };
 
@@ -207,26 +204,19 @@ export function ImageCropModal({
           />
         </div>
 
-        {/* Zoom controls */}
+        {/* Zoom slider */}
         <div className="flex items-center justify-center gap-3 px-4 pb-2">
-          <button
-            onClick={handleZoomOut}
-            className="p-2 rounded-lg bg-surface border border-border-subtle text-text-secondary hover:bg-surface-hover transition-colors"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          <div className="w-32 h-1.5 bg-surface-active rounded-full relative">
-            <div
-              className="absolute h-full bg-civic rounded-full transition-colors"
-              style={{ width: `${Math.min(100, (zoom / 3) * 100)}%` }}
-            />
-          </div>
-          <button
-            onClick={handleZoomIn}
-            className="p-2 rounded-lg bg-surface border border-border-subtle text-text-secondary hover:bg-surface-hover transition-colors"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
+          <span className="text-xs text-text-muted select-none">−</span>
+          <input
+            type="range"
+            min={minZoom}
+            max={maxZoom}
+            step={0.01}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="w-40 h-1.5 accent-civic bg-surface-active rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-civic [&::-webkit-slider-thumb]:cursor-pointer"
+          />
+          <span className="text-xs text-text-muted select-none">+</span>
           <button
             onClick={handleReset}
             className="p-2 rounded-lg bg-surface border border-border-subtle text-text-secondary hover:bg-surface-hover transition-colors"
