@@ -20,6 +20,7 @@ import {
   clearVoiceRoom,
 } from '@/lib/voice-signaling';
 import { getDebateById } from '@/lib/debate-store';
+import { getPusher } from '@/lib/pusher';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { readLimiter, chatLimiter } from '@/lib/security/rate-limiter';
 import { isValidId } from '@/lib/security/sanitize';
@@ -233,6 +234,17 @@ export async function PATCH(
       // Write signal AND fetch pending signals in ONE transaction (same DB connection)
       // This bypasses Neon's cross-instance read inconsistency on Vercel serverless
       const { signal, pending } = await postSignalAndFetch(debateId, userId, toUserId, signalType, payloadStr);
+
+      // Broadcast via Pusher for instant delivery (don't fail if unavailable)
+      const pusher = getPusher();
+      if (pusher) {
+        await pusher.trigger(
+          `debate-${debateId}`,
+          'signal',
+          { fromUserId: userId, toUserId, type: signalType, payload: payloadStr },
+        ).catch(() => {});
+      }
+
       return NextResponse.json({
         success: true,
         signal,

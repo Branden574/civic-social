@@ -18,6 +18,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { useRef, useCallback, useEffect, useState } from 'react';
+import type PusherClient from 'pusher-js';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -461,6 +462,55 @@ export function useWebRTC(
       stop();
     }
   }, [joined, stop]);
+
+  // ── Subscribe to Pusher for instant signal delivery ────────
+  useEffect(() => {
+    if (!joined || !activeRef.current) return;
+
+    let pusher: PusherClient | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let channel: any = null;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch('/api/pusher-config');
+        const config = await res.json();
+        if (!config.key || cancelled) return; // Pusher not configured or effect cleaned up
+
+        // Dynamic import so the bundle doesn't fail when pusher-js isn't available
+        const { default: PusherJS } = await import('pusher-js');
+        if (cancelled) return;
+
+        pusher = new PusherJS(config.key, { cluster: config.cluster });
+        channel = pusher.subscribe(`debate-${debateId}`);
+
+        channel.bind('signal', async (data: { fromUserId: string; toUserId: string; type: string; payload: string }) => {
+          // Only process signals addressed to us
+          if (data.toUserId !== currentUserId) return;
+
+          const sig: SignalMessage = {
+            fromUserId: data.fromUserId,
+            toUserId: data.toUserId,
+            type: data.type as SignalMessage['type'],
+            payload: data.payload,
+          };
+          console.log(`[WebRTC] Pusher: received ${sig.type} from ${sig.fromUserId.slice(-8)}`);
+          await handleSignalRef.current(sig);
+        });
+
+        console.log('[WebRTC] Pusher: subscribed to debate channel');
+      } catch {
+        console.warn('[WebRTC] Pusher: not available, using polling fallback');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channel) channel.unbind_all();
+      if (pusher) pusher.disconnect();
+    };
+  }, [joined, debateId, currentUserId]);
 
   return {
     remoteStreams,
