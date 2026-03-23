@@ -108,14 +108,21 @@ export function ImageCropModal({
   }, [offset]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current.dragging) return;
+    if (!dragRef.current.dragging || !imageEl || !containerRef.current) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
+    const cropW = containerRef.current.clientWidth;
+    const cropH = cropW / aspectRatio;
+    const drawW = imageEl.width * zoom;
+    const drawH = imageEl.height * zoom;
+    // Clamp so image always covers the crop area
+    const maxOffX = Math.max(0, (drawW - cropW) / 2);
+    const maxOffY = Math.max(0, (drawH - cropH) / 2);
     setOffset({
-      x: dragRef.current.startOffX + dx,
-      y: dragRef.current.startOffY + dy,
+      x: Math.max(-maxOffX, Math.min(maxOffX, dragRef.current.startOffX + dx)),
+      y: Math.max(-maxOffY, Math.min(maxOffY, dragRef.current.startOffY + dy)),
     });
-  }, []);
+  }, [imageEl, zoom, aspectRatio]);
 
   const handlePointerUp = useCallback(() => {
     dragRef.current.dragging = false;
@@ -156,6 +163,9 @@ export function ImageCropModal({
     outCanvas.width = outputWidth;
     outCanvas.height = outputHeight;
     const ctx = outCanvas.getContext('2d')!;
+    // Fill with black so no transparent pixels leak through
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, outputWidth, outputHeight);
     ctx.drawImage(imageEl, srcX, srcY, srcW, srcH, 0, 0, outputWidth, outputHeight);
 
     onCrop(outCanvas.toDataURL('image/webp', quality));

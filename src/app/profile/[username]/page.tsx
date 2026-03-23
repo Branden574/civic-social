@@ -638,7 +638,7 @@ export default function UserProfilePage() {
       <main className="flex-1 min-w-0">
         <div className="max-w-2xl mx-auto">
           {/* Header banner */}
-          <div className="h-32 bg-gradient-to-r from-civic-dark via-civic to-civic-light relative overflow-hidden">
+          <div className={clsx("h-32 relative overflow-hidden", profile.bannerUrl ? "bg-black" : "bg-gradient-to-r from-civic-dark via-civic to-civic-light")}>
             {profile.bannerUrl ? (
               <img src={profile.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
             ) : (

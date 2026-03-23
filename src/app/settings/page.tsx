@@ -388,7 +388,10 @@ function ProfileMediaSection() {
       {/* Banner */}
       <div className="relative mx-5 mb-4">
         <div
-          className="h-32 rounded-xl bg-gradient-to-r from-civic-dark via-civic to-civic-light relative overflow-hidden cursor-pointer group"
+          className={clsx(
+            "h-32 rounded-xl relative overflow-hidden cursor-pointer group",
+            displayBanner ? "bg-black" : "bg-gradient-to-r from-civic-dark via-civic to-civic-light",
+          )}
           onClick={() => bannerInputRef.current?.click()}
         >
           {displayBanner && (
