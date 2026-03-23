@@ -80,6 +80,7 @@ export function useWebRTC(
   joined: boolean,
 ) {
   const peersRef = useRef<Map<string, PeerState>>(new Map());
+  const creatingPeersRef = useRef<Set<string>>(new Set());
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -108,7 +109,14 @@ export function useWebRTC(
   }, [debateId]);
 
   // ── Create a peer connection for a remote user ─────────────
-  const createPeer = useCallback(async (remoteUserId: string): Promise<PeerState> => {
+  const createPeer = useCallback(async (remoteUserId: string): Promise<PeerState | null> => {
+    // Prevent duplicate concurrent creation (race between connectToPeers and handleSignal)
+    if (peersRef.current.has(remoteUserId) || creatingPeersRef.current.has(remoteUserId)) {
+      console.log(`[WebRTC] Skipping duplicate peer creation for ${remoteUserId}`);
+      return peersRef.current.get(remoteUserId) || null;
+    }
+    creatingPeersRef.current.add(remoteUserId);
+
     const iceServers = await getIceServers();
     const pc = new RTCPeerConnection({ iceServers });
 
@@ -214,6 +222,7 @@ export function useWebRTC(
     };
 
     peersRef.current.set(remoteUserId, peerState);
+    creatingPeersRef.current.delete(remoteUserId);
     return peerState;
   }, [sendSignal]);
 
@@ -236,9 +245,11 @@ export function useWebRTC(
     }
 
     // Get or create peer
-    let peerState = peersRef.current.get(fromUserId);
+    let peerState: PeerState | undefined = peersRef.current.get(fromUserId);
     if (!peerState) {
-      peerState = await createPeer(fromUserId);
+      const created = await createPeer(fromUserId);
+      if (!created) return; // Another creation in progress — signal will be re-polled
+      peerState = created;
     }
 
     const { pc, makingOffer } = peerState;
@@ -330,7 +341,7 @@ export function useWebRTC(
   const connectToPeers = useCallback(async (peerUserIds: string[]) => {
     for (const peerId of peerUserIds) {
       if (peerId === currentUserId) continue;
-      if (peersRef.current.has(peerId)) continue;
+      if (peersRef.current.has(peerId) || creatingPeersRef.current.has(peerId)) continue;
       // Create peer — onnegotiationneeded will fire and send offer
       await createPeer(peerId);
     }
