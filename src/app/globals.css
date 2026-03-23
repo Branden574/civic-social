@@ -68,6 +68,7 @@
   /* ── Typography ── */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
 
   /* ── Extended type scale ── */
   --text-3xl: 2.25rem;
@@ -987,4 +988,106 @@ a:focus-visible {
   .counter-num-1 { --num: 1; }
   .counter-num-2 { --num: 2; }
   .counter-num-3 { --num: 3; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EDITORIAL LANDING — Premium typography, layout & motion
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Serif display titles (Cormorant Garamond, weight 300) */
+.landing-serif-title {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+/* Full-height editorial sections with generous breathing room */
+.landing-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12vh 5vw;
+}
+@media (max-width: 768px) {
+  .landing-section {
+    min-height: auto;
+    padding: 8vh 1.5rem;
+  }
+}
+
+/* Glassmorphic card — semi-transparent with blur and subtle border */
+.landing-glass-card {
+  background: rgba(38, 38, 38, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+/* Accent label above section headings */
+.landing-section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-civic-light);
+  margin-bottom: 1.5rem;
+}
+
+/* 2-column editorial grid (1-col on mobile) */
+.landing-editorial-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+@media (min-width: 768px) {
+  .landing-editorial-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Hero parallax — fades and scales as user scrolls past */
+@keyframes heroFadeScale {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.95); }
+}
+
+@supports (animation-timeline: scroll()) {
+  .hero-parallax-fade {
+    animation: heroFadeScale linear both;
+    animation-timeline: scroll();
+    animation-range: 0vh 60vh;
+  }
+}
+
+/* Nav scroll-hide — slides up when scrolling down */
+.nav-hide-on-scroll {
+  transform: translateY(0);
+  transition: transform 0.35s var(--ease-smooth);
+}
+.nav-hide-on-scroll.nav-hidden {
+  transform: translateY(-120%);
+}
+
+/* 3D tilt on hover for pricing cards */
+.landing-tilt-card {
+  transition: transform 0.15s ease;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-parallax-fade {
+    animation: none !important;
+  }
+  .nav-hide-on-scroll {
+    transition: none !important;
+  }
+  .landing-tilt-card {
+    transition: none !important;
+  }
 }

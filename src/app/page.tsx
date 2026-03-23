@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar, MobileNav } from '@/components/layout/sidebar';
 import { FeedView } from '@/components/feed/feed-view';
 import { ComposeModal } from '@/components/compose/compose-modal';
-import { LandingPage } from '@/components/landing/landing-page';
+import { CivicLanding } from '@/components/landing/civic-landing';
 import { useAuth } from '@/lib/auth-context';
 
 export default function HomePage() {
@@ -18,7 +18,7 @@ export default function HomePage() {
 
   // Logged-out users see the premium landing page
   if (!isAuthenticated) {
-    return <LandingPage />;
+    return <CivicLanding />;
   }
 
   return (

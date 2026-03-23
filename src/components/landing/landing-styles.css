@@ -1,0 +1,527 @@
+/* ═══════════════════════════════════════════════════════════════
+   CIVIC LANDING — Premium dark civic-tech aesthetic
+   Isolated styles for the landing page only.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Color Tokens ── */
+.civic-landing {
+  --ink: #0a0a09;
+  --ink-light: #161412;
+  --ink-border: rgba(244, 240, 234, 0.08);
+  --cream: #f4f0ea;
+  --cream-dim: rgba(244, 240, 234, 0.65);
+  --accent-slate: #8ba3b5;
+  --accent-gold: #c2a878;
+  --font-display: var(--font-serif, 'Cormorant Garamond', serif);
+  --font-body: 'Inter', 'DM Sans', sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+/* ── Noise Overlay ── */
+.civic-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Hero Overlay ── */
+.civic-hero-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 5vw;
+}
+
+.civic-hero-content {
+  will-change: transform, opacity;
+  animation: civic-scramble-in 1.5s var(--ease-out) forwards;
+  max-width: 800px;
+  width: 100%;
+}
+
+.civic-hero-label {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--accent-slate);
+  margin-bottom: 1.5rem;
+  display: block;
+  text-shadow: 0 2px 20px rgba(0,0,0,1), 0 0 40px rgba(0,0,0,0.8);
+}
+
+.civic-hero-h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 6vw, 5rem);
+  font-weight: 300;
+  line-height: 1.05;
+  margin: 0 0 1.5rem 0;
+  color: #ffffff;
+  text-shadow: 0 4px 30px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.7);
+}
+
+.civic-hero-lead {
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 680px;
+  margin: 0 auto 3rem auto;
+  line-height: 1.6;
+  text-shadow: 0 2px 20px rgba(0,0,0,1), 0 0 40px rgba(0,0,0,0.8);
+}
+
+.civic-hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+
+@keyframes civic-scramble-in {
+  0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* ── Buttons ── */
+.civic-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 36px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+  background: var(--cream);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: transform 0.3s var(--ease-out), background 0.3s ease, color 0.3s ease;
+  border: 1px solid transparent;
+}
+.civic-btn:hover {
+  background: transparent;
+  color: var(--cream);
+  border-color: var(--cream);
+  transform: translateY(-2px);
+}
+.civic-btn-outline {
+  background: transparent;
+  color: var(--cream);
+  border-color: rgba(244, 240, 234, 0.3);
+}
+.civic-btn-outline:hover {
+  background: var(--cream);
+  color: var(--ink);
+}
+.civic-btn-sm {
+  padding: 10px 24px;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  border-radius: 40px;
+}
+
+/* ── Nav Pill ── */
+.civic-nav {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  z-index: 100;
+  width: 100%;
+  max-width: 900px;
+  padding: 0 1rem;
+  transition: transform 0.6s var(--ease-out), opacity 0.6s var(--ease-out);
+}
+.civic-nav.nav-hidden {
+  transform: translateX(-50%) translateY(-150%);
+  opacity: 0;
+}
+.civic-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, rgba(20, 18, 16, 0.7) 0%, rgba(10, 10, 9, 0.85) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(244, 240, 234, 0.1);
+  border-radius: 40px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+.civic-nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--cream);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.civic-nav-links {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.civic-nav-link {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--cream-dim);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+.civic-nav-link:hover {
+  color: var(--accent-gold);
+}
+.civic-nav-auth {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .civic-nav-links { display: none; }
+  .civic-nav-auth .civic-nav-link { display: none; }
+  .civic-nav { top: 16px; }
+}
+
+/* ── Page Root (content sections) ── */
+.civic-page-root {
+  position: relative;
+  z-index: 20;
+  pointer-events: auto;
+  margin-top: 100vh;
+}
+
+/* ── Sections ── */
+.civic-section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 15vh 5vw;
+  position: relative;
+}
+.civic-section-short {
+  min-height: 70vh;
+}
+
+.civic-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Typography ── */
+.civic-eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: var(--accent-slate);
+  margin-bottom: 1rem;
+  display: block;
+}
+.civic-sec-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 3.5rem);
+  font-weight: 300;
+  line-height: 1.1;
+  margin: 0 0 1.5rem 0;
+  color: var(--cream);
+}
+.civic-sec-desc {
+  font-size: 1.1rem;
+  color: var(--cream-dim);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  max-width: 500px;
+}
+
+/* ── Editorial Layout ── */
+.civic-editorial {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6vw;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .civic-editorial { grid-template-columns: 1fr; gap: 3rem; }
+}
+
+/* ── Glass Cards ── */
+.civic-glass-card {
+  background: linear-gradient(145deg, rgba(20, 18, 16, 0.6) 0%, rgba(10, 10, 9, 0.4) 100%);
+  border-top: 1px solid rgba(244, 240, 234, 0.1);
+  border-left: 1px solid rgba(244, 240, 234, 0.04);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease;
+}
+.civic-card-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  margin: 0 0 1rem 0;
+  font-weight: 400;
+  color: var(--cream);
+}
+.civic-card-text {
+  font-size: 0.95rem;
+  color: var(--cream-dim);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Step Grid ── */
+.civic-step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+@media (max-width: 900px) {
+  .civic-step-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+  .civic-step-grid { grid-template-columns: 1fr; }
+}
+.civic-step-number {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  color: var(--accent-gold);
+  opacity: 0.8;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+.civic-step-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0 0 0.5rem 0;
+  color: var(--cream);
+}
+.civic-step-desc {
+  font-size: 0.9rem;
+  color: var(--cream-dim);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Pricing ── */
+.civic-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.civic-pricing-card {
+  background: linear-gradient(145deg, rgba(20, 18, 16, 0.8) 0%, rgba(10, 10, 9, 0.6) 100%);
+  border-top: 1px solid rgba(244, 240, 234, 0.1);
+  border-left: 1px solid rgba(244, 240, 234, 0.04);
+  border-radius: 16px;
+  padding: 3.5rem 3rem;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+}
+.civic-pricing-tier {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-slate);
+  margin: 0 0 1rem 0;
+}
+.civic-pricing-price {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 8vw, 3.5rem);
+  color: var(--cream);
+  line-height: 1;
+  margin-bottom: 2rem;
+}
+.civic-pricing-price span {
+  font-size: 1rem;
+  font-family: var(--font-body);
+  color: var(--cream-dim);
+}
+.civic-pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 3rem 0;
+}
+.civic-pricing-features li {
+  font-size: 0.95rem;
+  color: var(--cream-dim);
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+.civic-pricing-features li::before {
+  content: '\25B9';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  color: var(--accent-gold);
+}
+
+/* ── Trust Visualization ── */
+.civic-trust-visual {
+  aspect-ratio: 4/5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.civic-trust-pulse {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-gold) 0%, transparent 70%);
+  animation: civic-pulse 8s ease-in-out infinite alternate;
+}
+@keyframes civic-pulse {
+  0% { transform: scale(1); opacity: 0.15; }
+  100% { transform: scale(1.1); opacity: 0.25; }
+}
+.civic-trust-text {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 300;
+  color: var(--accent-slate);
+  opacity: 0.4;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ── Reveal Animations ── */
+.civic-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
+}
+.civic-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.civic-delay-1 { transition-delay: 0.1s; }
+.civic-delay-2 { transition-delay: 0.2s; }
+.civic-delay-3 { transition-delay: 0.3s; }
+
+/* ── Footer ── */
+.civic-footer {
+  padding: 6rem 5vw 3rem;
+  text-align: center;
+  border-top: 1px solid var(--ink-border);
+  position: relative;
+  z-index: 20;
+  background: var(--ink);
+}
+.civic-footer-logo {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.civic-footer-copy {
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+  letter-spacing: 0.05em;
+}
+.civic-footer-links {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.civic-footer-links a {
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+.civic-footer-links a:hover {
+  color: var(--cream);
+}
+
+/* ── Mobile Overrides ── */
+@media (max-width: 900px) {
+  .civic-section {
+    padding: 8vh 1.25rem;
+    min-height: auto;
+  }
+  .civic-glass-card {
+    padding: 1.5rem;
+  }
+  .civic-pricing-card {
+    padding: 2rem 1.5rem;
+  }
+  .civic-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+  .civic-editorial {
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .civic-footer-links {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .civic-footer {
+    padding: 3rem 1.25rem 2rem;
+  }
+  .civic-hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .civic-hero-actions .civic-btn {
+    width: 100%;
+  }
+}
+
+/* ── Touch States ── */
+.civic-btn:active {
+  transform: scale(0.97);
+}
+.civic-glass-card:active {
+  background: linear-gradient(145deg, rgba(25, 23, 21, 0.7) 0%, rgba(15, 15, 14, 0.5) 100%);
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .civic-hero-content { animation: none; opacity: 1; }
+  .civic-reveal { opacity: 1; transform: none; transition: none; }
+  .civic-trust-pulse { animation: none; }
+  .civic-glass-card, .civic-pricing-card { transition: none; }
+}

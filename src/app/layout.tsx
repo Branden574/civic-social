@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider, ThemeScript } from '@/lib/theme-context';
 import { AuthProvider } from '@/lib/auth-context';
@@ -11,6 +11,13 @@ import { AppShell } from './app-shell';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '600'],
+  variable: '--font-serif',
   display: 'swap',
 });
 
@@ -72,7 +79,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body
-        className={`${inter.variable} font-sans antialiased bg-bg text-text-primary`}
+        className={`${inter.variable} ${cormorant.variable} font-sans antialiased bg-bg text-text-primary`}
       >
         <a
           href="#main"
