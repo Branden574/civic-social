@@ -26,11 +26,11 @@
   --color-text-inverse: #141414;
 
   /* ── Brand / Civic colors ── */
-  --color-civic: #6366F1;
-  --color-civic-light: #818CF8;
-  --color-civic-dark: #4F46E5;
-  --color-civic-subtle: rgba(99, 102, 241, 0.08);
-  --color-civic-muted: rgba(99, 102, 241, 0.15);
+  --color-civic: #c2a878;
+  --color-civic-light: #d4bc94;
+  --color-civic-dark: #a68b5b;
+  --color-civic-subtle: rgba(194, 168, 120, 0.08);
+  --color-civic-muted: rgba(194, 168, 120, 0.15);
 
   /* ── Signal colors ── */
   --color-positive: #10B981;
@@ -92,8 +92,8 @@ html.light {
   --color-text-secondary: #666666;
   --color-text-muted: #999999;
   --color-text-inverse: #f0f0f0;
-  --color-civic-subtle: rgba(99, 102, 241, 0.05);
-  --color-civic-muted: rgba(99, 102, 241, 0.10);
+  --color-civic-subtle: rgba(194, 168, 120, 0.05);
+  --color-civic-muted: rgba(194, 168, 120, 0.10);
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
