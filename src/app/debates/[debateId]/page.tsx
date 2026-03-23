@@ -967,8 +967,34 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
   const sideAParticipants = participants.filter((p) => p.side === 'A');
   const sideBParticipants = participants.filter((p) => p.side === 'B');
 
+  // Re-render when remote video tracks mute/unmute (camera toggled via replaceTrack)
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    const cleanup: Array<() => void> = [];
+    const onTrackChange = () => forceUpdate((n) => n + 1);
+
+    for (const stream of remoteStreams.values()) {
+      for (const track of stream.getVideoTracks()) {
+        track.addEventListener('mute', onTrackChange);
+        track.addEventListener('unmute', onTrackChange);
+        cleanup.push(() => {
+          track.removeEventListener('mute', onTrackChange);
+          track.removeEventListener('unmute', onTrackChange);
+        });
+      }
+    }
+    return () => cleanup.forEach((fn) => fn());
+  }, [remoteStreams]);
+
+  // Check if a stream has an active (unmuted, live) video track
+  function hasActiveVideo(stream: MediaStream | null): boolean {
+    if (!stream) return false;
+    const vt = stream.getVideoTracks()[0];
+    return !!vt && !vt.muted && vt.readyState === 'live';
+  }
+
   // Count how many participants have active video
-  const activeVideoCount = (localCameraOn ? 1 : 0) + Array.from(remoteStreams.values()).filter((s) => s.getVideoTracks().length > 0).length;
+  const activeVideoCount = (localCameraOn ? 1 : 0) + Array.from(remoteStreams.values()).filter(hasActiveVideo).length;
 
   if (participants.length === 0) return null;
 
@@ -979,8 +1005,7 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
   }
 
   function hasVideoFor(userId: string): boolean {
-    const stream = getStreamFor(userId);
-    return !!stream && stream.getVideoTracks().length > 0;
+    return hasActiveVideo(getStreamFor(userId));
   }
 
   return (

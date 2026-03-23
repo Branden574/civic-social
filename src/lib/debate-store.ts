@@ -186,11 +186,8 @@ export async function getAllDebates(): Promise<Debate[]> {
 }
 
 export async function getDebateById(id: string): Promise<Debate | null> {
-  // 1. Check in-memory cache first (fast path)
-  const cached = getCache().debates.get(id);
-  if (cached) return cached;
-
-  // 2. Check DB (handles cold starts / cross-instance lookups)
+  // Always read from DB when available to avoid stale cross-instance data.
+  // In-memory cache is only used as fallback when DB is unavailable.
   if (isDbAvailable()) {
     try {
       const row = await prisma.debate.findUnique({ where: { id } });
@@ -199,10 +196,12 @@ export async function getDebateById(id: string): Promise<Debate | null> {
         getCache().debates.set(id, debate);
         return debate;
       }
-    } catch { /* DB unavailable */ }
+      return null;
+    } catch { /* DB unavailable — fall through to cache */ }
   }
 
-  return null;
+  // Fallback: in-memory cache (only when DB is down)
+  return getCache().debates.get(id) ?? null;
 }
 
 export async function getPopularDebates(limit = 5): Promise<Debate[]> {

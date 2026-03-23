@@ -128,27 +128,48 @@ export function useWebRTC(
       iceRestartTimer: null,
     };
 
-    // Add local tracks to outgoing connection
-    if (localStreamRef.current) {
-      for (const track of localStreamRef.current.getTracks()) {
-        pc.addTrack(track, localStreamRef.current);
-      }
-      console.log(`[WebRTC] Added ${localStreamRef.current.getTracks().length} local tracks to peer ${remoteUserId}`);
-    } else {
-      console.warn(`[WebRTC] No local stream when creating peer ${remoteUserId} — tracks will be added later via setLocalStream`);
-    }
+    // Pre-allocate audio and video transceivers so the initial SDP always
+    // includes both m-lines.  This lets us toggle camera on/off later via
+    // replaceTrack without renegotiation.
+    const localStream = localStreamRef.current;
+    const audioTrack = localStream?.getAudioTracks()[0] ?? null;
+    const videoTrack = localStream?.getVideoTracks()[0] ?? null;
 
-    // Collect remote tracks
+    pc.addTransceiver('audio', {
+      direction: 'sendrecv',
+      ...(audioTrack && localStream ? { streams: [localStream] } : {}),
+    });
+    pc.addTransceiver('video', {
+      direction: 'sendrecv',
+      ...(videoTrack && localStream ? { streams: [localStream] } : {}),
+    });
+
+    // Set initial tracks on the transceivers
+    const transceivers = pc.getTransceivers();
+    for (const t of transceivers) {
+      const kind = t.receiver.track.kind;
+      const track = kind === 'audio' ? audioTrack : videoTrack;
+      if (track) {
+        t.sender.replaceTrack(track).catch(() => {});
+      }
+    }
+    console.log(`[WebRTC] Created peer ${remoteUserId} with transceivers (audio: ${!!audioTrack}, video: ${!!videoTrack})`);
+
+
+    // Collect remote tracks into a single MediaStream per peer.
+    // With pre-allocated transceivers, ontrack fires for both audio and video.
+    // We accumulate tracks into one stream so the UI has a single source.
+    const peerRemoteStream = new MediaStream();
     pc.ontrack = (event) => {
       console.log(`[WebRTC] Received remote track from ${remoteUserId}:`, event.track.kind);
-      const [remoteStream] = event.streams;
-      if (remoteStream) {
-        setRemoteStreams((prev) => {
-          const next = new Map(prev);
-          next.set(remoteUserId, remoteStream);
-          return next;
-        });
+      if (!peerRemoteStream.getTrackById(event.track.id)) {
+        peerRemoteStream.addTrack(event.track);
       }
+      setRemoteStreams((prev) => {
+        const next = new Map(prev);
+        next.set(remoteUserId, peerRemoteStream);
+        return next;
+      });
     };
 
     // ICE candidates → relay via signaling
@@ -311,44 +332,25 @@ export function useWebRTC(
   pollSignalsRef.current = pollSignals;
 
   // ── Set local stream (called by VoiceChat when mic/camera changes) ──
+  // Uses replaceTrack on pre-allocated transceivers — no renegotiation needed.
   const setLocalStream = useCallback((stream: MediaStream | null) => {
     localStreamRef.current = stream;
 
-    // Update tracks on all existing peer connections
+    const audioTrack = stream?.getAudioTracks()[0] ?? null;
+    const videoTrack = stream?.getVideoTracks()[0] ?? null;
+
     for (const [peerId, peerState] of peersRef.current) {
       const { pc } = peerState;
-      const senders = pc.getSenders();
 
-      if (!stream) {
-        // Remove all tracks
-        for (const sender of senders) {
-          try { pc.removeTrack(sender); } catch { /* already removed */ }
-        }
-        continue;
-      }
+      for (const transceiver of pc.getTransceivers()) {
+        const kind = transceiver.receiver.track.kind;
+        const desired = kind === 'audio' ? audioTrack : videoTrack;
+        const current = transceiver.sender.track;
 
-      const newTrackKinds = new Set(stream.getTracks().map((t) => t.kind));
-
-      // Remove senders for track kinds no longer in the stream
-      // (e.g. video sender when camera is turned off)
-      for (const sender of senders) {
-        if (sender.track && !newTrackKinds.has(sender.track.kind)) {
-          console.log(`[WebRTC] Removing ${sender.track.kind} sender for ${peerId} (track no longer in stream)`);
-          try { pc.removeTrack(sender); } catch { /* already removed */ }
-        }
-      }
-
-      // Add or replace tracks that are in the new stream
-      for (const track of stream.getTracks()) {
-        // Re-fetch senders after possible removal above
-        const currentSenders = pc.getSenders();
-        const existingSender = currentSenders.find((s) => s.track?.kind === track.kind);
-        if (existingSender) {
-          console.log(`[WebRTC] Replacing ${track.kind} track on existing sender for ${peerId}`);
-          existingSender.replaceTrack(track).catch(() => {});
-        } else {
-          console.log(`[WebRTC] Adding new ${track.kind} track to peer ${peerId}`);
-          pc.addTrack(track, stream);
+        // Only replace if the track actually changed
+        if (current?.id !== desired?.id) {
+          console.log(`[WebRTC] ${desired ? 'Setting' : 'Clearing'} ${kind} track for ${peerId}`);
+          transceiver.sender.replaceTrack(desired).catch(() => {});
         }
       }
     }
