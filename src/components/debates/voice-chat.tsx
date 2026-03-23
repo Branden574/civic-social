@@ -966,35 +966,51 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
               </button>
             ) : (
               <>
-                {/* Mute toggle */}
-                <button
-                  onClick={() => voiceAction('toggle_mute')}
-                  className={clsx(
-                    'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-colors',
-                    isSelfMuted
-                      ? 'bg-surface text-text-muted border border-border-subtle hover:bg-surface-hover'
-                      : 'bg-positive/15 text-positive-light hover:bg-positive/25',
-                  )}
-                >
-                  {isSelfMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                  {isSelfMuted ? 'Unmute' : 'Mute'}
-                </button>
+                {/* Speaker controls: mute, camera, settings */}
+                {isSpeaker && (
+                  <>
+                    <button
+                      onClick={() => voiceAction('toggle_mute')}
+                      className={clsx(
+                        'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-colors',
+                        isSelfMuted
+                          ? 'bg-surface text-text-muted border border-border-subtle hover:bg-surface-hover'
+                          : 'bg-positive/15 text-positive-light hover:bg-positive/25',
+                      )}
+                    >
+                      {isSelfMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                      {isSelfMuted ? 'Unmute' : 'Mute'}
+                    </button>
 
-                {/* Camera toggle */}
-                <button
-                  onClick={toggleCamera}
-                  className={clsx(
-                    'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-colors',
-                    cameraEnabled
-                      ? 'bg-civic-muted text-civic-light hover:bg-civic/25'
-                      : 'bg-surface text-text-muted border border-border-subtle hover:bg-surface-hover',
-                  )}
-                >
-                  {cameraEnabled ? <Camera className="w-3.5 h-3.5" /> : <CameraOff className="w-3.5 h-3.5" />}
-                  {cameraEnabled ? 'Cam On' : 'Cam Off'}
-                </button>
+                    <button
+                      onClick={toggleCamera}
+                      className={clsx(
+                        'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-colors',
+                        cameraEnabled
+                          ? 'bg-civic-muted text-civic-light hover:bg-civic/25'
+                          : 'bg-surface text-text-muted border border-border-subtle hover:bg-surface-hover',
+                      )}
+                    >
+                      {cameraEnabled ? <Camera className="w-3.5 h-3.5" /> : <CameraOff className="w-3.5 h-3.5" />}
+                      {cameraEnabled ? 'Cam On' : 'Cam Off'}
+                    </button>
 
-                {/* Request to speak (if listener) */}
+                    <button
+                      onClick={() => setShowDeviceSettings(!showDeviceSettings)}
+                      className={clsx(
+                        'p-2 rounded-xl transition-colors',
+                        showDeviceSettings
+                          ? 'bg-civic-muted text-civic'
+                          : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                      )}
+                      title="Audio device settings"
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+
+                {/* Listener controls: raise hand only */}
                 {!isSpeaker && !isPending && (
                   <button
                     onClick={() => voiceAction('request_speak')}
@@ -1013,24 +1029,18 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
                   </span>
                 )}
 
-                {/* Audio settings toggle */}
-                <button
-                  onClick={() => setShowDeviceSettings(!showDeviceSettings)}
-                  className={clsx(
-                    'p-2 rounded-xl transition-colors',
-                    showDeviceSettings
-                      ? 'bg-civic-muted text-civic'
-                      : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
-                  )}
-                  title="Audio device settings"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                </button>
+                {/* Listening indicator for non-speakers */}
+                {!isSpeaker && (
+                  <span className="flex items-center gap-1.5 px-2 py-1.5 text-[10px] text-text-muted bg-surface-active rounded-lg">
+                    <Volume2 className="w-3 h-3" />
+                    Listening
+                  </span>
+                )}
 
-                {/* Leave */}
+                {/* Leave — always visible */}
                 <button
                   onClick={leaveRoom}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-danger/10 text-danger-light rounded-xl hover:bg-danger/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-danger/10 text-danger-light rounded-xl hover:bg-danger/20 transition-colors ml-auto"
                 >
                   <PhoneOff className="w-3.5 h-3.5" />
                   Leave
