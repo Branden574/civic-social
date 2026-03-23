@@ -180,9 +180,11 @@ export function useWebRTC(
           peerState.makingOffer = true;
           console.log(`[WebRTC] Negotiation needed for ${remoteUserId}, sending offer`);
           await pc.setLocalDescription();
-          sendSignal(remoteUserId, 'offer', {
+          const sdp = pc.localDescription!.sdp;
+          console.log(`[WebRTC] Offer SDP size: ${sdp.length} chars`);
+          await sendSignal(remoteUserId, 'offer', {
             type: pc.localDescription!.type,
-            sdp: pc.localDescription!.sdp,
+            sdp,
           });
         } catch (err) {
           console.error(`[WebRTC] Negotiation failed for ${remoteUserId}:`, err);
@@ -282,7 +284,7 @@ export function useWebRTC(
         await pc.setRemoteDescription(new RTCSessionDescription(parsed));
         await pc.setLocalDescription();
         console.log(`[WebRTC] Sending answer to ${fromUserId}`);
-        sendSignal(fromUserId, 'answer', {
+        await sendSignal(fromUserId, 'answer', {
           type: pc.localDescription!.type,
           sdp: pc.localDescription!.sdp,
         });

@@ -229,7 +229,7 @@ export async function PATCH(
       }
       if (!payload) return badRequest('payload required.');
       const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
-      if (payloadStr.length > 10_000) return badRequest('Payload too large.');
+      if (payloadStr.length > 65_000) return badRequest('Payload too large.');
       const signal = await postSignal(debateId, userId, toUserId, signalType, payloadStr);
       return NextResponse.json({ success: true, signal });
     }
