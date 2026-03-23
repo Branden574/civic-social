@@ -44,14 +44,16 @@ export async function GET(
   }
 
   const user = getSessionUser(request);
-  const userId = user?.id || 'user-current';
+  const userId = user?.id ?? null;
 
   const room = await getVoiceRoom(debateId);
-  const signals = room ? await getSignals(debateId, userId) : [];
+  // Only fetch signals for authenticated users (signals are addressed to specific userIds)
+  const signals = room && userId ? await getSignals(debateId, userId) : [];
 
   return NextResponse.json({
     room,
     signals,
+    userId: userId || 'UNAUTHENTICATED',
     serverTime: new Date().toISOString(),
   });
 }
