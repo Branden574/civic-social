@@ -95,7 +95,7 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
   "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
-  "connect-src 'self' https://api.congress.gov https://vitals.vercel-insights.com https://*.vercel.app",
+  "connect-src 'self' https://api.congress.gov https://vitals.vercel-insights.com https://*.vercel.app wss://*.pusher.com https://*.pusher.com wss://*.pusherapp.com https://*.pusherapp.com https://sockjs-us2.pusher.com https://sockjs-us3.pusher.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

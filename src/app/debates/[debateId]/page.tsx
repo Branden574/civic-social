@@ -995,11 +995,15 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
     return () => cleanup.forEach((fn) => fn());
   }, [remoteStreams]);
 
-  // Check if a stream has an active (unmuted, live) video track
+  // Check if a stream has an active video track.
+  // For remote tracks, `muted` starts as true until media data actually flows
+  // (this is the WebRTC "muted" flag, NOT user-initiated mute). We treat
+  // readyState === 'live' as sufficient — the video element will display
+  // frames as soon as they arrive, even if `muted` is initially true.
   function hasActiveVideo(stream: MediaStream | null): boolean {
     if (!stream) return false;
     const vt = stream.getVideoTracks()[0];
-    return !!vt && !vt.muted && vt.readyState === 'live';
+    return !!vt && vt.readyState === 'live';
   }
 
   // Count how many participants have active video
@@ -1126,12 +1130,15 @@ function VideoSlot({
     return () => clearTimeout(t);
   }, [index]);
 
-  // Wire video element to stream
+  // Wire video element to stream.
+  // Depend on both videoStream and cameraOn because the <video> element
+  // is conditionally rendered (mounts when cameraOn becomes true).
+  // We need to set srcObject after the element enters the DOM.
   useEffect(() => {
     if (videoRef.current && videoStream) {
       videoRef.current.srcObject = videoStream;
     }
-  }, [videoStream]);
+  }, [videoStream, cameraOn]);
 
   // Camera reveal + flash animation
   useEffect(() => {
