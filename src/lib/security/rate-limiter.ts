@@ -108,10 +108,10 @@ export const postLimiter = createRateLimiter('post', {
   max: 10,
 });
 
-/** Chat messages + voice actions: 60 / minute per user */
+/** Chat messages + voice actions: 120 / minute per user */
 export const chatLimiter = createRateLimiter('chat', {
   windowMs: 60_000,
-  max: 60,
+  max: 120,
 });
 
 /** Follow/unfollow: 30 / minute per user */

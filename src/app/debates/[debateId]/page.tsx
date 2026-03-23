@@ -313,19 +313,23 @@ export default function DebateDetailPage() {
   }, [toast]);
 
   // Overdrive: detect new participants and show join toast
+  const joinToastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!debate?.participants) return;
     for (const p of debate.participants) {
       if (!seenParticipantIds.current.has(p.userId) && p.userId !== currentUserId) {
-        const sideLabel = p.side === 'A' ? debate.sideA.label : debate.sideB.label;
-        setJoinToast({ name: p.displayName, side: p.side, sideLabel });
-        const t = setTimeout(() => setJoinToast(null), 3500);
         seenParticipantIds.current.add(p.userId);
-        return () => clearTimeout(t);
+        if (!joinToast) {
+          const sideLabel = p.side === 'A' ? debate.sideA.label : debate.sideB.label;
+          setJoinToast({ name: p.displayName, side: p.side, sideLabel });
+          if (joinToastTimeout.current) clearTimeout(joinToastTimeout.current);
+          joinToastTimeout.current = setTimeout(() => setJoinToast(null), 3500);
+        }
+      } else {
+        seenParticipantIds.current.add(p.userId);
       }
-      seenParticipantIds.current.add(p.userId);
     }
-  }, [debate?.participants, currentUserId, debate?.sideA.label, debate?.sideB.label]);
+  }, [debate?.participants, currentUserId, debate?.sideA.label, debate?.sideB.label, joinToast]);
 
   // ── Loading / Not found ──────────────────────────────────────
   if (loading) {
@@ -619,7 +623,7 @@ export default function DebateDetailPage() {
           )}
 
           {/* ── Overdrive: Invited User Side-Pick Modal ── */}
-          {canJoin && debate && isInvited && showSidePickModal && (
+          {!loading && canJoin && debate && isInvited && !isDebater && showSidePickModal && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out forwards' }}>
               <div className="animate-spring-in bg-surface-elevated border border-border-subtle rounded-2xl shadow-2xl p-8 mx-4 max-w-md w-full">
                 {/* Header */}
