@@ -183,6 +183,14 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
+    // Banned users: redirect to landing page
+    if (sessionPayload?.role === 'banned') {
+      // Clear the session cookie so they're logged out
+      const res = NextResponse.redirect(new URL('/', request.url));
+      res.cookies.delete('civic-session');
+      return res;
+    }
+
     // Admin routes require admin/creator role (check claim from signed cookie)
     if (pathname.startsWith('/admin')) {
       if (!sessionPayload || (sessionPayload.role !== 'admin' && sessionPayload.role !== 'creator')) {

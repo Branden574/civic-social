@@ -199,6 +199,14 @@ function UsersTab() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    userId: string;
+    userName: string;
+    action: string;
+    label: string;
+    extra?: Record<string, string>;
+  } | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -213,21 +221,89 @@ function UsersTab() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const handleAction = async (userId: string, action: string, extra?: Record<string, string>) => {
+  // Clear feedback after 4 seconds
+  useEffect(() => {
+    if (!feedback) return;
+    const t = setTimeout(() => setFeedback(null), 4000);
+    return () => clearTimeout(t);
+  }, [feedback]);
+
+  const executeAction = async (userId: string, action: string, extra?: Record<string, string>) => {
     setActionLoading(userId);
+    setConfirmAction(null);
     try {
-      await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: action === 'delete' ? 'DELETE' : 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, ...extra }),
       });
-      await fetchUsers();
-    } catch { /* ignore */ }
+      const data = await res.json();
+      if (!res.ok) {
+        setFeedback({ type: 'error', message: data.error || `Failed to ${action} user.` });
+      } else {
+        setFeedback({ type: 'success', message: `User ${action === 'ban' ? 'banned' : action === 'unban' ? 'unbanned' : action === 'suspend' ? 'suspended' : 'deleted'} successfully.` });
+        await fetchUsers();
+      }
+    } catch {
+      setFeedback({ type: 'error', message: `Network error — could not ${action} user.` });
+    }
     setActionLoading(null);
+  };
+
+  const requestAction = (userId: string, userName: string, action: string, label: string, extra?: Record<string, string>) => {
+    setConfirmAction({ userId, userName, action, label, extra });
   };
 
   return (
     <div className="space-y-4">
+      {/* Feedback banner */}
+      {feedback && (
+        <div className={clsx(
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
+          feedback.type === 'success' ? 'bg-positive/10 text-positive-light' : 'bg-danger/10 text-danger-light',
+        )}>
+          {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+          {feedback.message}
+          <button onClick={() => setFeedback(null)} className="ml-auto"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      )}
+
+      {/* Confirmation dialog */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-surface-elevated border border-border-subtle rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <h3 className="text-base font-semibold text-text-primary mb-2">
+              Confirm {confirmAction.label}
+            </h3>
+            <p className="text-sm text-text-secondary mb-5">
+              Are you sure you want to {confirmAction.label.toLowerCase()} <strong>{confirmAction.userName}</strong>?
+              {confirmAction.action === 'delete' && ' This will permanently remove their account and all associated data. This cannot be undone.'}
+              {confirmAction.action === 'ban' && ' They will be unable to access the platform.'}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl hover:bg-surface-hover transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => executeAction(confirmAction.userId, confirmAction.action, confirmAction.extra)}
+                className={clsx(
+                  'px-4 py-2 text-sm font-semibold rounded-xl transition-colors',
+                  confirmAction.action === 'delete' ? 'bg-danger text-white hover:bg-danger/80' :
+                  confirmAction.action === 'ban' ? 'bg-danger text-white hover:bg-danger/80' :
+                  confirmAction.action === 'unban' ? 'bg-positive text-white hover:bg-positive/80' :
+                  'bg-warning text-white hover:bg-warning/80',
+                )}
+              >
+                {confirmAction.label}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -267,14 +343,14 @@ function UsersTab() {
                   {u.role !== 'banned' && u.role !== 'admin' && u.role !== 'creator' && (
                     <>
                       <button
-                        onClick={() => handleAction(u.id, 'suspend', { suspendUntil: new Date(Date.now() + 7 * 86400000).toISOString(), reason: '7-day suspension' })}
+                        onClick={() => requestAction(u.id, u.displayName, 'suspend', 'Suspend 7 days', { suspendUntil: new Date(Date.now() + 7 * 86400000).toISOString(), reason: '7-day suspension' })}
                         disabled={actionLoading === u.id}
                         className="text-xs px-2 py-1 rounded-md bg-warning/10 text-warning-light hover:bg-warning/20 font-medium transition-colors disabled:opacity-50"
                       >
                         Suspend 7d
                       </button>
                       <button
-                        onClick={() => handleAction(u.id, 'ban', { reason: 'Banned by admin' })}
+                        onClick={() => requestAction(u.id, u.displayName, 'ban', 'Ban user', { reason: 'Banned by admin' })}
                         disabled={actionLoading === u.id}
                         className="text-xs px-2 py-1 rounded-md bg-danger/10 text-danger-light hover:bg-danger/20 font-medium transition-colors disabled:opacity-50"
                       >
@@ -284,11 +360,21 @@ function UsersTab() {
                   )}
                   {u.role === 'banned' && (
                     <button
-                      onClick={() => handleAction(u.id, 'unban', { reason: 'Unbanned by admin' })}
+                      onClick={() => requestAction(u.id, u.displayName, 'unban', 'Unban user', { reason: 'Unbanned by admin' })}
                       disabled={actionLoading === u.id}
                       className="text-xs px-2 py-1 rounded-md bg-positive/10 text-positive-light hover:bg-positive/20 font-medium transition-colors disabled:opacity-50"
                     >
                       Unban
+                    </button>
+                  )}
+                  {u.role !== 'admin' && u.role !== 'creator' && (
+                    <button
+                      onClick={() => requestAction(u.id, u.displayName, 'delete', 'Delete account')}
+                      disabled={actionLoading === u.id}
+                      className="text-xs px-2 py-1 rounded-md bg-surface-hover text-text-muted hover:bg-danger/10 hover:text-danger-light font-medium transition-colors disabled:opacity-50"
+                      title="Delete account"
+                    >
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
