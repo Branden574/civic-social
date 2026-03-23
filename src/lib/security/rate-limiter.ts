@@ -126,10 +126,10 @@ export const debateLimiter = createRateLimiter('debate', {
   max: 5,
 });
 
-/** API read endpoints: 200 / minute per IP (supports real-time debate polling) */
+/** API read endpoints: 600 / minute per IP (supports real-time debate polling from multiple tabs) */
 export const readLimiter = createRateLimiter('read', {
   windowMs: 60_000,
-  max: 200,
+  max: 600,
 });
 
 /** Signup: 3 / hour per IP */
