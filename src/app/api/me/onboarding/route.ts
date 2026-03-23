@@ -53,9 +53,14 @@ export async function POST(request: NextRequest) {
   // Persist to database (survives cold starts)
   if (isDbAvailable()) {
     try {
+      const onboardingData: Record<string, unknown> = { onboardingCompletedAt: new Date() };
+      const topics = Array.isArray(body.topics)
+        ? (body.topics as string[]).filter((t: string) => typeof t === 'string' && t.length > 0).slice(0, 20)
+        : [];
+      if (topics.length > 0) onboardingData.topics = topics;
       await prisma.searchableUser.update({
         where: { id: sessionUser.id },
-        data: { onboardingCompletedAt: new Date() },
+        data: onboardingData,
       });
     } catch {
       // DB write failed — in-memory state is still correct for this request

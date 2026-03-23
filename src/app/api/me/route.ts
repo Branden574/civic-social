@@ -156,11 +156,12 @@ export async function GET(request: NextRequest) {
     let dbDisplayName = sessionUser.displayName || '';
     let dbUsername = '';
     let dbBio = '';
+    let dbTopics: string[] = [];
     if (isDbAvailable()) {
       try {
         const dbUser = await prisma.searchableUser.findFirst({
           where: { id: sessionUser.id },
-          select: { onboardingCompletedAt: true, displayName: true, username: true, bio: true },
+          select: { onboardingCompletedAt: true, displayName: true, username: true, bio: true, topics: true },
         });
         if (dbUser?.onboardingCompletedAt) {
           dbOnboardingDone = true;
@@ -169,6 +170,7 @@ export async function GET(request: NextRequest) {
         if (dbUser?.displayName) dbDisplayName = dbUser.displayName;
         if (dbUser?.username) dbUsername = dbUser.username;
         if (dbUser?.bio) dbBio = dbUser.bio;
+        if (dbUser?.topics) dbTopics = dbUser.topics;
       } catch { /* DB read failed — use defaults */ }
 
       // Fallback: bio may exist in User table but not SearchableUser
@@ -195,6 +197,7 @@ export async function GET(request: NextRequest) {
         username: dbUsername,
         email: sessionUser.email,
         bio: dbBio,
+        topics: dbTopics,
       },
     });
 
@@ -257,16 +260,18 @@ export async function POST(request: NextRequest) {
     // Cold start — check DB for persisted onboarding before falling back to client
     let dbOnboardingDone = false;
     let dbOnboardingCompletedAt: string | null = null;
+    let dbTopicsFromDb: string[] = [];
     if (isDbAvailable()) {
       try {
         const dbUser = await prisma.searchableUser.findFirst({
           where: { id: sessionUser.id },
-          select: { onboardingCompletedAt: true },
+          select: { onboardingCompletedAt: true, topics: true },
         });
         if (dbUser?.onboardingCompletedAt) {
           dbOnboardingDone = true;
           dbOnboardingCompletedAt = dbUser.onboardingCompletedAt.toISOString();
         }
+        if (dbUser?.topics?.length) dbTopicsFromDb = dbUser.topics;
       } catch { /* DB read failed */ }
     }
 
@@ -286,7 +291,7 @@ export async function POST(request: NextRequest) {
         email: sessionUser.email,
         countryCode: clientProfile?.country || clientOnboarding?.country || '',
         partyAffiliation: clientProfile?.affiliation || clientOnboarding?.affiliation || '',
-        topics: clientProfile?.topics || clientOnboarding?.topics || [],
+        topics: dbTopicsFromDb.length > 0 ? dbTopicsFromDb : (clientProfile?.topics || clientOnboarding?.topics || []),
         bio: clientProfile?.bio || clientOnboarding?.bio || '',
         avatarUrl: null,
       },
@@ -367,19 +372,29 @@ export async function PATCH(request: NextRequest) {
   upsertUserState(sessionUser.id, { profile: profileUpdate });
 
   // Persist to DB
-  if (isDbAvailable() && bio !== undefined) {
-    try {
-      await prisma.searchableUser.update({
-        where: { id: sessionUser.id },
-        data: { bio },
-      });
-    } catch { /* SearchableUser update failed */ }
-    try {
-      await prisma.user.update({
-        where: { id: sessionUser.id },
-        data: { bio },
-      });
-    } catch { /* User update failed */ }
+  if (isDbAvailable()) {
+    const dbUpdate: Record<string, unknown> = {};
+    if (bio !== undefined) dbUpdate.bio = bio;
+    if (topics !== undefined) dbUpdate.topics = topics;
+
+    if (Object.keys(dbUpdate).length > 0) {
+      try {
+        await prisma.searchableUser.update({
+          where: { id: sessionUser.id },
+          data: dbUpdate,
+        });
+      } catch { /* SearchableUser update failed */ }
+
+      // Bio also lives on the User model
+      if (bio !== undefined) {
+        try {
+          await prisma.user.update({
+            where: { id: sessionUser.id },
+            data: { bio },
+          });
+        } catch { /* User update failed */ }
+      }
+    }
   }
 
   return NextResponse.json({

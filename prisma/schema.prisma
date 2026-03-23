@@ -80,6 +80,7 @@ model SearchableUser {
   postCount         Int     @default(0)
   role              String   @default("user")   // user | moderator | admin | creator
   suspendedUntil    DateTime?
+  topics            String[] @default([])  // user's selected interest topics
   onboardingCompletedAt DateTime?  // persisted onboarding completion
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
