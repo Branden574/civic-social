@@ -141,6 +141,13 @@ export default function DebateDetailPage() {
   const [localWebRTCStream, setLocalWebRTCStream] = useState<MediaStream | null>(null);
   const [voiceCameraOn, setVoiceCameraOn] = useState(false);
 
+  // Overdrive: side-pick modal for invited users
+  const [showSidePickModal, setShowSidePickModal] = useState(true);
+
+  // Overdrive: join toast for new participants
+  const [joinToast, setJoinToast] = useState<{ name: string; side: string; sideLabel: string } | null>(null);
+  const seenParticipantIds = useRef<Set<string>>(new Set());
+
   const handleRemoteStreamsChange = useCallback((streams: Map<string, MediaStream>) => {
     setRemoteStreams(streams);
   }, []);
@@ -305,6 +312,21 @@ export default function DebateDetailPage() {
     if (toast) { const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); }
   }, [toast]);
 
+  // Overdrive: detect new participants and show join toast
+  useEffect(() => {
+    if (!debate?.participants) return;
+    for (const p of debate.participants) {
+      if (!seenParticipantIds.current.has(p.userId) && p.userId !== currentUserId) {
+        const sideLabel = p.side === 'A' ? debate.sideA.label : debate.sideB.label;
+        setJoinToast({ name: p.displayName, side: p.side, sideLabel });
+        const t = setTimeout(() => setJoinToast(null), 3500);
+        seenParticipantIds.current.add(p.userId);
+        return () => clearTimeout(t);
+      }
+      seenParticipantIds.current.add(p.userId);
+    }
+  }, [debate?.participants, currentUserId, debate?.sideA.label, debate?.sideB.label]);
+
   // ── Loading / Not found ──────────────────────────────────────
   if (loading) {
     return (
@@ -360,7 +382,7 @@ export default function DebateDetailPage() {
                     debate.status === 'waiting' ? 'bg-info/10 text-info-light' :
                     'bg-surface-active text-text-muted',
                   )}>
-                    {debate.status === 'live' && <span className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />}
+                    {debate.status === 'live' && <span className="w-1.5 h-1.5 rounded-full bg-danger animate-live-glow" />}
                     {debate.status.toUpperCase()}
                   </span>
                   {debate.status === 'live' && (
@@ -557,66 +579,98 @@ export default function DebateDetailPage() {
             </div>
           )}
 
-          {/* ── Join Debate CTA ── */}
-          {canJoin && debate && (
-            <div className={clsx(
-              'px-4 sm:px-6 py-4 border-b border-border-subtle',
-              isInvited ? 'bg-civic-subtle' : '',
-            )}>
+          {/* ── Join Debate CTA (inline — for non-invited users) ── */}
+          {canJoin && debate && !isInvited && (
+            <div className="px-4 sm:px-6 py-4 border-b border-border-subtle">
               <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
-                {isInvited && (
-                  <p className="text-xs font-semibold text-civic-light mb-2 flex items-center gap-1.5">
-                    <UserPlus className="w-3.5 h-3.5" />
-                    You&apos;ve been invited to this debate!
-                  </p>
-                )}
                 <p className="text-sm font-semibold text-text-primary mb-3">
-                  {isInvited ? 'Choose your side to join:' : 'Join this debate — pick a side:'}
+                  Join this debate — pick a side:
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleJoin('A')}
-                    disabled={!!joinLoading}
-                    className={clsx(
-                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-colors',
-                      'hover:border-civic/40 hover:bg-civic-subtle',
-                      joinLoading === 'A' ? 'border-civic/40 bg-civic-subtle' : 'border-border-subtle',
-                    )}
-                  >
-                    {joinLoading === 'A' ? (
-                      <Loader2 className="w-5 h-5 text-civic animate-spin" />
-                    ) : (
-                      <>
-                        <span className="text-sm font-bold text-text-primary">{debate.sideA.label}</span>
-                        <span className={clsx('text-xs font-medium px-2 py-0.5 rounded-full', getAffStyle(debate.sideA.ideology))}>
-                          {debate.sideA.ideology}
-                        </span>
-                        <span className="text-xs text-text-muted">{sideAParticipants.length} debater{sideAParticipants.length !== 1 ? 's' : ''}</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleJoin('B')}
-                    disabled={!!joinLoading}
-                    className={clsx(
-                      'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-colors',
-                      'hover:border-civic/40 hover:bg-civic-subtle',
-                      joinLoading === 'B' ? 'border-civic/40 bg-civic-subtle' : 'border-border-subtle',
-                    )}
-                  >
-                    {joinLoading === 'B' ? (
-                      <Loader2 className="w-5 h-5 text-civic animate-spin" />
-                    ) : (
-                      <>
-                        <span className="text-sm font-bold text-text-primary">{debate.sideB.label}</span>
-                        <span className={clsx('text-xs font-medium px-2 py-0.5 rounded-full', getAffStyle(debate.sideB.ideology))}>
-                          {debate.sideB.ideology}
-                        </span>
-                        <span className="text-xs text-text-muted">{sideBParticipants.length} debater{sideBParticipants.length !== 1 ? 's' : ''}</span>
-                      </>
-                    )}
-                  </button>
+                  {(['A', 'B'] as const).map((side) => {
+                    const sideData = side === 'A' ? debate.sideA : debate.sideB;
+                    const count = side === 'A' ? sideAParticipants.length : sideBParticipants.length;
+                    return (
+                      <button
+                        key={side}
+                        onClick={() => handleJoin(side)}
+                        disabled={!!joinLoading}
+                        className={clsx(
+                          'flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all duration-200',
+                          'hover:border-civic/40 hover:bg-civic-subtle hover:-translate-y-0.5',
+                          joinLoading === side ? 'border-civic/40 bg-civic-subtle' : 'border-border-subtle',
+                        )}
+                      >
+                        {joinLoading === side ? (
+                          <Loader2 className="w-5 h-5 text-civic animate-spin" />
+                        ) : (
+                          <>
+                            <span className="text-sm font-bold text-text-primary">{sideData.label}</span>
+                            <span className={clsx('text-xs font-medium px-2 py-0.5 rounded-full', getAffStyle(sideData.ideology))}>{sideData.ideology}</span>
+                            <span className="text-xs text-text-muted">{count} debater{count !== 1 ? 's' : ''}</span>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Overdrive: Invited User Side-Pick Modal ── */}
+          {canJoin && debate && isInvited && showSidePickModal && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ animation: 'fadeIn 0.2s ease-out forwards' }}>
+              <div className="animate-spring-in bg-surface-elevated border border-border-subtle rounded-2xl shadow-2xl p-8 mx-4 max-w-md w-full">
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-civic-muted flex items-center justify-center mx-auto mb-3">
+                    <Mic className="w-7 h-7 text-civic-light" />
+                  </div>
+                  <h2 className="text-xl font-bold text-text-primary mb-1">You&apos;re invited!</h2>
+                  <p className="text-sm text-text-muted">Choose a side to join the debate</p>
+                  <p className="text-xs font-semibold text-civic-light mt-2 truncate">{debate.title}</p>
+                </div>
+
+                {/* Side cards */}
+                <div className="grid grid-cols-2 gap-4 mb-5">
+                  {(['A', 'B'] as const).map((side, i) => {
+                    const sideData = side === 'A' ? debate.sideA : debate.sideB;
+                    const count = side === 'A' ? sideAParticipants.length : sideBParticipants.length;
+                    return (
+                      <button
+                        key={side}
+                        onClick={() => { handleJoin(side); setShowSidePickModal(false); }}
+                        disabled={!!joinLoading}
+                        className={clsx(
+                          'flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all duration-200',
+                          'hover:border-civic/50 hover:bg-civic-subtle hover:-translate-y-1 hover:shadow-lg hover:shadow-civic/10',
+                          'active:translate-y-0 active:scale-[0.98]',
+                          joinLoading === side ? 'border-civic/40 bg-civic-subtle scale-[0.98]' : 'border-border-subtle',
+                        )}
+                        style={{ animationDelay: `${350 + i * 100}ms`, opacity: 0, animation: `springIn 0.5s var(--ease-decel) ${350 + i * 100}ms forwards` }}
+                      >
+                        {joinLoading === side ? (
+                          <Loader2 className="w-6 h-6 text-civic animate-spin" />
+                        ) : (
+                          <>
+                            <span className="text-base font-bold text-text-primary">{sideData.label}</span>
+                            <span className={clsx('text-xs font-medium px-2.5 py-1 rounded-full', getAffStyle(sideData.ideology))}>{sideData.ideology}</span>
+                            <span className="text-xs text-text-muted">{count} debater{count !== 1 ? 's' : ''}</span>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Skip */}
+                <button
+                  onClick={() => setShowSidePickModal(false)}
+                  className="w-full text-center text-xs text-text-muted hover:text-text-secondary transition-colors py-2"
+                >
+                  Spectate instead
+                </button>
               </div>
             </div>
           )}
@@ -854,6 +908,25 @@ export default function DebateDetailPage() {
             {toast.message}
           </div>
         )}
+
+        {/* Overdrive: Participant joined toast */}
+        {joinToast && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-join-toast">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-surface-elevated/95 backdrop-blur-md border border-border-subtle shadow-xl">
+              <div className={clsx(
+                'w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold',
+                joinToast.side === 'A' ? 'bg-ideology-center-left/15 text-ideology-center-left' : 'bg-ideology-center-right/15 text-ideology-center-right',
+              )}>
+                {joinToast.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-text-primary">{joinToast.name}</p>
+                <p className="text-xs text-text-muted">joined {joinToast.sideLabel}</p>
+              </div>
+              <UserPlus className="w-4 h-4 text-civic-light ml-2" />
+            </div>
+          </div>
+        )}
       </main>
       <MobileNav />
     </div>
@@ -924,11 +997,12 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
             'grid gap-2',
             sideAParticipants.length > 1 ? 'grid-cols-2' : 'grid-cols-1',
           )}>
-            {sideAParticipants.slice(0, 4).map((p) => (
+            {sideAParticipants.slice(0, 4).map((p, i) => (
               <VideoSlot
                 key={p.userId}
                 participant={p}
                 side="A"
+                index={i}
                 isMe={p.userId === currentUserId}
                 isHost={p.userId === creatorId}
                 cameraOn={hasVideoFor(p.userId)}
@@ -950,11 +1024,12 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
             'grid gap-2',
             sideBParticipants.length > 1 ? 'grid-cols-2' : 'grid-cols-1',
           )}>
-            {sideBParticipants.slice(0, 4).map((p) => (
+            {sideBParticipants.slice(0, 4).map((p, i) => (
               <VideoSlot
                 key={p.userId}
                 participant={p}
                 side="B"
+                index={i}
                 isMe={p.userId === currentUserId}
                 isHost={p.userId === creatorId}
                 cameraOn={hasVideoFor(p.userId)}
@@ -976,6 +1051,7 @@ function DebateVideoGrid({ participants, sideA, sideB, currentUserId, creatorId,
 function VideoSlot({
   participant,
   side,
+  index,
   isMe,
   isHost,
   cameraOn,
@@ -983,6 +1059,7 @@ function VideoSlot({
 }: {
   participant: Participant;
   side: 'A' | 'B';
+  index: number;
   isMe: boolean;
   isHost: boolean;
   cameraOn: boolean;
@@ -990,15 +1067,17 @@ function VideoSlot({
 }) {
   const [entered, setEntered] = useState(false);
   const [cameraRevealed, setCameraRevealed] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const prevCameraOn = useRef(false);
 
   const initials = participant.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2);
 
-  // Slot entrance animation
+  // Staggered slot entrance animation
   useEffect(() => {
-    const t = setTimeout(() => setEntered(true), 50);
+    const t = setTimeout(() => setEntered(true), 80 + index * 150);
     return () => clearTimeout(t);
-  }, []);
+  }, [index]);
 
   // Wire video element to stream
   useEffect(() => {
@@ -1007,30 +1086,41 @@ function VideoSlot({
     }
   }, [videoStream]);
 
-  // Camera reveal animation (slight delay for smoothness)
+  // Camera reveal + flash animation
   useEffect(() => {
     if (cameraOn && videoStream) {
-      const t = setTimeout(() => setCameraRevealed(true), 100);
+      const t = setTimeout(() => {
+        setCameraRevealed(true);
+        // Flash only on first camera activation
+        if (!prevCameraOn.current) {
+          setShowFlash(true);
+          setTimeout(() => setShowFlash(false), 700);
+        }
+        prevCameraOn.current = true;
+      }, 100);
       return () => clearTimeout(t);
     } else {
       setCameraRevealed(false);
+      prevCameraOn.current = false;
     }
   }, [cameraOn, videoStream]);
 
   return (
     <div
       className={clsx(
-        'relative aspect-video rounded-xl overflow-hidden transition-colors duration-500 ease-out',
+        'relative aspect-video rounded-xl overflow-hidden transition-all duration-500',
         entered ? 'opacity-100 scale-100' : 'opacity-0 scale-90',
+        showFlash && 'animate-camera-flash',
         cameraRevealed
-          ? 'border-2 border-civic/40 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+          ? 'border-2 border-civic/40 shadow-[0_0_20px_rgba(194,168,120,0.15)]'
           : 'border-2 border-border-subtle',
       )}
+      style={{ transitionTimingFunction: 'var(--ease-spring)' }}
     >
       {/* Camera feed — fades in smoothly */}
       {cameraOn && videoStream ? (
         <div className={clsx(
-          'absolute inset-0 transition-colors duration-700 ease-out',
+          'absolute inset-0 transition-all duration-700 ease-out',
           cameraRevealed ? 'opacity-100 scale-100' : 'opacity-0 scale-105',
         )}>
           <video
@@ -1043,9 +1133,9 @@ function VideoSlot({
         </div>
       ) : null}
 
-      {/* Placeholder (initials) — visible when camera is off, fades out when camera turns on */}
+      {/* Placeholder (initials) — visible when camera is off */}
       <div className={clsx(
-        'absolute inset-0 flex flex-col items-center justify-center bg-surface-elevated transition-colors duration-500',
+        'absolute inset-0 flex flex-col items-center justify-center bg-surface-elevated transition-all duration-500',
         cameraRevealed ? 'opacity-0 scale-95' : 'opacity-100 scale-100',
       )}>
         <div className={clsx(
@@ -1060,8 +1150,14 @@ function VideoSlot({
         </div>
       </div>
 
-      {/* Name overlay — always visible */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-2.5 py-2 z-10">
+      {/* Name overlay — slides up on entrance */}
+      <div
+        className={clsx(
+          'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-2.5 py-2 z-10 transition-all duration-300',
+          entered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2',
+        )}
+        style={{ transitionDelay: `${200 + index * 150}ms` }}
+      >
         <div className="flex items-center gap-1.5">
           {isHost && <Crown className="w-3 h-3 text-warning shrink-0" />}
           <span className="text-xs font-medium text-white truncate">
@@ -1069,7 +1165,7 @@ function VideoSlot({
           </span>
           {cameraRevealed && (
             <span className="ml-auto flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-positive animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-positive animate-breathe" />
               <span className="text-[9px] text-positive-light font-medium">LIVE</span>
             </span>
           )}

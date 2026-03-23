@@ -158,6 +158,43 @@ body {
   animation: slideUp 0.3s var(--ease-decel) forwards;
 }
 
+/* ── Overdrive: Broadcast Studio Animations ── */
+
+@keyframes springIn {
+  0% { opacity: 0; transform: scale(0.92) translateY(12px); }
+  55% { opacity: 1; transform: scale(1.03) translateY(-3px); }
+  80% { transform: scale(0.99) translateY(1px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes cameraFlash {
+  0% { border-color: var(--color-civic); box-shadow: 0 0 0 rgba(194,168,120,0); }
+  40% { border-color: var(--color-civic-light); box-shadow: 0 0 24px rgba(194,168,120,0.35); }
+  100% { border-color: var(--color-civic); box-shadow: 0 0 0 rgba(194,168,120,0); }
+}
+
+@keyframes liveGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(239,68,68,0.3); }
+  50% { box-shadow: 0 0 14px rgba(239,68,68,0.5); }
+}
+
+@keyframes joinSlideIn {
+  0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-spring-in { animation: springIn 0.55s var(--ease-decel) forwards; }
+.animate-breathe { animation: breathe 2s ease-in-out infinite; }
+.animate-camera-flash { animation: cameraFlash 0.7s ease-out forwards; }
+.animate-live-glow { animation: liveGlow 2s ease-in-out infinite; }
+.animate-join-toast { animation: joinSlideIn 0.5s var(--ease-spring) forwards; }
+
 /* ── Smooth theme transition ── */
 html, body {
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -387,10 +424,19 @@ html *:not([class*="animate-"]) {
   .animate-shared-expand,
   .animate-bottom-sheet-up,
   .animate-scale-in,
-  .animate-pop-in {
+  .animate-pop-in,
+  .animate-spring-in,
+  .animate-camera-flash,
+  .animate-live-glow,
+  .animate-join-toast {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .animate-breathe {
+    animation: none !important;
+    opacity: 1 !important;
   }
   
   .skeleton-shimmer {

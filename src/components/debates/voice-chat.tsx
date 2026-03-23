@@ -1087,19 +1087,30 @@ function VoiceAvatar({
 
   return (
     <div className="flex flex-col items-center gap-1 group relative">
-      {/* Outer ring — animated green pulse when speaking */}
+      {/* Outer ring — audio-reactive glow when speaking */}
       <div className="relative">
         {visualState === 'speaking' && (
-          <div className="absolute inset-0 rounded-xl bg-positive/20 animate-ping" style={{ animationDuration: '1.5s' }} />
+          <div
+            className="absolute -inset-1 rounded-xl opacity-60"
+            style={{
+              background: 'radial-gradient(circle, rgba(34,197,94,0.3) 0%, transparent 70%)',
+              animation: 'breathe 1.2s ease-in-out infinite',
+            }}
+          />
         )}
-        <div className={clsx(
-          'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold relative transition-colors duration-300',
-          visualState === 'speaking'
-            ? 'bg-positive/20 text-positive-light ring-2 ring-positive shadow-[0_0_12px_rgba(34,197,94,0.35)]'
-            : visualState === 'silent'
-              ? 'bg-positive/10 text-positive-light ring-2 ring-positive/25'
-              : 'bg-surface-active text-text-muted',
-        )}>
+        <div
+          className={clsx(
+            'w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold relative transition-all duration-300',
+            visualState === 'speaking'
+              ? 'bg-positive/20 text-positive-light ring-2 ring-positive scale-[1.04]'
+              : visualState === 'silent'
+                ? 'bg-positive/10 text-positive-light ring-2 ring-positive/25'
+                : 'bg-surface-active text-text-muted',
+          )}
+          style={visualState === 'speaking' ? {
+            boxShadow: '0 0 16px rgba(34,197,94,0.4), 0 0 32px rgba(34,197,94,0.15)',
+          } : undefined}
+        >
           {initials}
           {isHost && (
             <Crown className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 text-warning" />
