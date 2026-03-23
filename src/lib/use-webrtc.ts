@@ -269,53 +269,61 @@ export function useWebRTC(
 
     const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
 
-    if (type === 'offer') {
-      const offerCollision = makingOffer || pc.signalingState !== 'stable';
-      peerState.ignoreOffer = !polite && offerCollision;
-      if (peerState.ignoreOffer) {
-        console.log(`[WebRTC] Ignoring offer from ${fromUserId} (collision, impolite)`);
-        return;
-      }
-      console.log(`[WebRTC] Processing offer from ${fromUserId}`);
-
-      await pc.setRemoteDescription(new RTCSessionDescription(parsed));
-      await pc.setLocalDescription();
-      sendSignal(fromUserId, 'answer', {
-        type: pc.localDescription!.type,
-        sdp: pc.localDescription!.sdp,
-      });
-    } else if (type === 'answer') {
-      console.log(`[WebRTC] Processing answer from ${fromUserId}`);
-      await pc.setRemoteDescription(new RTCSessionDescription(parsed));
-    } else if (type === 'ice-candidate') {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(parsed));
-      } catch {
-        if (!peerState.ignoreOffer) {
-          // ICE candidate error — non-critical
+    try {
+      if (type === 'offer') {
+        const offerCollision = makingOffer || pc.signalingState !== 'stable';
+        peerState.ignoreOffer = !polite && offerCollision;
+        if (peerState.ignoreOffer) {
+          console.log(`[WebRTC] Ignoring offer from ${fromUserId} (collision, impolite)`);
+          return;
         }
+        console.log(`[WebRTC] Processing offer from ${fromUserId}, signalingState=${pc.signalingState}`);
+
+        await pc.setRemoteDescription(new RTCSessionDescription(parsed));
+        await pc.setLocalDescription();
+        console.log(`[WebRTC] Sending answer to ${fromUserId}`);
+        sendSignal(fromUserId, 'answer', {
+          type: pc.localDescription!.type,
+          sdp: pc.localDescription!.sdp,
+        });
+      } else if (type === 'answer') {
+        console.log(`[WebRTC] Processing answer from ${fromUserId}, signalingState=${pc.signalingState}`);
+        await pc.setRemoteDescription(new RTCSessionDescription(parsed));
+      } else if (type === 'ice-candidate') {
+        await pc.addIceCandidate(new RTCIceCandidate(parsed));
       }
+    } catch (err) {
+      console.error(`[WebRTC] Error handling ${type} from ${fromUserId}:`, err);
     }
   }, [createPeer, currentUserId, sendSignal]);
 
   // ── Poll for signals ───────────────────────────────────────
+  const pollCountRef = useRef(0);
   const pollSignals = useCallback(async () => {
     if (!activeRef.current) return;
+    pollCountRef.current++;
     try {
       const res = await fetch(
         `/api/debates/${encodeURIComponent(debateId)}/voice?_t=${Date.now()}`,
       );
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[WebRTC] Poll HTTP ${res.status}`);
+        return;
+      }
       const data = await res.json();
       const signals: SignalMessage[] = data.signals || [];
+      // Log first 5 polls and whenever signals arrive
+      if (pollCountRef.current <= 5 || signals.length > 0) {
+        console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}`);
+      }
       if (signals.length > 0) {
-        console.log(`[WebRTC] Poll received ${signals.length} signal(s):`, signals.map(s => `${s.type} from ${s.fromUserId?.slice(-8)}`));
+        console.log(`[WebRTC] Signals:`, signals.map(s => `${s.type} from ${s.fromUserId?.slice(-8)}`));
       }
       for (const sig of signals) {
         await handleSignal(sig);
       }
-    } catch {
-      // Poll failed — will retry
+    } catch (err) {
+      console.error(`[WebRTC] Poll error:`, err);
     }
   }, [debateId, handleSignal]);
 
