@@ -143,6 +143,7 @@ export default function DebateDetailPage() {
 
   // Overdrive: side-pick modal for invited users
   const [showSidePickModal, setShowSidePickModal] = useState(true);
+  const wasInvitedRef = useRef(false);
 
   // Overdrive: join toast for new participants
   const [joinToast, setJoinToast] = useState<{ name: string; side: string; sideLabel: string } | null>(null);
@@ -219,7 +220,7 @@ export default function DebateDetailPage() {
     }
   }, [debate, debateId]);
 
-  // Auto-refresh debate state every 4s (only updates if data changed to avoid re-renders)
+  // Auto-refresh debate state every 2s (only updates if data changed to avoid re-renders)
   const debateLoadedRef = useRef(false);
   useEffect(() => {
     if (!debate && !debateLoadedRef.current) return;
@@ -238,7 +239,7 @@ export default function DebateDetailPage() {
           });
         }
       } catch { /* ignore */ }
-    }, 4000);
+    }, 2000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debateId]);
@@ -306,6 +307,14 @@ export default function DebateDetailPage() {
       setToast({ message: 'Network error.', type: 'error' });
     } finally { setJoinLoading(null); }
   }, [debateId, debate?.sideA.label, debate?.sideB.label]);
+
+  // Detect when user newly becomes invited → re-show the side-pick modal
+  useEffect(() => {
+    if (isInvited && !wasInvitedRef.current && !isDebater) {
+      setShowSidePickModal(true);
+    }
+    wasInvitedRef.current = isInvited;
+  }, [isInvited, isDebater]);
 
   // Auto-dismiss toast
   useEffect(() => {

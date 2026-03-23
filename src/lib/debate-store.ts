@@ -354,7 +354,7 @@ export async function inviteToDebate(debateId: string, creatorId: string, target
   if (!debate.invitedUserIds.includes(targetUserId)) {
     debate.invitedUserIds.push(targetUserId);
   }
-  persistDebate(debate);
+  await persistDebate(debate, true);
   return true;
 }
 
