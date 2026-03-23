@@ -318,7 +318,10 @@ export function useWebRTC(
       if (pollCountRef.current <= 5 || signals.length > 0) {
         const d = data._debug;
         console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}` +
-          (d ? ` | DB: user=${d.userId}, unconsumed=${d.totalUnconsumed}, forMe=${d.forMe}` : ''));
+          (d ? ` | myId=${d.myId}, unconsumed=${d.totalUnconsumed}, forMe=${d.forMe}` : ''));
+        if (d?.targets?.length > 0 && d.forMe === 0 && d.totalUnconsumed > 0) {
+          console.warn(`[WebRTC] MISMATCH! Signals exist but none for me. Targets:`, d.targets);
+        }
       }
       if (signals.length > 0) {
         console.log(`[WebRTC] Signals:`, signals.map(s => `${s.type} from ${s.fromUserId?.slice(-8)}`));

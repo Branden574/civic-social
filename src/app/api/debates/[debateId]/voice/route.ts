@@ -50,25 +50,28 @@ export async function GET(
   // Only fetch signals for authenticated users (signals are addressed to specific userIds)
   const signals = room && userId ? await getSignals(debateId, userId) : [];
 
-  // Debug: count all unconsumed signals in DB to check if signals exist but don't match
+  // Debug: check signal addressing
   let debugTotalUnconsumed = 0;
   let debugForMe = 0;
+  let debugTargets: string[] = [];
   if (room && userId) {
     try {
       const { prisma } = await import('@/lib/db');
-      debugTotalUnconsumed = await prisma.voiceSignal.count({
+      const unconsumed = await prisma.voiceSignal.findMany({
         where: { debateId, consumed: false },
+        select: { toUserId: true, fromUserId: true, type: true },
+        take: 10,
       });
-      debugForMe = await prisma.voiceSignal.count({
-        where: { debateId, consumed: false, toUserId: userId },
-      });
+      debugTotalUnconsumed = unconsumed.length;
+      debugForMe = unconsumed.filter(s => s.toUserId === userId).length;
+      debugTargets = [...new Set(unconsumed.map(s => `to:${s.toUserId.slice(-12)} from:${s.fromUserId.slice(-12)}`))];
     } catch { /* ignore */ }
   }
 
   return NextResponse.json({
     room,
     signals,
-    _debug: { userId: userId?.slice(-8) ?? 'NONE', signalsReturned: signals.length, totalUnconsumed: debugTotalUnconsumed, forMe: debugForMe },
+    _debug: { myId: userId ?? 'NONE', signalsReturned: signals.length, totalUnconsumed: debugTotalUnconsumed, forMe: debugForMe, targets: debugTargets },
     serverTime: new Date().toISOString(),
   });
 }
