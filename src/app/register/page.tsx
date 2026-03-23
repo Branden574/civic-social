@@ -157,32 +157,32 @@ export default function RegisterPage() {
   const topicCount = selectedTopics.length;
 
   return (
-    <div className="min-h-screen bg-bg flex">
+    <div className="min-h-screen flex" style={{ background: '#0a0a09' }}>
+      {/* Noise overlay */}
+      <div className="fixed inset-0 z-[1] pointer-events-none opacity-[0.035]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+
       {/* Left — branding panel (desktop) */}
-      <div className="hidden lg:flex lg:w-[480px] bg-[#1a1a1a] p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[480px] p-12 flex-col justify-between relative overflow-hidden" style={{ background: '#0d0c0a' }}>
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute w-[400px] h-[400px] top-[20%] left-[-10%] opacity-[0.08] blur-[100px]" style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.4) 0%, transparent 70%)' }} />
+          <div className="absolute w-[400px] h-[400px] top-[20%] left-[-10%] opacity-[0.04] blur-[100px]" style={{ background: 'radial-gradient(ellipse, rgba(194,168,120,0.4) 0%, transparent 70%)' }} />
         </div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-14">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-white">
-              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
-            </svg>
-            <span className="text-xl font-bold text-white">Civic Social</span>
-          </div>
+          <Link href="/" className="landing-serif-title text-lg uppercase tracking-[0.05em] mb-14 block" style={{ color: '#f4f0ea' }}>
+            Civic Social
+          </Link>
 
-          <h2 className="text-3xl font-bold text-white leading-tight mb-5">
+          <h2 className="landing-serif-title text-4xl leading-tight mb-5" style={{ color: '#f4f0ea' }}>
             Where ideas compete,
             <br />
             not identities.
           </h2>
-          <p className="text-white/70 text-base leading-relaxed">
+          <p className="text-base leading-relaxed" style={{ color: 'rgba(244,240,234,0.65)' }}>
             Join a platform built for civil discourse, evidence-based debate, and solution-driven
             civic engagement. No rage algorithms. No echo chambers. No ad tracking.
           </p>
         </div>
 
-        <div className="space-y-5 text-white/60 text-sm">
+        <div className="space-y-5 text-sm" style={{ color: 'rgba(244,240,234,0.5)' }}>
           <div className="flex items-center gap-3">
             <Lock className="w-4 h-4" />
             <span>End-to-end encryption &middot; GDPR compliant</span>
@@ -199,29 +199,28 @@ export default function RegisterPage() {
       </div>
 
       {/* Right — registration form */}
-      <div className="flex-1 flex items-center justify-center p-5 sm:p-8">
+      <div className="flex-1 flex items-center justify-center p-5 sm:p-8 relative z-10">
         <div className="w-full max-w-[440px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-text-primary">
-              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
-            </svg>
-            <span className="text-lg font-bold text-text-primary">Civic Social</span>
+            <Link href="/" className="landing-serif-title text-lg uppercase tracking-[0.05em]" style={{ color: '#f4f0ea' }}>
+              Civic Social
+            </Link>
           </div>
 
           {/* Progress bar */}
           <div className="flex items-center gap-2 mb-10">
-            <div className={clsx('h-1 flex-1 rounded-full transition-colors', currentIdx >= 0 ? 'bg-civic' : 'bg-surface-active')} />
-            <div className={clsx('h-1 flex-1 rounded-full transition-colors', currentIdx >= 1 ? 'bg-civic' : 'bg-surface-active')} />
+            <div className={clsx('h-1 flex-1 rounded-full transition-colors', currentIdx >= 0 ? 'bg-[#c2a878]' : 'bg-[rgba(244,240,234,0.08)]')} />
+            <div className={clsx('h-1 flex-1 rounded-full transition-colors', currentIdx >= 1 ? 'bg-[#c2a878]' : 'bg-[rgba(244,240,234,0.08)]')} />
           </div>
 
           {/* ═══ STEP 1: Create Account ═══ */}
           {step === 'account' && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl font-bold text-text-primary mb-2">
+              <h2 className="landing-serif-title text-3xl mb-2" style={{ color: '#f4f0ea' }}>
                 Create your Account
               </h2>
-              <p className="text-sm text-text-muted mb-8">
+              <p className="text-sm mb-8" style={{ color: 'rgba(244,240,234,0.65)' }}>
                 Choose a display name, email, and password. Your data is encrypted and never sold.
               </p>
 
@@ -547,9 +546,9 @@ export default function RegisterPage() {
 
           {/* Login link */}
           {step === 'account' && (
-            <p className="text-sm text-text-muted text-center mt-8">
+            <p className="text-sm text-center mt-8" style={{ color: 'rgba(244,240,234,0.65)' }}>
               Already have an account?{' '}
-              <Link href="/login" className="text-civic-light font-semibold hover:text-civic transition-colors">
+              <Link href="/login" className="font-semibold transition-colors hover:opacity-80" style={{ color: '#c2a878' }}>
                 Sign in
               </Link>
             </p>
