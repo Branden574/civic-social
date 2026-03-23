@@ -41,3 +41,14 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# AI tool configs
+.agent/
+.agents/
+.claude/
+.junie/
+.kiro/
+skills-lock.json
+
+# Playwright MCP logs
+.playwright-mcp/
