@@ -43,15 +43,15 @@ export async function POST(request: NextRequest) {
     try {
       await prisma.$executeRaw`
         INSERT INTO "ContactSubmission" ("id", "name", "email", "subject", "message", "ip", "createdAt")
-        VALUES (${`contact-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`}, ${name}, ${email}, ${subject}, ${message}, ${ip}, NOW())
+        VALUES (${`contact-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`}, ${name}, ${email}, ${subject}, ${message}, ${'redacted'}, NOW())
       `;
     } catch (err) {
       console.error('[contact] DB insert failed, falling back to log:', err);
-      console.log('[contact-submission]', JSON.stringify({ name, email, subject, message: message.slice(0, 200), ip, at: new Date().toISOString() }));
+      console.log('[contact-submission]', JSON.stringify({ name, subject, message: message.slice(0, 200), at: new Date().toISOString() }));
     }
   } else {
-    // Log submission so it isn't lost
-    console.log('[contact-submission]', JSON.stringify({ name, email, subject, message: message.slice(0, 200), ip, at: new Date().toISOString() }));
+    // Log submission so it isn't lost (no PII beyond name/subject)
+    console.log('[contact-submission]', JSON.stringify({ name, subject, message: message.slice(0, 200), at: new Date().toISOString() }));
   }
 
   return NextResponse.json({

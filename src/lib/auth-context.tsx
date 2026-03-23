@@ -110,7 +110,10 @@ const STORAGE_KEY = 'civic-auth-user';
 
 function persistUser(user: AuthUser) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    // Exclude email from localStorage — it's PII that doesn't need client persistence.
+    // The email is fetched from the server session on page load via /api/me.
+    const { email: _email, ...safeUser } = user;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(safeUser));
   } catch {
     // noop — SSR / private browsing
   }

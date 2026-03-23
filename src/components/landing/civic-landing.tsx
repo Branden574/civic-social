@@ -290,8 +290,9 @@ export function CivicLanding() {
                 </h2>
                 <ul className="space-y-4 mt-6">
                   {[
+                    ['Your Data Stays Yours', 'We don\'t sell, share, or monetize your personal data. No tracking pixels, no ad networks, no behavioral profiling. Passwords are cryptographically hashed — we can\'t read them even if we wanted to.'],
                     ['Verified Identity', 'Multi-tier verification tied to professional credentials, not just payment. Know who you\'re engaging with.'],
-                    ['Contextual Transparency', 'Every ranking signal is published. See exactly why content appears in your feed — no black boxes.'],
+                    ['Contextual Transparency', 'Every ranking signal is published. See exactly why content appears in your feed — no black boxes, no hidden algorithms.'],
                     ['Structural Civility', 'Proactive protections, not reactive bans. Conversation health monitoring with de-escalation built in.'],
                   ].map(([title, desc]) => (
                     <li key={title} className="pl-6 relative">
