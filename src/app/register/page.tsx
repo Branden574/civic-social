@@ -50,6 +50,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupError, setSignupError] = useState('');
@@ -114,6 +115,10 @@ export default function RegisterPage() {
       setSignupError('Password must be at least 8 characters.');
       return;
     }
+    if (password !== confirmPassword) {
+      setSignupError('Passwords do not match.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -153,7 +158,7 @@ export default function RegisterPage() {
 
   // ─── Derived state ────────────────────────────────────────
 
-  const canCreateAccount = displayName.trim().length >= 2 && !displayNameError && email.includes('@') && password.length >= 8;
+  const canCreateAccount = displayName.trim().length >= 2 && !displayNameError && email.includes('@') && password.length >= 8 && password === confirmPassword;
   const topicCount = selectedTopics.length;
 
   return (
@@ -283,9 +288,6 @@ export default function RegisterPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimum 8 characters"
                       className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic transition-colors pr-12"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && canCreateAccount) handleCreateAccount();
-                      }}
                     />
                     <button
                       type="button"
@@ -295,6 +297,30 @@ export default function RegisterPage() {
                       {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                     </button>
                   </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                    Confirm Password
+                  </label>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter your password"
+                    className={`w-full px-4 py-3.5 bg-surface border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40 focus:border-civic transition-colors ${
+                      confirmPassword && confirmPassword !== password
+                        ? 'border-danger/50'
+                        : 'border-border'
+                    }`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && canCreateAccount) handleCreateAccount();
+                    }}
+                  />
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="text-xs text-danger-light mt-1.5">Passwords do not match</p>
+                  )}
                 </div>
               </div>
 
