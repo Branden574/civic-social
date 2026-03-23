@@ -345,13 +345,18 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   }, []);
 
   // ── Connect to new peers when room participants change ─────
+  // Use a stable string key so React detects new participants reliably
+  const peerIdKey = room?.participants
+    ?.map((p) => p.userId)
+    .filter((id) => id !== currentUserId)
+    .sort()
+    .join(',') ?? '';
+
   useEffect(() => {
-    if (!joined || !room?.participants) return;
-    const peerIds = room.participants
-      .map((p) => p.userId)
-      .filter((id) => id !== currentUserId);
+    if (!joined || !peerIdKey) return;
+    const peerIds = peerIdKey.split(',');
     if (peerIds.length > 0) connectToPeers(peerIds);
-  }, [joined, room?.participants, currentUserId, connectToPeers]);
+  }, [joined, peerIdKey, connectToPeers]);
 
   // Current user's participant state
   const myParticipant = room?.participants.find((p) => p.userId === currentUserId) ?? null;
@@ -388,7 +393,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
 
   useEffect(() => {
     if (!room?.enabled) return;
-    const interval = setInterval(fetchRoom, 3000);
+    const interval = setInterval(fetchRoom, 1500);
     return () => clearInterval(interval);
   }, [fetchRoom, room?.enabled]);
 

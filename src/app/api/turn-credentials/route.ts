@@ -24,11 +24,17 @@ export async function GET(request: NextRequest) {
     try {
       const res = await fetch(
         `https://civic-social.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`,
-        { next: { revalidate: 300 } }, // cache for 5 minutes
       );
       if (res.ok) {
-        const iceServers = await res.json();
-        return NextResponse.json({ servers: iceServers }, {
+        const meteredServers = await res.json();
+        // Metered may return {url} instead of {urls} — normalize for RTCPeerConnection
+        const normalized = (meteredServers as Record<string, unknown>[]).map((s) => ({
+          urls: (s.urls || s.url) as string,
+          ...(s.username ? { username: s.username as string } : {}),
+          ...(s.credential ? { credential: s.credential as string } : {}),
+        }));
+        const servers = [...DEFAULT_ICE_SERVERS, ...normalized];
+        return NextResponse.json({ servers }, {
           headers: { 'Cache-Control': 'private, max-age=300' },
         });
       }

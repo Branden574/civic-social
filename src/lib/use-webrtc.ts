@@ -56,9 +56,15 @@ async function getIceServers(): Promise<RTCIceServer[]> {
     const res = await fetch('/api/turn-credentials');
     if (res.ok) {
       const data = await res.json();
-      return data.servers ?? DEFAULT_ICE_SERVERS;
+      const servers = data.servers ?? DEFAULT_ICE_SERVERS;
+      if (typeof window !== 'undefined') {
+        const hasTurn = servers.some((s: RTCIceServer) => String(s.urls).startsWith('turn'));
+        console.log(`[WebRTC] ICE servers: ${servers.length} configured, TURN: ${hasTurn}`);
+      }
+      return servers;
     }
   } catch { /* fall through */ }
+  console.warn('[WebRTC] Failed to fetch ICE servers, using STUN-only fallback');
   return DEFAULT_ICE_SERVERS;
 }
 
