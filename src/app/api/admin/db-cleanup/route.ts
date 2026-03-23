@@ -5,8 +5,8 @@ import { getSessionUser } from '@/lib/security/api-guard';
 // POST /api/admin/db-cleanup — purge old data to free DB space
 export async function POST(request: NextRequest) {
   const user = getSessionUser(request);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: 'Auth required' }, { status: 401 });
   }
 
   if (!isDbAvailable()) {
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
 // GET — just show counts without deleting
 export async function GET(request: NextRequest) {
   const user = getSessionUser(request);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: 'Auth required' }, { status: 401 });
   }
 
   if (!isDbAvailable()) {
