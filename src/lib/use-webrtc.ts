@@ -302,6 +302,10 @@ export function useWebRTC(
       if (!res.ok) return;
       const data = await res.json();
       const signals: SignalMessage[] = data.signals || [];
+      // Debug: log auth and signal status
+      if (signals.length > 0 || data.userId === 'UNAUTHENTICATED') {
+        console.log(`[WebRTC] Poll: userId=${data.userId}, signals=${signals.length}`);
+      }
       for (const sig of signals) {
         await handleSignal(sig);
       }
