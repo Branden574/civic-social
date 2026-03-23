@@ -5,7 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
-import { readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
+import { readLimiter, socialLimiter, authLimiter } from '@/lib/security/rate-limiter';
+import { verifyPassword } from '@/lib/security/hash';
+import { logAuditAction } from '@/lib/audit-log';
+import { sessionCookieOptions } from '@/lib/security/session';
 import {
   getUserState,
   upsertUserState,
@@ -384,4 +387,91 @@ export async function PATCH(request: NextRequest) {
     ...(bio !== undefined && { bio }),
     ...(topics !== undefined && { topics }),
   });
+}
+
+// ─── DELETE /api/me — Delete account and all data ───────────
+
+export async function DELETE(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = authLimiter.check(ip);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
+
+  const sessionUser = getSessionUser(request);
+  if (!sessionUser) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  if (!isDbAvailable()) {
+    return NextResponse.json({ error: 'Database unavailable.' }, { status: 503 });
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('Invalid JSON.');
+  }
+
+  // Require password confirmation for account deletion
+  const password = body.password as string;
+  if (!password) {
+    return badRequest('Password is required to delete your account.');
+  }
+
+  // Verify password
+  const dbUser = await prisma.searchableUser.findUnique({
+    where: { id: sessionUser.id },
+    select: { passwordHash: true },
+  });
+  if (!dbUser?.passwordHash) {
+    return NextResponse.json({ error: 'Account not found.' }, { status: 404 });
+  }
+
+  const passwordValid = verifyPassword(password, dbUser.passwordHash);
+  if (!passwordValid) {
+    return NextResponse.json({ error: 'Incorrect password.' }, { status: 403 });
+  }
+
+  const userId = sessionUser.id;
+
+  // Soft-delete posts
+  await prisma.storedPost.updateMany({
+    where: { authorId: userId },
+    data: { deletedAt: new Date() },
+  });
+
+  // Soft-delete comments
+  await prisma.storedComment.updateMany({
+    where: { authorId: userId },
+    data: { deletedAt: new Date() },
+  });
+
+  // Delete notifications
+  await prisma.notification.deleteMany({
+    where: { OR: [{ recipientUserId: userId }, { actorUserId: userId }] },
+  });
+
+  // Delete searchable user record
+  await prisma.searchableUser.delete({ where: { id: userId } });
+
+  // Delete auth user record (cascades Follow, Reaction, etc.)
+  try {
+    await prisma.user.delete({ where: { id: userId } });
+  } catch {
+    // May only exist in SearchableUser
+  }
+
+  await logAuditAction({
+    actorId: userId,
+    action: 'self_delete_account',
+    targetType: 'user',
+    targetId: userId,
+    details: {},
+    ip,
+  });
+
+  // Clear the session cookie
+  const response = NextResponse.json({ success: true });
+  response.cookies.set('civic-session', '', { ...sessionCookieOptions(0), maxAge: 0 });
+  return response;
 }

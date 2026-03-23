@@ -138,24 +138,7 @@ export default function SettingsPage() {
             </SettingsSection>
 
             {/* Data */}
-            <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
-              <h3 className="text-sm font-semibold text-text-primary mb-4">
-                Your Data
-              </h3>
-              <div className="space-y-3">
-                <button className="flex items-center gap-2 text-sm text-info-light hover:underline">
-                  <Download className="w-4 h-4" />
-                  Export all your data (GDPR)
-                </button>
-                <button className="flex items-center gap-2 text-sm text-danger-light hover:underline">
-                  <Trash2 className="w-4 h-4" />
-                  Delete all data and close account
-                </button>
-              </div>
-              <p className="text-xs text-text-muted mt-3">
-                Data deletion is permanent and irrecoverable. All your posts will be anonymized.
-              </p>
-            </div>
+            <DataSection />
           </div>
 
           <div className="h-20 lg:h-8" />
@@ -990,6 +973,137 @@ function ThemeToggleSetting() {
           {preference === 'system' && ' (from system preference)'}
         </p>
       </div>
+    </div>
+  );
+}
+
+// ─── Data / Account Deletion Section ─────────────────────────
+
+function DataSection() {
+  const { logout } = useAuth();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
+
+  const handleExport = useCallback(async () => {
+    setExportLoading(true);
+    try {
+      const res = await fetch('/api/me');
+      if (!res.ok) throw new Error('Failed to fetch data');
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `civic-social-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Export failed silently
+    }
+    setExportLoading(false);
+  }, []);
+
+  const handleDelete = useCallback(async () => {
+    if (!deletePassword) {
+      setDeleteError('Please enter your password.');
+      return;
+    }
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      const res = await fetch('/api/me', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDeleteError(data.error || 'Failed to delete account.');
+        return;
+      }
+      // Account deleted — log out and redirect
+      logout();
+    } catch {
+      setDeleteError('Network error. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deletePassword, logout]);
+
+  return (
+    <div className="bg-surface-elevated rounded-xl border border-border-subtle p-5">
+      <h3 className="text-sm font-semibold text-text-primary mb-4">
+        Your Data
+      </h3>
+      <div className="space-y-3">
+        <button
+          onClick={handleExport}
+          disabled={exportLoading}
+          className="flex items-center gap-2 text-sm text-civic-light hover:underline disabled:opacity-50"
+        >
+          {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          Export all your data (GDPR)
+        </button>
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="flex items-center gap-2 text-sm text-danger-light hover:underline"
+        >
+          <Trash2 className="w-4 h-4" />
+          Delete all data and close account
+        </button>
+      </div>
+      <p className="text-xs text-text-muted mt-3">
+        Data deletion is permanent and irrecoverable. All your posts will be removed.
+      </p>
+
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-surface-elevated border border-border-subtle rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <h3 className="text-base font-semibold text-text-primary mb-2">
+              Delete your account?
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              This will permanently delete your account, posts, comments, and all associated data. This action <strong>cannot be undone</strong>.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                Enter your password to confirm
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(''); }}
+                placeholder="Your password"
+                className="w-full px-3 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-danger/40 focus:border-danger transition-colors"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter' && deletePassword) handleDelete(); }}
+              />
+              {deleteError && (
+                <p className="text-xs text-danger-light mt-1.5">{deleteError}</p>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); setDeleteError(''); }}
+                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl hover:bg-surface-hover transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteLoading || !deletePassword}
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-danger text-white hover:bg-danger/80 transition-colors disabled:opacity-50"
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete my account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
