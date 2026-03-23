@@ -15,7 +15,7 @@ import {
   toggleSelfMute,
   serverMuteUser,
   muteAll,
-  postSignal,
+  postSignalAndFetch,
   getSignals,
   clearVoiceRoom,
 } from '@/lib/voice-signaling';
@@ -230,10 +230,15 @@ export async function PATCH(
       if (!payload) return badRequest('payload required.');
       const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
       if (payloadStr.length > 65_000) return badRequest('Payload too large.');
-      const signal = await postSignal(debateId, userId, toUserId, signalType, payloadStr);
-      // Piggyback: return pending signals for the sender on the same DB connection
-      const pendingForMe = await getSignals(debateId, userId);
-      return NextResponse.json({ success: true, signal, pendingSignals: pendingForMe, _dbWrite: signal.id?.startsWith('sig-') ? 'MEMORY_FALLBACK' : 'DB_OK' });
+      // Write signal AND fetch pending signals in ONE transaction (same DB connection)
+      // This bypasses Neon's cross-instance read inconsistency on Vercel serverless
+      const { signal, pending } = await postSignalAndFetch(debateId, userId, toUserId, signalType, payloadStr);
+      return NextResponse.json({
+        success: true,
+        signal,
+        pendingSignals: pending,
+        _dbWrite: signal.id?.startsWith('sig-') ? 'MEMORY_FALLBACK' : 'DB_OK',
+      });
     }
 
     default:

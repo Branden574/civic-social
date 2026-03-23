@@ -324,13 +324,18 @@ export async function muteAll(debateId: string, hostUserId: string): Promise<boo
 
 // ─── Signaling relay ────────────────────────────────────────────
 
-export async function postSignal(
+/**
+ * Post a signal AND atomically fetch pending signals for the sender.
+ * Using a single transaction ensures read-after-write consistency on
+ * Neon Postgres, which has cross-instance read inconsistency on Vercel.
+ */
+export async function postSignalAndFetch(
   debateId: string,
   fromUserId: string,
   toUserId: string,
   type: SignalingMessage['type'],
   payload: string,
-): Promise<SignalingMessage> {
+): Promise<{ signal: SignalingMessage; pending: SignalingMessage[] }> {
   const signal: SignalingMessage = {
     id: `sig-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     debateId,
@@ -344,36 +349,59 @@ export async function postSignal(
 
   if (isDbAvailable()) {
     try {
-      const row = await prisma.voiceSignal.create({
-        data: {
-          debateId,
-          fromUserId,
-          toUserId,
-          type,
-          payload,
-          consumed: false,
-        },
-      });
-      signal.id = row.id;
-      console.log(`[voice] postSignal OK: ${type} from ${fromUserId.slice(-8)} to ${toUserId.slice(-8)} (${payload.length} chars)`);
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. Write the outgoing signal
+        const row = await tx.voiceSignal.create({
+          data: { debateId, fromUserId, toUserId, type, payload, consumed: false },
+        });
 
-      // Cleanup: delete consumed signals older than 30 seconds
-      // Fire-and-forget to keep the table small
+        // 2. Read pending signals for the sender (same transaction = same connection)
+        const pendingRows = await tx.voiceSignal.findMany({
+          where: {
+            debateId,
+            consumed: false,
+            toUserId: { in: [fromUserId, 'all'] },
+            NOT: { fromUserId },
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 50,
+        });
+
+        // 3. Mark them consumed
+        if (pendingRows.length > 0) {
+          await tx.voiceSignal.updateMany({
+            where: { id: { in: pendingRows.map((r) => r.id) } },
+            data: { consumed: true },
+          });
+        }
+
+        // 4. Cleanup old consumed signals (fire-and-forget outside transaction)
+        return { written: row, pendingRows };
+      });
+
+      signal.id = result.written.id;
+
+      // Cleanup outside transaction
       const cutoff = new Date(Date.now() - 30_000);
       prisma.voiceSignal.deleteMany({
-        where: {
-          debateId,
-          consumed: true,
-          createdAt: { lt: cutoff },
-        },
+        where: { debateId, consumed: true, createdAt: { lt: cutoff } },
       }).catch(() => {});
 
-      return signal;
+      const pending = result.pendingRows.map((r) => ({
+        id: r.id,
+        debateId: r.debateId,
+        fromUserId: r.fromUserId,
+        toUserId: r.toUserId,
+        type: r.type as SignalingMessage['type'],
+        payload: r.payload,
+        createdAt: r.createdAt.toISOString(),
+        consumed: true,
+      }));
+
+      return { signal, pending };
     } catch (err) {
-      console.error('[voice] postSignal DB FAILED:', err);
+      console.error('[voice] postSignalAndFetch DB FAILED:', err);
     }
-  } else {
-    console.warn('[voice] postSignal: DB not available, using in-memory fallback');
   }
 
   // Fallback: in-memory
@@ -386,7 +414,14 @@ export async function postSignal(
   if (sigs.length > 1000) {
     fb.signals.set(debateId, sigs.slice(-500));
   }
-  return signal;
+
+  // Also fetch from in-memory for sender
+  const pending = sigs.filter(
+    (s) => !s.consumed && (s.toUserId === fromUserId || s.toUserId === 'all') && s.fromUserId !== fromUserId,
+  );
+  for (const s of pending) s.consumed = true;
+
+  return { signal, pending };
 }
 
 export async function getSignals(debateId: string, forUserId: string): Promise<SignalingMessage[]> {
