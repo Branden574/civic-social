@@ -80,7 +80,8 @@ export function useWebRTC(
   joined: boolean,
 ) {
   const peersRef = useRef<Map<string, PeerState>>(new Map());
-  const creatingPeersRef = useRef<Set<string>>(new Set());
+  // Tracks in-progress peer creation with a promise so concurrent callers can await
+  const pendingPeersRef = useRef<Map<string, Promise<PeerState>>>(new Map());
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -108,127 +109,130 @@ export function useWebRTC(
     }
   }, [debateId]);
 
-  // ── Create a peer connection for a remote user ─────────────
-  const createPeer = useCallback(async (remoteUserId: string): Promise<PeerState | null> => {
-    // Prevent duplicate concurrent creation (race between connectToPeers and handleSignal)
-    if (peersRef.current.has(remoteUserId) || creatingPeersRef.current.has(remoteUserId)) {
-      console.log(`[WebRTC] Skipping duplicate peer creation for ${remoteUserId}`);
-      return peersRef.current.get(remoteUserId) || null;
-    }
-    creatingPeersRef.current.add(remoteUserId);
+  // ── Create (or await) a peer connection for a remote user ───
+  // Returns a promise that concurrent callers can await, preventing
+  // the race where handleSignal drops a consumed signal because
+  // connectToPeers is still creating the peer asynchronously.
+  const createPeer = useCallback((remoteUserId: string): Promise<PeerState> => {
+    // Already created — return immediately
+    const existing = peersRef.current.get(remoteUserId);
+    if (existing) return Promise.resolve(existing);
 
-    const iceServers = await getIceServers();
-    const pc = new RTCPeerConnection({ iceServers });
+    // Creation in progress — return the same promise so callers wait
+    const pending = pendingPeersRef.current.get(remoteUserId);
+    if (pending) return pending;
 
-    const peerState: PeerState = {
-      pc,
-      makingOffer: false,
-      ignoreOffer: false,
-      iceRestarts: 0,
-      iceRestartTimer: null,
-    };
+    // Start new creation
+    const promise = (async (): Promise<PeerState> => {
+      const iceServers = await getIceServers();
+      const pc = new RTCPeerConnection({ iceServers });
 
-    // Add available local tracks via addTrack (creates transceivers implicitly).
-    // Do NOT use addTransceiver — both sides would create duplicate transceivers
-    // causing offer collisions that never resolve with polling-based signaling.
-    if (localStreamRef.current) {
-      for (const track of localStreamRef.current.getTracks()) {
-        pc.addTrack(track, localStreamRef.current);
+      const peerState: PeerState = {
+        pc,
+        makingOffer: false,
+        ignoreOffer: false,
+        iceRestarts: 0,
+        iceRestartTimer: null,
+      };
+
+      // Add available local tracks via addTrack (creates transceivers implicitly)
+      if (localStreamRef.current) {
+        for (const track of localStreamRef.current.getTracks()) {
+          pc.addTrack(track, localStreamRef.current);
+        }
+        console.log(`[WebRTC] Added ${localStreamRef.current.getTracks().length} local tracks to peer ${remoteUserId}`);
+      } else {
+        console.log(`[WebRTC] No local stream when creating peer ${remoteUserId} — tracks will be added via setLocalStream`);
       }
-      console.log(`[WebRTC] Added ${localStreamRef.current.getTracks().length} local tracks to peer ${remoteUserId}`);
-    } else {
-      console.log(`[WebRTC] No local stream when creating peer ${remoteUserId} — tracks will be added via setLocalStream`);
-    }
 
-    // Collect remote tracks into a single MediaStream per peer.
-    // We accumulate tracks so the UI has a single source per remote user.
-    const peerRemoteStream = new MediaStream();
-    pc.ontrack = (event) => {
-      console.log(`[WebRTC] Received remote track from ${remoteUserId}:`, event.track.kind);
-      if (!peerRemoteStream.getTrackById(event.track.id)) {
-        peerRemoteStream.addTrack(event.track);
-      }
-      setRemoteStreams((prev) => {
-        const next = new Map(prev);
-        next.set(remoteUserId, peerRemoteStream);
-        return next;
-      });
-    };
-
-    // ICE candidates → relay via signaling
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        sendSignal(remoteUserId, 'ice-candidate', {
-          candidate: event.candidate.candidate,
-          sdpMid: event.candidate.sdpMid,
-          sdpMLineIndex: event.candidate.sdpMLineIndex,
+      // Collect remote tracks into a single MediaStream per peer
+      const peerRemoteStream = new MediaStream();
+      pc.ontrack = (event) => {
+        console.log(`[WebRTC] Received remote track from ${remoteUserId}:`, event.track.kind);
+        if (!peerRemoteStream.getTrackById(event.track.id)) {
+          peerRemoteStream.addTrack(event.track);
+        }
+        setRemoteStreams((prev) => {
+          const next = new Map(prev);
+          next.set(remoteUserId, peerRemoteStream);
+          return next;
         });
-      }
-    };
+      };
 
-    // Perfect negotiation: handle negotiationneeded
-    pc.onnegotiationneeded = async () => {
-      try {
-        peerState.makingOffer = true;
-        console.log(`[WebRTC] Negotiation needed for ${remoteUserId}, sending offer`);
-        await pc.setLocalDescription();
-        sendSignal(remoteUserId, 'offer', {
-          type: pc.localDescription!.type,
-          sdp: pc.localDescription!.sdp,
-        });
-      } catch (err) {
-        console.error(`[WebRTC] Negotiation failed for ${remoteUserId}:`, err);
-      } finally {
-        peerState.makingOffer = false;
-      }
-    };
+      // ICE candidates → relay via signaling
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          sendSignal(remoteUserId, 'ice-candidate', {
+            candidate: event.candidate.candidate,
+            sdpMid: event.candidate.sdpMid,
+            sdpMLineIndex: event.candidate.sdpMLineIndex,
+          });
+        }
+      };
 
-    pc.onconnectionstatechange = () => {
-      console.log(`[WebRTC] Connection state for ${remoteUserId}: ${pc.connectionState}`);
-      if (pc.connectionState === 'failed') {
-        // Attempt ICE restart before giving up
-        if (peerState.iceRestarts < MAX_ICE_RESTARTS) {
-          peerState.iceRestarts++;
-          peerState.iceRestartTimer = setTimeout(async () => {
-            try {
-              const offer = await pc.createOffer({ iceRestart: true });
-              await pc.setLocalDescription(offer);
-              sendSignal(remoteUserId, 'offer', {
-                type: pc.localDescription!.type,
-                sdp: pc.localDescription!.sdp,
-              });
-            } catch {
-              // ICE restart failed — remove stream
-              setRemoteStreams((prev) => {
-                const next = new Map(prev);
-                next.delete(remoteUserId);
-                return next;
-              });
-            }
-          }, ICE_RESTART_DELAY_MS);
-        } else {
-          // Max restarts exceeded — clean up
+      // Perfect negotiation: handle negotiationneeded
+      pc.onnegotiationneeded = async () => {
+        try {
+          peerState.makingOffer = true;
+          console.log(`[WebRTC] Negotiation needed for ${remoteUserId}, sending offer`);
+          await pc.setLocalDescription();
+          sendSignal(remoteUserId, 'offer', {
+            type: pc.localDescription!.type,
+            sdp: pc.localDescription!.sdp,
+          });
+        } catch (err) {
+          console.error(`[WebRTC] Negotiation failed for ${remoteUserId}:`, err);
+        } finally {
+          peerState.makingOffer = false;
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log(`[WebRTC] Connection state for ${remoteUserId}: ${pc.connectionState}`);
+        if (pc.connectionState === 'failed') {
+          if (peerState.iceRestarts < MAX_ICE_RESTARTS) {
+            peerState.iceRestarts++;
+            peerState.iceRestartTimer = setTimeout(async () => {
+              try {
+                const offer = await pc.createOffer({ iceRestart: true });
+                await pc.setLocalDescription(offer);
+                sendSignal(remoteUserId, 'offer', {
+                  type: pc.localDescription!.type,
+                  sdp: pc.localDescription!.sdp,
+                });
+              } catch {
+                setRemoteStreams((prev) => {
+                  const next = new Map(prev);
+                  next.delete(remoteUserId);
+                  return next;
+                });
+              }
+            }, ICE_RESTART_DELAY_MS);
+          } else {
+            setRemoteStreams((prev) => {
+              const next = new Map(prev);
+              next.delete(remoteUserId);
+              return next;
+            });
+          }
+        } else if (pc.connectionState === 'connected') {
+          peerState.iceRestarts = 0;
+        } else if (pc.connectionState === 'closed') {
           setRemoteStreams((prev) => {
             const next = new Map(prev);
             next.delete(remoteUserId);
             return next;
           });
         }
-      } else if (pc.connectionState === 'connected') {
-        // Reset restart counter on successful connection
-        peerState.iceRestarts = 0;
-      } else if (pc.connectionState === 'closed') {
-        setRemoteStreams((prev) => {
-          const next = new Map(prev);
-          next.delete(remoteUserId);
-          return next;
-        });
-      }
-    };
+      };
 
-    peersRef.current.set(remoteUserId, peerState);
-    creatingPeersRef.current.delete(remoteUserId);
-    return peerState;
+      peersRef.current.set(remoteUserId, peerState);
+      return peerState;
+    })();
+
+    pendingPeersRef.current.set(remoteUserId, promise);
+    promise.then(() => pendingPeersRef.current.delete(remoteUserId));
+    return promise;
   }, [sendSignal]);
 
   // ── Handle incoming signal ─────────────────────────────────
@@ -249,12 +253,10 @@ export function useWebRTC(
       return;
     }
 
-    // Get or create peer
+    // Get or create peer — awaits in-progress creation if needed
     let peerState: PeerState | undefined = peersRef.current.get(fromUserId);
     if (!peerState) {
-      const created = await createPeer(fromUserId);
-      if (!created) return; // Another creation in progress — signal will be re-polled
-      peerState = created;
+      peerState = await createPeer(fromUserId);
     }
 
     const { pc, makingOffer } = peerState;
@@ -302,10 +304,6 @@ export function useWebRTC(
       if (!res.ok) return;
       const data = await res.json();
       const signals: SignalMessage[] = data.signals || [];
-      // Debug: log auth and signal status
-      if (signals.length > 0 || data.userId === 'UNAUTHENTICATED') {
-        console.log(`[WebRTC] Poll: userId=${data.userId}, signals=${signals.length}`);
-      }
       for (const sig of signals) {
         await handleSignal(sig);
       }
@@ -367,7 +365,7 @@ export function useWebRTC(
   const connectToPeers = useCallback(async (peerUserIds: string[]) => {
     for (const peerId of peerUserIds) {
       if (peerId === currentUserId) continue;
-      if (peersRef.current.has(peerId) || creatingPeersRef.current.has(peerId)) continue;
+      if (peersRef.current.has(peerId) || pendingPeersRef.current.has(peerId)) continue;
       // Create peer — onnegotiationneeded will fire and send offer
       await createPeer(peerId);
     }

@@ -53,7 +53,6 @@ export async function GET(
   return NextResponse.json({
     room,
     signals,
-    userId: userId || 'UNAUTHENTICATED',
     serverTime: new Date().toISOString(),
   });
 }
