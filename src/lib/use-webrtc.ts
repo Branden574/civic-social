@@ -82,6 +82,9 @@ export function useWebRTC(
   const peersRef = useRef<Map<string, PeerState>>(new Map());
   // Tracks in-progress peer creation with a promise so concurrent callers can await
   const pendingPeersRef = useRef<Map<string, Promise<PeerState>>>(new Map());
+  // Ref to handleSignal so sendSignal can process piggybacked signals without circular deps
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSignalRef = useRef<(sig: SignalMessage) => Promise<void>>(async () => {});
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -113,6 +116,13 @@ export function useWebRTC(
           console.error(`[WebRTC] Signal went to MEMORY not DB!`, signalType, 'to', toUserId);
         } else if (signalType === 'offer' || signalType === 'answer') {
           console.log(`[WebRTC] Signal sent OK (${data._dbWrite}):`, signalType, 'to', toUserId.slice(-8));
+        }
+        // Process piggybacked signals returned with the PATCH response
+        if (data.pendingSignals?.length > 0) {
+          console.log(`[WebRTC] Piggyback: ${data.pendingSignals.length} signal(s) received via PATCH response`);
+          for (const sig of data.pendingSignals) {
+            await handleSignalRef.current(sig);
+          }
         }
       }
     } catch (err) {
@@ -306,6 +316,9 @@ export function useWebRTC(
     }
   }, [createPeer, currentUserId, sendSignal]);
 
+  // Keep handleSignalRef current so sendSignal can use it without circular deps
+  handleSignalRef.current = handleSignal;
+
   // ── Poll for signals ───────────────────────────────────────
   const pollCountRef = useRef(0);
   const pollSignals = useCallback(async () => {
@@ -321,14 +334,9 @@ export function useWebRTC(
       }
       const data = await res.json();
       const signals: SignalMessage[] = data.signals || [];
-      // Log first 5 polls and whenever signals arrive
-      if (pollCountRef.current <= 15 || signals.length > 0) {
-        const d = data._debug;
-        console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}` +
-          (d ? ` | myId=${d.myId}, unconsumed=${d.totalUnconsumed}, forMe=${d.forMe}` : ''));
-        if (d?.targets?.length > 0 && d.forMe === 0 && d.totalUnconsumed > 0) {
-          console.warn(`[WebRTC] MISMATCH! myId=${d.myId} but targets:`, d.targets);
-        }
+      // Log first 3 polls and whenever signals arrive
+      if (pollCountRef.current <= 3 || signals.length > 0) {
+        console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}`);
       }
       if (signals.length > 0) {
         console.log(`[WebRTC] Signals:`, signals.map(s => `${s.type} from ${s.fromUserId?.slice(-8)}`));

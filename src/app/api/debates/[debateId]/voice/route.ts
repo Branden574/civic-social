@@ -50,28 +50,9 @@ export async function GET(
   // Only fetch signals for authenticated users (signals are addressed to specific userIds)
   const signals = room && userId ? await getSignals(debateId, userId) : [];
 
-  // Debug: check signal addressing
-  let debugTotalUnconsumed = 0;
-  let debugForMe = 0;
-  let debugTargets: string[] = [];
-  if (room && userId) {
-    try {
-      const { prisma } = await import('@/lib/db');
-      const unconsumed = await prisma.voiceSignal.findMany({
-        where: { debateId, consumed: false },
-        select: { toUserId: true, fromUserId: true, type: true },
-        take: 10,
-      });
-      debugTotalUnconsumed = unconsumed.length;
-      debugForMe = unconsumed.filter(s => s.toUserId === userId).length;
-      debugTargets = [...new Set(unconsumed.map(s => `to:${s.toUserId} from:${s.fromUserId}`))];
-    } catch { /* ignore */ }
-  }
-
   return NextResponse.json({
     room,
     signals,
-    _debug: { myId: userId, signalsReturned: signals.length, totalUnconsumed: debugTotalUnconsumed, forMe: debugForMe, targets: debugTargets },
     serverTime: new Date().toISOString(),
   });
 }
@@ -250,7 +231,9 @@ export async function PATCH(
       const payloadStr = typeof payload === 'string' ? payload : JSON.stringify(payload);
       if (payloadStr.length > 65_000) return badRequest('Payload too large.');
       const signal = await postSignal(debateId, userId, toUserId, signalType, payloadStr);
-      return NextResponse.json({ success: true, signal, _dbWrite: signal.id?.startsWith('sig-') ? 'MEMORY_FALLBACK' : 'DB_OK' });
+      // Piggyback: return pending signals for the sender on the same DB connection
+      const pendingForMe = await getSignals(debateId, userId);
+      return NextResponse.json({ success: true, signal, pendingSignals: pendingForMe, _dbWrite: signal.id?.startsWith('sig-') ? 'MEMORY_FALLBACK' : 'DB_OK' });
     }
 
     default:
