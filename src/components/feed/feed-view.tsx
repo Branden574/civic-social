@@ -97,8 +97,7 @@ export function FeedView() {
 
   // ─── Initial feed fetch ──────────────────────────────────────
   const fetchFeed = useCallback(async () => {
-    // Only show loading spinner when we have no data to display
-    setLoading((prev) => prev && !feed);
+    setLoading(true);
     try {
       const res = await trackedFetch(`/api/feed?tab=${activeTab}&sort=${sortMode}${coldStartParams}&_t=${Date.now()}`);
       if (!res.ok) throw new Error(`Feed fetch failed: ${res.status}`);
@@ -112,7 +111,7 @@ export function FeedView() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, sortMode, coldStartParams, trackedFetch, markFirstContent, feed]);
+  }, [activeTab, sortMode, coldStartParams, trackedFetch, markFirstContent]);
 
   useEffect(() => {
     fetchFeed();

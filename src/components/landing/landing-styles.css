@@ -209,9 +209,9 @@
   flex-direction: column;
   justify-content: center;
   gap: 5px;
-  width: 36px;
-  height: 36px;
-  padding: 6px;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
   background: none;
   border: none;
   cursor: pointer;
@@ -221,9 +221,9 @@
 .civic-hamburger-line {
   display: block;
   width: 100%;
-  height: 2px;
+  height: 2.5px;
   background: var(--cream);
-  border-radius: 1px;
+  border-radius: 2px;
   transition: transform 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
   transform-origin: center;
 }
@@ -299,7 +299,15 @@
   .civic-nav-links { display: none; }
   .civic-nav-auth { display: none; }
   .civic-hamburger { display: flex; }
-  .civic-nav { top: 16px; }
+  .civic-nav {
+    top: 16px;
+    /* Ensure nav is always above hero content on mobile */
+    top: max(16px, env(safe-area-inset-top, 16px));
+  }
+  .civic-nav-inner {
+    background: rgba(10, 10, 9, 0.92);
+    border: 1px solid rgba(244, 240, 234, 0.15);
+  }
 }
 
 /* ── Page Root (content sections) ── */
