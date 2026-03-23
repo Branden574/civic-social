@@ -28,6 +28,7 @@ import { PostCard, type PostData } from '@/components/feed/post-card';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { CredibilityBadge } from '@/components/ui/credibility-badge';
+import { countries } from '@/lib/data/countries';
 import { AuthGate } from '@/components/auth/auth-gate';
 
 const PULL_THRESHOLD = 72;
@@ -201,7 +202,8 @@ export default function ProfilePage() {
     ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : 'Recently';
   const userTopics = user?.onboarding?.topics ?? [];
-  const userCountry = user?.onboarding?.country || '';
+  const userCountryCode = user?.onboarding?.country || '';
+  const userCountryObj = countries.find((c) => c.code === userCountryCode);
   const userAffiliation = user?.onboarding?.affiliation || '';
 
   // Real stats from server (default 0)
@@ -296,10 +298,10 @@ export default function ProfilePage() {
             )}
 
             <div className="flex items-center gap-4 text-xs text-text-muted mb-4 flex-wrap">
-              {userCountry && (
+              {userCountryObj && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {userCountry}
+                  <span>{userCountryObj.flag}</span>
+                  {userCountryObj.name}
                 </span>
               )}
               <span className="flex items-center gap-1">
