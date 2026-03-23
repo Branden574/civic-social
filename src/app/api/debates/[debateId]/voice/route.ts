@@ -50,9 +50,25 @@ export async function GET(
   // Only fetch signals for authenticated users (signals are addressed to specific userIds)
   const signals = room && userId ? await getSignals(debateId, userId) : [];
 
+  // Debug: count all unconsumed signals in DB to check if signals exist but don't match
+  let debugTotalUnconsumed = 0;
+  let debugForMe = 0;
+  if (room && userId) {
+    try {
+      const { prisma } = await import('@/lib/db');
+      debugTotalUnconsumed = await prisma.voiceSignal.count({
+        where: { debateId, consumed: false },
+      });
+      debugForMe = await prisma.voiceSignal.count({
+        where: { debateId, consumed: false, toUserId: userId },
+      });
+    } catch { /* ignore */ }
+  }
+
   return NextResponse.json({
     room,
     signals,
+    _debug: { userId: userId?.slice(-8) ?? 'NONE', signalsReturned: signals.length, totalUnconsumed: debugTotalUnconsumed, forMe: debugForMe },
     serverTime: new Date().toISOString(),
   });
 }

@@ -316,7 +316,9 @@ export function useWebRTC(
       const signals: SignalMessage[] = data.signals || [];
       // Log first 5 polls and whenever signals arrive
       if (pollCountRef.current <= 5 || signals.length > 0) {
-        console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}`);
+        const d = data._debug;
+        console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}` +
+          (d ? ` | DB: user=${d.userId}, unconsumed=${d.totalUnconsumed}, forMe=${d.forMe}` : ''));
       }
       if (signals.length > 0) {
         console.log(`[WebRTC] Signals:`, signals.map(s => `${s.type} from ${s.fromUserId?.slice(-8)}`));
