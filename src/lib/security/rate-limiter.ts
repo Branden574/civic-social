@@ -108,10 +108,10 @@ export const postLimiter = createRateLimiter('post', {
   max: 10,
 });
 
-/** Chat messages: 30 / minute per user */
+/** Chat messages + voice actions: 60 / minute per user */
 export const chatLimiter = createRateLimiter('chat', {
   windowMs: 60_000,
-  max: 30,
+  max: 60,
 });
 
 /** Follow/unfollow: 30 / minute per user */
@@ -126,10 +126,10 @@ export const debateLimiter = createRateLimiter('debate', {
   max: 5,
 });
 
-/** API read endpoints: 60 / minute per IP */
+/** API read endpoints: 200 / minute per IP (supports real-time debate polling) */
 export const readLimiter = createRateLimiter('read', {
   windowMs: 60_000,
-  max: 60,
+  max: 200,
 });
 
 /** Signup: 3 / hour per IP */
