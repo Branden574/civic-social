@@ -58,6 +58,8 @@ export default function RegisterPage() {
 
   // ─── Step 2: Personalization fields ────────────────────────
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [countrySearch, setCountrySearch] = useState('');
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [selectedParty, setSelectedParty] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [partySearch, setPartySearch] = useState('');
@@ -67,6 +69,14 @@ export default function RegisterPage() {
 
   const steps: Step[] = ['account', 'personalize', 'complete'];
   const currentIdx = steps.indexOf(step);
+
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return countries;
+    const q = countrySearch.trim().toLowerCase();
+    return countries.filter((c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+  }, [countrySearch]);
+
+  const selectedCountryObj = useMemo(() => countries.find((c) => c.code === selectedCountry), [selectedCountry]);
 
   const countryParties: Party[] = useMemo(() => {
     if (!selectedCountry) return [];
@@ -88,6 +98,8 @@ export default function RegisterPage() {
 
   function handleCountrySelect(code: string) {
     setSelectedCountry(code);
+    setCountrySearch('');
+    setCountryDropdownOpen(false);
     setSelectedParty('');
     setPartySearch('');
   }
@@ -393,27 +405,63 @@ export default function RegisterPage() {
               </p>
 
               {/* ── Country selection ── */}
-              <div className="mb-5">
+              <div className="mb-5 relative">
                 <label className="block text-sm font-medium text-text-secondary mb-2">
                   Country
                 </label>
-                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
-                  {countries.map((country) => (
-                    <button
-                      key={country.code}
-                      onClick={() => handleCountrySelect(country.code)}
-                      className={clsx(
-                        'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-sm transition-colors',
-                        selectedCountry === country.code
-                          ? 'bg-civic-subtle border border-civic/30 text-text-primary font-medium'
-                          : 'bg-surface border border-border hover:bg-surface-hover text-text-secondary',
+                <button
+                  type="button"
+                  onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
+                  className={clsx(
+                    'w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-left text-sm transition-colors border',
+                    selectedCountry
+                      ? 'bg-civic-subtle border-civic/30 text-text-primary font-medium'
+                      : 'bg-surface border-border text-text-muted hover:bg-surface-hover',
+                  )}
+                >
+                  {selectedCountryObj ? (
+                    <>
+                      <span>{selectedCountryObj.flag}</span>
+                      <span>{selectedCountryObj.name}</span>
+                    </>
+                  ) : (
+                    <span>Select your country...</span>
+                  )}
+                  <svg className="w-4 h-4 ml-auto text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {countryDropdownOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-surface-elevated border border-border-subtle rounded-xl shadow-lg overflow-hidden animate-fade-in">
+                    <div className="p-2 border-b border-border-subtle">
+                      <input
+                        type="text"
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        placeholder="Search countries..."
+                        autoFocus
+                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-civic/40"
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredCountries.length === 0 ? (
+                        <p className="px-4 py-3 text-xs text-text-muted">No countries found</p>
+                      ) : (
+                        filteredCountries.map((country) => (
+                          <button
+                            key={country.code}
+                            onClick={() => handleCountrySelect(country.code)}
+                            className={clsx(
+                              'w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors hover:bg-surface-hover',
+                              selectedCountry === country.code && 'bg-civic-subtle text-text-primary font-medium',
+                            )}
+                          >
+                            <span>{country.flag}</span>
+                            <span>{country.name}</span>
+                          </button>
+                        ))
                       )}
-                    >
-                      <span>{country.flag}</span>
-                      <span className="truncate text-xs">{country.name}</span>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ── Political Affiliation ── */}
