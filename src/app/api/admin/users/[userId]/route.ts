@@ -108,32 +108,22 @@ export async function DELETE(
     return NextResponse.json({ error: 'Cannot delete admin accounts.' }, { status: 403 });
   }
 
-  // Soft-delete user's posts
-  await prisma.storedPost.updateMany({
-    where: { authorId: userId },
-    data: { deletedAt: new Date() },
-  });
-
-  // Delete user's comments
-  await prisma.storedComment.updateMany({
-    where: { authorId: userId },
-    data: { deletedAt: new Date() },
-  });
-
-  // Delete notifications involving this user
+  // Hard-delete all user content
+  await prisma.storedComment.deleteMany({ where: { authorId: userId } });
+  await prisma.storedPost.deleteMany({ where: { authorId: userId } });
   await prisma.notification.deleteMany({
     where: { OR: [{ recipientUserId: userId }, { actorUserId: userId }] },
   });
 
   // Delete the searchable user record
-  await prisma.searchableUser.delete({ where: { id: userId } });
+  try {
+    await prisma.searchableUser.delete({ where: { id: userId } });
+  } catch { /* may not exist */ }
 
   // Delete the auth user record (cascades Follow, Reaction, Post, etc.)
   try {
     await prisma.user.delete({ where: { id: userId } });
-  } catch {
-    // User may only exist in SearchableUser (e.g., legacy accounts)
-  }
+  } catch { /* may only exist in SearchableUser */ }
 
   await logAuditAction({
     actorId: auth.id,

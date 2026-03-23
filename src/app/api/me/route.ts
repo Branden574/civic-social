@@ -434,32 +434,22 @@ export async function DELETE(request: NextRequest) {
 
   const userId = sessionUser.id;
 
-  // Soft-delete posts
-  await prisma.storedPost.updateMany({
-    where: { authorId: userId },
-    data: { deletedAt: new Date() },
-  });
-
-  // Soft-delete comments
-  await prisma.storedComment.updateMany({
-    where: { authorId: userId },
-    data: { deletedAt: new Date() },
-  });
-
-  // Delete notifications
+  // Hard-delete all user content — everything should be gone
+  await prisma.storedComment.deleteMany({ where: { authorId: userId } });
+  await prisma.storedPost.deleteMany({ where: { authorId: userId } });
   await prisma.notification.deleteMany({
     where: { OR: [{ recipientUserId: userId }, { actorUserId: userId }] },
   });
 
-  // Delete searchable user record
-  await prisma.searchableUser.delete({ where: { id: userId } });
+  // Delete searchable user record (profile, search, etc.)
+  try {
+    await prisma.searchableUser.delete({ where: { id: userId } });
+  } catch { /* may not exist */ }
 
-  // Delete auth user record (cascades Follow, Reaction, etc.)
+  // Delete auth user record (cascades Follow, Reaction, Post, etc.)
   try {
     await prisma.user.delete({ where: { id: userId } });
-  } catch {
-    // May only exist in SearchableUser
-  }
+  } catch { /* may only exist in SearchableUser */ }
 
   await logAuditAction({
     actorId: userId,

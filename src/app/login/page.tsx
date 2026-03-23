@@ -123,8 +123,8 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: 'rgba(244,240,234,0.4)' }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors hover:opacity-100"
+                  style={{ color: '#f4f0ea', opacity: 0.7 }}
                   tabIndex={-1}
                 >
                   {showPassword ? (
