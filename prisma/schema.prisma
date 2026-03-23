@@ -561,6 +561,24 @@ model VoiceSignal {
   @@index([createdAt])
 }
 
+model DebateChatMessage {
+  id          String   @id @default(cuid())
+  debateId    String
+  userId      String
+  displayName String
+  type        String   @default("user")  // user | system | reaction | pinned
+  content     String
+  side        String?                     // A | B | null (spectator)
+  replyToId   String?
+  reactions   String   @default("{}")     // JSON: emoji → count
+  pinned      Boolean  @default(false)
+  deleted     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([debateId, createdAt])
+  @@index([debateId, deleted])
+}
+
 // ─────────────────────────────────────────────
 // CIVILITY EVENTS (durable behavioral history)
 // Persists even if the offending post is deleted.

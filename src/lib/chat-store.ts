@@ -13,8 +13,11 @@
 //   - Configurable data retention / clearance
 //
 // Uses Symbol.for on global for HMR persistence in dev.
-// In production: Replace with Redis pub/sub + persistent DB.
+// DB-backed: messages persist to DebateChatMessage table for cross-instance reads.
+// Messages are auto-deleted when the debate ends.
 // ═══════════════════════════════════════════════════════════════
+
+import { isDbAvailable, prisma } from '@/lib/db';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -129,37 +132,77 @@ export function updateChatConfig(debateId: string, updates: Partial<ChatConfig>)
 
 // ─── Message retrieval ──────────────────────────────────────────
 
-export function getMessages(
+export async function getMessages(
   debateId: string,
   options: { since?: string; limit?: number } = {},
-): ChatMessage[] {
+): Promise<ChatMessage[]> {
+  const limit = options.limit ?? 200;
+
+  // Try DB first for cross-instance consistency
+  if (isDbAvailable()) {
+    try {
+      const where: Record<string, unknown> = { debateId, deleted: false };
+      if (options.since) {
+        where.createdAt = { gt: new Date(options.since) };
+      }
+      const rows = await prisma.debateChatMessage.findMany({
+        where,
+        orderBy: { createdAt: 'asc' },
+        take: limit,
+      });
+      return rows.map(rowToChatMessage);
+    } catch { /* DB read failed — fall through to in-memory */ }
+  }
+
+  // Fallback: in-memory
   const store = getStore();
   const all = store.messages.get(debateId) || [];
-
-  // Filter out deleted messages for non-admin reads
   let messages = all.filter((m) => !m.deleted);
-
-  // If `since` is provided, return only messages after that timestamp
   if (options.since) {
     const sinceTime = new Date(options.since).getTime();
     messages = messages.filter((m) => new Date(m.createdAt).getTime() > sinceTime);
   }
-
-  // Limit results (most recent)
-  const limit = options.limit ?? 200;
-  if (messages.length > limit) {
-    messages = messages.slice(-limit);
-  }
-
+  if (messages.length > limit) messages = messages.slice(-limit);
   return messages;
 }
 
-export function getMessageCount(debateId: string): number {
+function rowToChatMessage(row: Record<string, unknown>): ChatMessage {
+  return {
+    id: row.id as string,
+    debateId: row.debateId as string,
+    userId: row.userId as string,
+    displayName: row.displayName as string,
+    type: (row.type as ChatMessageType) || 'user',
+    content: row.content as string,
+    side: (row.side as 'A' | 'B' | null) ?? null,
+    replyToId: row.replyToId as string | undefined,
+    reactions: typeof row.reactions === 'string' ? JSON.parse(row.reactions as string) : {},
+    pinned: row.pinned as boolean,
+    deleted: row.deleted as boolean,
+    createdAt: row.createdAt instanceof Date ? (row.createdAt as Date).toISOString() : row.createdAt as string,
+  };
+}
+
+export async function getMessageCount(debateId: string): Promise<number> {
+  if (isDbAvailable()) {
+    try {
+      return await prisma.debateChatMessage.count({ where: { debateId, deleted: false } });
+    } catch { /* fall through */ }
+  }
   const store = getStore();
   return (store.messages.get(debateId) || []).filter((m) => !m.deleted).length;
 }
 
-export function getPinnedMessages(debateId: string): ChatMessage[] {
+export async function getPinnedMessages(debateId: string): Promise<ChatMessage[]> {
+  if (isDbAvailable()) {
+    try {
+      const rows = await prisma.debateChatMessage.findMany({
+        where: { debateId, pinned: true, deleted: false },
+        orderBy: { createdAt: 'asc' },
+      });
+      return rows.map(rowToChatMessage);
+    } catch { /* fall through */ }
+  }
   const store = getStore();
   return (store.messages.get(debateId) || []).filter((m) => m.pinned && !m.deleted);
 }
@@ -258,7 +301,7 @@ export function postMessage(input: PostMessageInput): PostMessageResult {
     createdAt: new Date().toISOString(),
   };
 
-  // Store message
+  // Store message in-memory
   if (!store.messages.has(input.debateId)) {
     store.messages.set(input.debateId, []);
   }
@@ -271,6 +314,25 @@ export function postMessage(input: PostMessageInput): PostMessageResult {
   const msgs = store.messages.get(input.debateId)!;
   if (msgs.length > 5000) {
     store.messages.set(input.debateId, msgs.slice(-5000));
+  }
+
+  // Persist to DB (fire-and-forget for speed)
+  if (isDbAvailable()) {
+    prisma.debateChatMessage.create({
+      data: {
+        id: message.id,
+        debateId: message.debateId,
+        userId: message.userId,
+        displayName: message.displayName,
+        type: message.type,
+        content: message.content,
+        side: message.side ?? null,
+        replyToId: message.replyToId ?? null,
+        reactions: JSON.stringify(message.reactions),
+        pinned: message.pinned,
+        deleted: message.deleted,
+      },
+    }).catch(() => { /* DB write failed — message still in memory */ });
   }
 
   return {
@@ -302,6 +364,25 @@ export function postSystemMessage(debateId: string, content: string): ChatMessag
     store.messages.set(debateId, []);
   }
   store.messages.get(debateId)!.push(message);
+
+  // Persist to DB
+  if (isDbAvailable()) {
+    prisma.debateChatMessage.create({
+      data: {
+        id: message.id,
+        debateId: message.debateId,
+        userId: message.userId,
+        displayName: message.displayName,
+        type: message.type,
+        content: message.content,
+        side: null,
+        reactions: '{}',
+        pinned: false,
+        deleted: false,
+      },
+    }).catch(() => {});
+  }
+
   return message;
 }
 
@@ -429,6 +510,11 @@ export function clearChatData(debateId: string): {
     if (key.startsWith(`${debateId}:`)) {
       store.rateLimits.delete(key);
     }
+  }
+
+  // Delete from DB too
+  if (isDbAvailable()) {
+    prisma.debateChatMessage.deleteMany({ where: { debateId } }).catch(() => {});
   }
 
   return { messagesDeleted: msgCount, mutesCleared: muteCount };

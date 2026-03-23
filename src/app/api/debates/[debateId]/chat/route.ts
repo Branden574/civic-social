@@ -50,10 +50,10 @@ export async function GET(
   const user = getSessionUser(request);
   const userId = user?.id || 'user-current';
 
-  const messages = getMessages(debateId, { since, limit });
+  const messages = await getMessages(debateId, { since, limit });
   const config = getChatConfig(debateId);
   const stats = getChatStats(debateId);
-  const pinned = getPinnedMessages(debateId);
+  const pinned = await getPinnedMessages(debateId);
   const muted = isUserMuted(debateId, userId);
 
   return NextResponse.json({
