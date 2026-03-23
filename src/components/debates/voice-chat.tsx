@@ -371,6 +371,9 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   const listeners = room?.participants.filter((p) => p.role === 'listener') ?? [];
   const pendingRequests = room?.speakRequests ?? [];
 
+  // Track whether we've already auto-reconnected after a refresh
+  const hasAutoReconnected = useRef(false);
+
   // ── Fetch voice room state ──────────────────────────────────
   const fetchRoom = useCallback(async () => {
     try {
@@ -379,7 +382,7 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
       const data = await res.json();
       setRoom(data.room || null);
 
-      // Check if we're in the room
+      // Check if we're in the room (e.g. after page refresh)
       if (data.room?.participants.some((p: VoiceParticipant) => p.userId === currentUserId)) {
         setJoined(true);
       }
@@ -390,6 +393,30 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   useEffect(() => {
     fetchRoom();
   }, [fetchRoom]);
+
+  // ── Auto-reconnect after page refresh ─────────────────────
+  // When the component mounts and detects the user is already in the
+  // voice room (joined=true from fetchRoom), re-request mic and
+  // restart WebRTC so audio/video resumes without manual action.
+  useEffect(() => {
+    if (!joined || hasAutoReconnected.current || !room?.enabled) return;
+    hasAutoReconnected.current = true;
+
+    const myParticipant = room.participants.find((p) => p.userId === currentUserId);
+    if (!myParticipant) return;
+
+    (async () => {
+      // Speakers need mic; listeners only need WebRTC receive
+      if (myParticipant.role === 'speaker') {
+        const mic = await requestMicPermission();
+        if (mic.granted && mic.stream) {
+          setMicPermission('granted');
+          setMicStream(mic.stream);
+        }
+      }
+      startWebRTC();
+    })();
+  }, [joined, room, currentUserId, startWebRTC]);
 
   useEffect(() => {
     if (!room?.enabled) return;
