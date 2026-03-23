@@ -94,7 +94,7 @@ export function useWebRTC(
     payload: unknown,
   ) => {
     try {
-      await fetch(`/api/debates/${encodeURIComponent(debateId)}/voice`, {
+      const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}/voice`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,8 +104,12 @@ export function useWebRTC(
           payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
         }),
       });
-    } catch {
-      // Signal send failed — peer will retry
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error(`[WebRTC] Signal send FAILED (${res.status}):`, signalType, 'to', toUserId, err);
+      }
+    } catch (err) {
+      console.error(`[WebRTC] Signal send ERROR:`, signalType, 'to', toUserId, err);
     }
   }, [debateId]);
 
@@ -304,6 +308,9 @@ export function useWebRTC(
       if (!res.ok) return;
       const data = await res.json();
       const signals: SignalMessage[] = data.signals || [];
+      if (signals.length > 0) {
+        console.log(`[WebRTC] Poll received ${signals.length} signal(s):`, signals.map(s => `${s.type} from ${s.fromUserId?.slice(-8)}`));
+      }
       for (const sig of signals) {
         await handleSignal(sig);
       }
