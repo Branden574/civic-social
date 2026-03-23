@@ -90,7 +90,8 @@ function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
 
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+  // TODO: migrate to nonce-based CSP to remove 'unsafe-inline'
+  "script-src 'self' 'unsafe-inline' https://vercel.live",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
   "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
@@ -166,8 +167,17 @@ export function middleware(request: NextRequest) {
     '/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/terms', '/privacy', '/contact', '/safety', '/how-it-works',
   ]);
   const isPublicRoute = PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/_next/');
+  const sessionCookie = request.cookies.get('civic-session')?.value;
+
+  // Parse session payload once for reuse (auth gate + session refresh)
+  let sessionPayload: { iat?: number; role?: string } | null = null;
+  if (sessionCookie) {
+    try {
+      sessionPayload = JSON.parse(atob(sessionCookie.split('.')[0]));
+    } catch { /* invalid — handled below */ }
+  }
+
   if (!isPublicRoute) {
-    const sessionCookie = request.cookies.get('civic-session')?.value;
     if (!sessionCookie) {
       const loginUrl = new URL('/', request.url);
       return NextResponse.redirect(loginUrl);
@@ -175,13 +185,8 @@ export function middleware(request: NextRequest) {
 
     // Admin routes require admin/creator role (check claim from signed cookie)
     if (pathname.startsWith('/admin')) {
-      try {
-        const payload = JSON.parse(atob(sessionCookie.split('.')[0]));
-        if (payload.role !== 'admin' && payload.role !== 'creator') {
-          return NextResponse.redirect(new URL('/feed', request.url));
-        }
-      } catch {
-        return NextResponse.redirect(new URL('/', request.url));
+      if (!sessionPayload || (sessionPayload.role !== 'admin' && sessionPayload.role !== 'creator')) {
+        return NextResponse.redirect(new URL('/feed', request.url));
       }
     }
   }
@@ -222,19 +227,11 @@ export function middleware(request: NextRequest) {
   // If the session cookie is valid and past 50% of its lifetime,
   // refresh the cookie expiry so active users aren't logged out.
   const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours (matches session.ts)
-  const sessionCookie = request.cookies.get('civic-session')?.value;
   let shouldRefreshSession = false;
-  if (sessionCookie) {
-    try {
-      const payload = JSON.parse(atob(sessionCookie.split('.')[0]));
-      if (payload.iat) {
-        const ageSeconds = Math.floor((Date.now() / 1000) - payload.iat);
-        if (ageSeconds > SESSION_MAX_AGE / 2) {
-          shouldRefreshSession = true;
-        }
-      }
-    } catch {
-      // Invalid session — ignore, let downstream auth handle it
+  if (sessionPayload?.iat) {
+    const ageSeconds = Math.floor((Date.now() / 1000) - sessionPayload.iat);
+    if (ageSeconds > SESSION_MAX_AGE / 2) {
+      shouldRefreshSession = true;
     }
   }
 

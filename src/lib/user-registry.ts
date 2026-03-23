@@ -345,6 +345,28 @@ export async function getUserById(id: string): Promise<RegisteredUser | null> {
   return getStore().users.get(id) ?? null;
 }
 
+export async function getUsersByIds(ids: string[]): Promise<Map<string, RegisteredUser>> {
+  const unique = [...new Set(ids)];
+  const result = new Map<string, RegisteredUser>();
+  if (unique.length === 0) return result;
+
+  if (isDbAvailable()) {
+    const rows = await prisma.searchableUser.findMany({
+      where: { id: { in: unique } },
+    });
+    for (const row of rows) {
+      result.set(row.id, rowToRegisteredUser(row));
+    }
+  } else {
+    const store = getStore();
+    for (const id of unique) {
+      const user = store.users.get(id);
+      if (user) result.set(id, user);
+    }
+  }
+  return result;
+}
+
 export async function getUserByUsername(username: string): Promise<RegisteredUser | null> {
   if (isDbAvailable()) {
     const norm = username.toLowerCase().trim();

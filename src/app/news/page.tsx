@@ -97,11 +97,11 @@ export default function NewsPage() {
   }, []);
 
   useEffect(() => {
-    // On first load, try to fetch fresh news from RSS feeds
-    fetchNews(true);
+    // Serve cached news immediately, don't block on RSS refresh
+    fetchNews(false);
   }, [fetchNews]);
 
-  // Auto-refresh every 5 minutes
+  // Background refresh every 5 minutes
   useEffect(() => {
     const interval = setInterval(() => fetchNews(true), 5 * 60 * 1000);
     return () => clearInterval(interval);

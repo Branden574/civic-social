@@ -25,11 +25,7 @@ export interface SessionPayload {
 function getSecret(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('SESSION_SECRET environment variable is required in production');
-    }
-    // Development fallback — clearly insecure, only for local dev
-    return 'dev-insecure-fallback-set-SESSION_SECRET-in-env';
+    throw new Error('SESSION_SECRET environment variable is required. Set it in .env');
   }
   return secret;
 }

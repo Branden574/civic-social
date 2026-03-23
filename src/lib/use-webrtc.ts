@@ -44,29 +44,22 @@ interface SignalMessage {
 
 // ─── Constants ──────────────────────────────────────────────────
 
-function getIceServers(): RTCIceServer[] {
-  const servers: RTCIceServer[] = [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ];
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
 
-  // TURN server for reliable NAT traversal (required for ~20% of users
-  // behind symmetric NATs, corporate firewalls, or mobile carriers).
-  // Set NEXT_PUBLIC_TURN_URL, NEXT_PUBLIC_TURN_USERNAME, NEXT_PUBLIC_TURN_CREDENTIAL
-  // in .env to enable. Providers: Twilio, Xirsys, Cloudflare, or self-hosted coturn.
-  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
-  const turnUser = process.env.NEXT_PUBLIC_TURN_USERNAME;
-  const turnCred = process.env.NEXT_PUBLIC_TURN_CREDENTIAL;
-
-  if (turnUrl && turnUser && turnCred) {
-    servers.push({
-      urls: turnUrl,
-      username: turnUser,
-      credential: turnCred,
-    });
-  }
-
-  return servers;
+// Fetch ICE servers (including TURN credentials) from server-side API.
+// Credentials are never exposed in the client bundle.
+async function getIceServers(): Promise<RTCIceServer[]> {
+  try {
+    const res = await fetch('/api/turn-credentials');
+    if (res.ok) {
+      const data = await res.json();
+      return data.servers ?? DEFAULT_ICE_SERVERS;
+    }
+  } catch { /* fall through */ }
+  return DEFAULT_ICE_SERVERS;
 }
 
 const SIGNAL_POLL_MS = 1500;
@@ -109,8 +102,9 @@ export function useWebRTC(
   }, [debateId]);
 
   // ── Create a peer connection for a remote user ─────────────
-  const createPeer = useCallback((remoteUserId: string): PeerState => {
-    const pc = new RTCPeerConnection({ iceServers: getIceServers() });
+  const createPeer = useCallback(async (remoteUserId: string): Promise<PeerState> => {
+    const iceServers = await getIceServers();
+    const pc = new RTCPeerConnection({ iceServers });
 
     const peerState: PeerState = {
       pc,
@@ -233,7 +227,7 @@ export function useWebRTC(
     // Get or create peer
     let peerState = peersRef.current.get(fromUserId);
     if (!peerState) {
-      peerState = createPeer(fromUserId);
+      peerState = await createPeer(fromUserId);
     }
 
     const { pc, makingOffer } = peerState;
@@ -317,12 +311,12 @@ export function useWebRTC(
   }, []);
 
   // ── Initiate connections to a list of peer userIds ─────────
-  const connectToPeers = useCallback((peerUserIds: string[]) => {
+  const connectToPeers = useCallback(async (peerUserIds: string[]) => {
     for (const peerId of peerUserIds) {
       if (peerId === currentUserId) continue;
       if (peersRef.current.has(peerId)) continue;
       // Create peer — onnegotiationneeded will fire and send offer
-      createPeer(peerId);
+      await createPeer(peerId);
     }
   }, [currentUserId, createPeer]);
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, getClientIp, tooManyRequests } from '@/lib/security/api-guard';
 import { readLimiter } from '@/lib/security/rate-limiter';
-import { setPostStatus } from '@/lib/post-data-store';
+import { setPostStatus, getPostById } from '@/lib/post-data-store';
 import { logAuditAction } from '@/lib/audit-log';
 import { dbCreateNotification } from '@/lib/social-store';
 
@@ -39,7 +39,13 @@ export async function PATCH(
   if (action === 'remove') {
     const reason = (body.reason as string) || 'other';
     const reasonText = REMOVAL_REASONS[reason] || REMOVAL_REASONS.other;
-    const authorId = body.authorId as string;
+
+    // Look up the post to get the real authorId (don't trust client-supplied value)
+    const post = await getPostById(postId);
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found.' }, { status: 404 });
+    }
+    const authorId = post.authorId;
 
     const success = await setPostStatus(postId, 'removed');
     if (!success) {

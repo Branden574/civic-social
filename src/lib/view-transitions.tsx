@@ -53,12 +53,8 @@ export function ViewTransitionProvider({ children }: { children: ReactNode }) {
       const type = options?.transitionType || 'default';
       document.documentElement.dataset.transitionType = type;
 
-      const transition = document.startViewTransition(async () => {
+      const transition = document.startViewTransition(() => {
         router.push(href);
-        // Wait for React to commit the new page
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => setTimeout(resolve, 0));
-        });
       });
 
       transition.finished.then(() => {

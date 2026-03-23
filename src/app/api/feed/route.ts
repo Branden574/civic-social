@@ -16,7 +16,7 @@ import { getClientIp, getSessionUser, tooManyRequests } from '@/lib/security/api
 import { readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeUrl, clampInt } from '@/lib/security/sanitize';
 import { dbGetFollowingIds } from '@/lib/social-store';
-import { getUserById, registerUser } from '@/lib/user-registry';
+import { getUserById, getUsersByIds, registerUser } from '@/lib/user-registry';
 
 // ─── Safety filter (shared by both modes) ────────────────────
 function applySafetyFilter(candidates: FeedCandidate[]): { safe: FeedCandidate[]; filtered: number } {
@@ -33,8 +33,8 @@ function applySafetyFilter(candidates: FeedCandidate[]): { safe: FeedCandidate[]
 
 // ─── Serialize for "latest" mode (no algorithm scores) ───────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, number>) {
-  const registryUser = await getUserById(c.author.id);
+async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, number>, userCache?: Map<string, import('@/lib/user-registry').RegisteredUser>) {
+  const registryUser = userCache?.get(c.author.id) ?? await getUserById(c.author.id);
   return {
     id: c.post.id,
     content: c.post.content,
@@ -110,9 +110,9 @@ async function serializeChronologicalPost(c: FeedCandidate, counts: Map<string, 
 }
 
 // ─── Serialize a user-created PersistedPost for feed response ─
-async function serializeUserPost(p: PersistedPost, counts: Map<string, number>) {
+async function serializeUserPost(p: PersistedPost, counts: Map<string, number>, userCache?: Map<string, import('@/lib/user-registry').RegisteredUser>) {
   const safeUrl = p.articleUrl ? sanitizeUrl(p.articleUrl) : null;
-  const registryUser = await getUserById(p.authorId);
+  const registryUser = userCache?.get(p.authorId) ?? await getUserById(p.authorId);
   const civicRep = registryUser ? Math.max(0, Math.min(1, registryUser.credibilityScore / 100)) : 0.5;
   const authorProfile = {
     id: p.authorId,
@@ -193,7 +193,11 @@ export async function GET(request: NextRequest) {
   const allPostIds = [...userPosts.map((p) => p.id), ...candidates.map((c) => c.post.id)];
   const counts = await getCommentCountsBatch(allPostIds);
 
-  const allPublishedUserCreatedPosts = await Promise.all(userPosts.map((p) => serializeUserPost(p, counts)));
+  // ── Batch-fetch all author profiles in one query (avoids N+1) ──
+  const allAuthorIds = [...userPosts.map((p) => p.authorId), ...candidates.map((c) => c.author.id)];
+  const userCache = await getUsersByIds(allAuthorIds);
+
+  const allPublishedUserCreatedPosts = await Promise.all(userPosts.map((p) => serializeUserPost(p, counts, userCache)));
 
   // Filter by hashtag if provided (exact match, not substring)
   if (hashtag) {
@@ -220,7 +224,7 @@ export async function GET(request: NextRequest) {
     );
 
     const trimmed = sorted.slice(0, limit);
-    const mockSerialized = await Promise.all(trimmed.map((c) => serializeChronologicalPost(c, counts)));
+    const mockSerialized = await Promise.all(trimmed.map((c) => serializeChronologicalPost(c, counts, userCache)));
     const relevantUserPosts = tab === 'following'
       ? allPublishedUserCreatedPosts.filter((p) => followingPlusSelf.includes(p.author.id))
       : allPublishedUserCreatedPosts;
@@ -257,7 +261,7 @@ export async function GET(request: NextRequest) {
     const relevantUserPosts = allPublishedUserCreatedPosts.filter((p) =>
       followingPlusSelf.includes(p.author.id),
     );
-    const followingPosts = [...relevantUserPosts, ...await Promise.all(feed.posts.map((rp) => serializeRankedPost(rp, counts)))];
+    const followingPosts = [...relevantUserPosts, ...await Promise.all(feed.posts.map((rp) => serializeRankedPost(rp, counts, userCache)))];
     return NextResponse.json({
       tab: 'following',
       sort: 'top',
@@ -295,7 +299,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       tab: 'for-you',
       sort: 'top',
-      posts: await Promise.all(coldFeed.posts.map((rp) => serializeRankedPost(rp, counts))),
+      posts: await Promise.all(coldFeed.posts.map((rp) => serializeRankedPost(rp, counts, userCache))),
       diversity: coldFeed.diversity,
       meta: {
         totalCandidates: coldFeed.totalCandidates,
@@ -312,7 +316,7 @@ export async function GET(request: NextRequest) {
 
   // For You tab: full algorithmic ranking
   const feed = generateFeed(candidates, user, undefined, limit);
-  const forYouPosts = [...allPublishedUserCreatedPosts, ...await Promise.all(feed.posts.map((rp) => serializeRankedPost(rp, counts)))];
+  const forYouPosts = [...allPublishedUserCreatedPosts, ...await Promise.all(feed.posts.map((rp) => serializeRankedPost(rp, counts, userCache)))];
 
   return NextResponse.json({
     tab: 'for-you',
@@ -328,8 +332,8 @@ export async function GET(request: NextRequest) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function serializeRankedPost(rp: any, counts: Map<string, number>) {
-  const registryUser = await getUserById(rp.candidate.author.id);
+async function serializeRankedPost(rp: any, counts: Map<string, number>, userCache?: Map<string, import('@/lib/user-registry').RegisteredUser>) {
+  const registryUser = userCache?.get(rp.candidate.author.id) ?? await getUserById(rp.candidate.author.id);
   return {
     id: rp.candidate.post.id,
     content: rp.candidate.post.content,

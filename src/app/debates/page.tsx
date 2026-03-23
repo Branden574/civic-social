@@ -123,9 +123,9 @@ export default function DebatesPage() {
 
   useEffect(() => { fetchDebates(); }, [fetchDebates]);
 
-  // Auto-refresh every 10s
+  // Auto-refresh every 30s
   useEffect(() => {
-    const interval = setInterval(fetchDebates, 10000);
+    const interval = setInterval(fetchDebates, 30000);
     return () => clearInterval(interval);
   }, [fetchDebates]);
 
