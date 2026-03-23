@@ -64,14 +64,14 @@ export async function GET(
       });
       debugTotalUnconsumed = unconsumed.length;
       debugForMe = unconsumed.filter(s => s.toUserId === userId).length;
-      debugTargets = [...new Set(unconsumed.map(s => `to:${s.toUserId.slice(-12)} from:${s.fromUserId.slice(-12)}`))];
+      debugTargets = [...new Set(unconsumed.map(s => `to:${s.toUserId} from:${s.fromUserId}`))];
     } catch { /* ignore */ }
   }
 
   return NextResponse.json({
     room,
     signals,
-    _debug: { myId: userId ?? 'NONE', signalsReturned: signals.length, totalUnconsumed: debugTotalUnconsumed, forMe: debugForMe, targets: debugTargets },
+    _debug: { myId: userId, signalsReturned: signals.length, totalUnconsumed: debugTotalUnconsumed, forMe: debugForMe, targets: debugTargets },
     serverTime: new Date().toISOString(),
   });
 }

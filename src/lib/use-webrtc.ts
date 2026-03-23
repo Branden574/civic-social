@@ -320,7 +320,7 @@ export function useWebRTC(
         console.log(`[WebRTC] Poll #${pollCountRef.current}: ${signals.length} signal(s), peers=${peersRef.current.size}` +
           (d ? ` | myId=${d.myId}, unconsumed=${d.totalUnconsumed}, forMe=${d.forMe}` : ''));
         if (d?.targets?.length > 0 && d.forMe === 0 && d.totalUnconsumed > 0) {
-          console.warn(`[WebRTC] MISMATCH! Signals exist but none for me. Targets:`, d.targets);
+          console.warn(`[WebRTC] MISMATCH! myId=${d.myId} but targets:`, d.targets);
         }
       }
       if (signals.length > 0) {
