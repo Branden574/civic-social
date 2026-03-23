@@ -166,13 +166,14 @@ export function useWebRTC(
     pc.onnegotiationneeded = async () => {
       try {
         peerState.makingOffer = true;
+        console.log(`[WebRTC] Negotiation needed for ${remoteUserId}, sending offer`);
         await pc.setLocalDescription();
         sendSignal(remoteUserId, 'offer', {
           type: pc.localDescription!.type,
           sdp: pc.localDescription!.sdp,
         });
-      } catch {
-        // Negotiation failed
+      } catch (err) {
+        console.error(`[WebRTC] Negotiation failed for ${remoteUserId}:`, err);
       } finally {
         peerState.makingOffer = false;
       }
@@ -329,8 +330,10 @@ export function useWebRTC(
       for (const track of stream.getTracks()) {
         const existingSender = senders.find((s) => s.track?.kind === track.kind);
         if (existingSender) {
+          console.log(`[WebRTC] Replacing ${track.kind} track on existing sender`);
           existingSender.replaceTrack(track).catch(() => {});
         } else {
+          console.log(`[WebRTC] Adding new ${track.kind} track to peer connection`);
           pc.addTrack(track, stream);
         }
       }
