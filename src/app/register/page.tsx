@@ -134,7 +134,7 @@ export default function RegisterPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [email, password, displayName, auth]);
+  }, [email, password, confirmPassword, displayName, auth]);
 
   const handleSavePersonalization = useCallback(async () => {
     auth.updateOnboarding({
