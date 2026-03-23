@@ -219,7 +219,7 @@ export default function DebateDetailPage() {
     }
   }, [debate, debateId]);
 
-  // Auto-refresh debate state every 8s (only updates if data changed to avoid re-renders)
+  // Auto-refresh debate state every 4s (only updates if data changed to avoid re-renders)
   const debateLoadedRef = useRef(false);
   useEffect(() => {
     if (!debate && !debateLoadedRef.current) return;
@@ -238,7 +238,7 @@ export default function DebateDetailPage() {
           });
         }
       } catch { /* ignore */ }
-    }, 8000);
+    }, 4000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debateId]);

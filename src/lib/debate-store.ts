@@ -392,7 +392,7 @@ export async function incrementSpectators(debateId: string): Promise<void> {
   const debate = await getDebateById(debateId);
   if (debate) {
     debate.spectatorCount++;
-    persistDebate(debate);
+    await persistDebate(debate, true);
   }
 }
 
