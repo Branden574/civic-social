@@ -34,6 +34,10 @@ interface PeerState {
   ignoreOffer: boolean;
   iceRestarts: number;
   iceRestartTimer: ReturnType<typeof setTimeout> | null;
+  /** ICE candidates that arrived before the remote description was set.
+   *  Signals are consumed-on-read, so a dropped candidate is gone forever —
+   *  buffer and flush after setRemoteDescription instead. */
+  pendingCandidates: RTCIceCandidateInit[];
 }
 
 interface SignalMessage {
@@ -155,6 +159,7 @@ export function useWebRTC(
         ignoreOffer: false,
         iceRestarts: 0,
         iceRestartTimer: null,
+        pendingCandidates: [],
       };
 
       // Add available local tracks via addTrack (creates transceivers implicitly)
@@ -289,6 +294,20 @@ export function useWebRTC(
 
     const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
 
+    // Flush ICE candidates buffered while waiting for the remote description
+    const flushPendingCandidates = async () => {
+      const queued = peerState!.pendingCandidates.splice(0);
+      for (const cand of queued) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(cand));
+        } catch (err) {
+          if (!peerState!.ignoreOffer) {
+            console.error(`[WebRTC] Buffered candidate failed for ${fromUserId}:`, err);
+          }
+        }
+      }
+    };
+
     try {
       if (type === 'offer') {
         const offerCollision = makingOffer || pc.signalingState !== 'stable';
@@ -300,6 +319,7 @@ export function useWebRTC(
         console.log(`[WebRTC] Processing offer from ${fromUserId}, signalingState=${pc.signalingState}`);
 
         await pc.setRemoteDescription(new RTCSessionDescription(parsed));
+        await flushPendingCandidates();
         await pc.setLocalDescription();
         console.log(`[WebRTC] Sending answer to ${fromUserId}`);
         await sendSignal(fromUserId, 'answer', {
@@ -309,7 +329,15 @@ export function useWebRTC(
       } else if (type === 'answer') {
         console.log(`[WebRTC] Processing answer from ${fromUserId}, signalingState=${pc.signalingState}`);
         await pc.setRemoteDescription(new RTCSessionDescription(parsed));
+        await flushPendingCandidates();
       } else if (type === 'ice-candidate') {
+        // Buffer candidates that arrive before the remote description —
+        // adding them now throws, and the signal is already consumed
+        // server-side, so dropping it would lose the candidate forever.
+        if (!pc.remoteDescription) {
+          peerState.pendingCandidates.push(parsed);
+          return;
+        }
         await pc.addIceCandidate(new RTCIceCandidate(parsed));
       }
     } catch (err) {
@@ -327,7 +355,7 @@ export function useWebRTC(
     pollCountRef.current++;
     try {
       const res = await fetch(
-        `/api/debates/${encodeURIComponent(debateId)}/voice?_t=${Date.now()}`,
+        `/api/debates/${encodeURIComponent(debateId)}/voice?signals=1&_t=${Date.now()}`,
       );
       if (!res.ok) {
         console.error(`[WebRTC] Poll HTTP ${res.status}`);
@@ -464,8 +492,11 @@ export function useWebRTC(
   }, [joined, stop]);
 
   // ── Subscribe to Pusher for instant signal delivery ────────
+  // Gate on `joined` only — NOT activeRef. activeRef is set by start()
+  // asynchronously after join, so checking it here raced and silently
+  // skipped the subscription, leaving only the lossy polling path.
   useEffect(() => {
-    if (!joined || !activeRef.current) return;
+    if (!joined) return;
 
     let pusher: PusherClient | null = null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

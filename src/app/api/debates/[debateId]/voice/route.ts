@@ -48,8 +48,12 @@ export async function GET(
   const userId = user?.id ?? null;
 
   const room = await getVoiceRoom(debateId);
-  // Only fetch signals for authenticated users (signals are addressed to specific userIds)
-  const signals = room && userId ? await getSignals(debateId, userId) : [];
+  // Signals are CONSUMED on read (marked consumed atomically). Only the
+  // WebRTC signal poller may consume them — it passes ?signals=1. Room-state
+  // polls (no flag) must never consume, or offers/answers get eaten and
+  // peers never see each other's media.
+  const wantSignals = request.nextUrl.searchParams.get('signals') === '1';
+  const signals = wantSignals && room && userId ? await getSignals(debateId, userId) : [];
 
   return NextResponse.json({
     room,
