@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -140,6 +141,36 @@ export default function DebateDetailPage() {
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [localWebRTCStream, setLocalWebRTCStream] = useState<MediaStream | null>(null);
   const [voiceCameraOn, setVoiceCameraOn] = useState(false);
+
+  // ── Single VoiceChat instance, portaled between layouts ────
+  // There must be EXACTLY ONE mounted VoiceChat per debate page.
+  // The old markup rendered one in the mobile panel and one in the
+  // desktop column, hidden via CSS — but CSS hiding doesn't unmount
+  // React components, so BOTH WebRTC engines ran simultaneously:
+  // they consumed each other's signals, sent competing offers under
+  // the same userId, and overwrote the page's stream state through
+  // the shared callbacks (which is why a debater could transmit
+  // video the host saw, while their own preview tile stayed empty).
+  // A portal moves the single instance between slots without
+  // remounting it, so voice survives layout/panel changes.
+  const [mobileVoiceSlot, setMobileVoiceSlot] = useState<HTMLDivElement | null>(null);
+  const [desktopVoiceSlot, setDesktopVoiceSlot] = useState<HTMLDivElement | null>(null);
+  const [isDesktopLayout, setIsDesktopLayout] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)'); // Tailwind lg
+    setIsDesktopLayout(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDesktopLayout(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // Mobile with the voice panel open → mobile slot. Everything else →
+  // desktop slot (CSS-hidden below lg, which keeps voice running in
+  // the background when the mobile panel is closed).
+  const voiceSlot = !isDesktopLayout && showMobilePanel === 'voice' && mobileVoiceSlot
+    ? mobileVoiceSlot
+    : desktopVoiceSlot;
 
   // Overdrive: side-pick modal for invited users
   const [showSidePickModal, setShowSidePickModal] = useState(true);
@@ -868,20 +899,12 @@ export default function DebateDetailPage() {
             </div>
           )}
 
-          {/* ── Mobile: Voice panel (below main content) ── */}
+          {/* ── Mobile: Voice panel slot (single VoiceChat portals here) ── */}
           {showMobilePanel === 'voice' && (
-            <div className="lg:hidden px-4 sm:px-6 pb-4 animate-fade-in">
-              <VoiceChat
-                debateId={debate.id}
-                debateStatus={debate.status}
-                isCreator={isCreator}
-                isDebater={isDebater}
-                currentUserId={currentUserId}
-                onRemoteStreamsChange={handleRemoteStreamsChange}
-                onLocalStreamChange={handleLocalStreamChange}
-                onCameraChange={handleCameraChange}
-              />
-            </div>
+            <div
+              ref={setMobileVoiceSlot}
+              className="lg:hidden px-4 sm:px-6 pb-4 animate-fade-in"
+            />
           )}
 
           <div className="h-20 lg:h-8" />
@@ -897,6 +920,17 @@ export default function DebateDetailPage() {
             spectatorCount={debate.spectatorCount}
             debaterCount={debate.participants.length}
           />
+          {/* Desktop voice slot — also hosts the (CSS-hidden) instance on
+              mobile when the panel is closed, so voice keeps running. */}
+          <div ref={setDesktopVoiceSlot} />
+        </div>
+
+        </div> {/* end flex row */}
+
+        {/* THE single VoiceChat instance. Portaled into whichever slot the
+            current layout shows. Never render a second one — two engines
+            consume each other's WebRTC signals and break video. */}
+        {voiceSlot && createPortal(
           <VoiceChat
             debateId={debate.id}
             debateStatus={debate.status}
@@ -906,10 +940,9 @@ export default function DebateDetailPage() {
             onRemoteStreamsChange={handleRemoteStreamsChange}
             onLocalStreamChange={handleLocalStreamChange}
             onCameraChange={handleCameraChange}
-          />
-        </div>
-
-        </div> {/* end flex row */}
+          />,
+          voiceSlot,
+        )}
 
         {/* Toast */}
         {toast && (

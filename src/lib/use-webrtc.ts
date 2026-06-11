@@ -77,6 +77,29 @@ const SIGNAL_POLL_MS = 1500;
 const ICE_RESTART_DELAY_MS = 2000;
 const MAX_ICE_RESTARTS = 3;
 
+// ── Double-mount guard ──────────────────────────────────────────
+// Two useWebRTC instances for the same debate+user consume each
+// other's signals (GET marks them consumed) and send competing
+// offers — video breaks in ways that look random. The debate page
+// must render exactly ONE VoiceChat (portaled between layouts).
+const activeInstances = new Map<string, number>();
+
+function registerInstance(key: string): () => void {
+  const next = (activeInstances.get(key) ?? 0) + 1;
+  activeInstances.set(key, next);
+  if (next > 1) {
+    console.error(
+      `[WebRTC] ${next} useWebRTC instances active for ${key}. ` +
+      'Multiple instances steal each other\'s signals — render exactly one VoiceChat per debate.',
+    );
+  }
+  return () => {
+    const cur = (activeInstances.get(key) ?? 1) - 1;
+    if (cur <= 0) activeInstances.delete(key);
+    else activeInstances.set(key, cur);
+  };
+}
+
 // ─── Hook ───────────────────────────────────────────────────────
 
 export function useWebRTC(
@@ -94,6 +117,12 @@ export function useWebRTC(
   const localStreamRef = useRef<MediaStream | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeRef = useRef(false);
+
+  // Detect duplicate engines for the same debate+user (see guard above).
+  useEffect(() => {
+    if (!debateId || !currentUserId) return;
+    return registerInstance(`${debateId}:${currentUserId}`);
+  }, [debateId, currentUserId]);
 
   // ── Send signal to server ──────────────────────────────────
   const sendSignal = useCallback(async (

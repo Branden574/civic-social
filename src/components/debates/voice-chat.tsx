@@ -386,6 +386,25 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
   const isSpeaker = myParticipant?.role === 'speaker';
   const isPending = myParticipant?.role === 'pending';
   const isSelfMuted = myParticipant?.isMuted ?? true;
+  const isServerMutedMe = myParticipant?.isServerMuted ?? false;
+
+  // ── Enforce mute on the actual audio tracks ────────────────
+  // Room state (isMuted/isServerMuted) previously only changed the
+  // badge — the mic track kept transmitting to every peer while the
+  // UI said "Muted". track.enabled=false makes WebRTC send silence
+  // without renegotiation. (P2P limitation: server-mute is enforced
+  // client-side; a tampered client could ignore it.)
+  useEffect(() => {
+    if (!joined) return;
+    const shouldTransmit = !isSelfMuted && !isServerMutedMe;
+    const tracks = [
+      ...(micStream?.getAudioTracks() ?? []),
+      ...combinedStreamRef.current.getAudioTracks(),
+    ];
+    for (const t of tracks) {
+      if (t.enabled !== shouldTransmit) t.enabled = shouldTransmit;
+    }
+  }, [joined, isSelfMuted, isServerMutedMe, micStream]);
 
   // Voice activity detection — green ring when speaking
   const isSpeaking = useVoiceActivity(micStream, isSelfMuted);
@@ -1132,9 +1151,12 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={audioOutputRef} className="hidden" />
 
-      {/* Remote audio playback — one <audio> per remote peer stream */}
+      {/* Remote audio playback — one <audio> per remote peer stream.
+          sinkId routes output to the selected speaker (previously only
+          the hidden placeholder element got setSinkId, so switching
+          output devices audibly did nothing). */}
       {Array.from(remoteStreams.entries()).map(([userId, stream]) => (
-        <RemoteAudio key={userId} stream={stream} />
+        <RemoteAudio key={userId} stream={stream} sinkId={selectedOutputId} />
       ))}
     </div>
   );
@@ -1241,8 +1263,20 @@ function VoiceAvatar({
 // Hidden audio element that plays a remote peer's audio stream.
 // Explicitly calls play() to handle iOS autoplay restrictions.
 
-function RemoteAudio({ stream }: { stream: MediaStream }) {
+function RemoteAudio({ stream, sinkId }: { stream: MediaStream; sinkId?: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Route playback to the selected output device (Chromium only —
+  // setSinkId is a no-op elsewhere).
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !sinkId || sinkId === 'default') return;
+    if ('setSinkId' in el) {
+      (el as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> })
+        .setSinkId(sinkId)
+        .catch(() => { /* unsupported or revoked device — keep default */ });
+    }
+  }, [sinkId]);
 
   useEffect(() => {
     const el = audioRef.current;
