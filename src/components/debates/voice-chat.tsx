@@ -466,11 +466,17 @@ export function VoiceChat({ debateId, debateStatus, isCreator, isDebater, curren
     })();
   }, [joined, room, currentUserId, startWebRTC]);
 
+  // Poll the voice room while the debate is active — NOT only once it's
+  // enabled. Gating on room?.enabled meant a debater already on the page
+  // never discovered the host enabling voice (the one-shot initial fetch
+  // saw a disabled room, the interval never started, and they were stuck
+  // on "not enabled" until a manual refresh). Now they see enablement,
+  // new participants, and mute changes live.
   useEffect(() => {
-    if (!room?.enabled) return;
+    if (debateStatus === 'completed') return;
     const interval = setInterval(fetchRoom, 1500);
     return () => clearInterval(interval);
-  }, [fetchRoom, room?.enabled]);
+  }, [fetchRoom, debateStatus]);
 
   // ── Microphone permission + cleanup ─────────────────────────
   // Stop mic stream tracks when leaving or unmounting

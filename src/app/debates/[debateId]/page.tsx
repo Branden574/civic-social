@@ -1170,8 +1170,12 @@ function VideoSlot({
   // is conditionally rendered (mounts when cameraOn becomes true).
   // We need to set srcObject after the element enters the DOM.
   useEffect(() => {
-    if (videoRef.current && videoStream) {
-      videoRef.current.srcObject = videoStream;
+    const el = videoRef.current;
+    if (el && videoStream) {
+      el.srcObject = videoStream;
+      // Explicitly start playback — autoplay can still be deferred for
+      // streams attached outside a user-gesture stack (WebRTC ontrack).
+      el.play().catch(() => { /* will retry on next track/state change */ });
     }
   }, [videoStream, cameraOn]);
 
@@ -1215,7 +1219,12 @@ function VideoSlot({
           <video
             ref={videoRef}
             autoPlay
-            muted={isMe}
+            // Always muted: browsers block autoplay of UNMUTED video, so a
+            // remote tile (isMe=false) with audio would never start playing
+            // and the camera would stay black even though the track arrived.
+            // Tile audio is irrelevant here anyway — remote audio plays
+            // through the dedicated <RemoteAudio> elements in VoiceChat.
+            muted
             playsInline
             className="w-full h-full object-cover"
           />
