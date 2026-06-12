@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { playNotificationSound, unlockAudio } from '@/lib/notification-sound';
 import { getLocalReadIds, getLocalDismissedIds, markAllLocalRead } from '@/lib/notification-local-state';
@@ -9,7 +9,8 @@ import { getLocalReadIds, getLocalDismissedIds, markAllLocalRead } from '@/lib/n
 // Notification Context — Badge Count + Sound + In-App Toasts
 // ═══════════════════════════════════════════════════════════════
 //
-// Polls /api/notifications?action=unread-count every 30s.
+// SSE is the primary transport; falls back to polling
+// /api/notifications every 60s (jittered) only while SSE is down.
 // Adjusts server-reported unread count by subtracting locally
 // read/dismissed IDs (handles serverless cold-start resets).
 // When real new notifications arrive, plays sound and shows toast.
@@ -37,9 +38,21 @@ interface NotificationContextValue {
   setSoundEnabled: (enabled: boolean) => void;
 }
 
-const NotificationContext = createContext<NotificationContextValue>({
+// Frequently-changing value lives in its own context so consumers of
+// actions/toast/sound don't re-render on every unread-count tick.
+interface UnreadCountContextValue {
+  unreadCount: number;
+  setUnreadCount: (n: number | ((prev: number) => number)) => void;
+}
+
+type NotificationActionsValue = Omit<NotificationContextValue, 'unreadCount' | 'setUnreadCount'>;
+
+const UnreadCountContext = createContext<UnreadCountContextValue>({
   unreadCount: 0,
   setUnreadCount: () => {},
+});
+
+const NotificationContext = createContext<NotificationActionsValue>({
   markAllRead: async () => {},
   refresh: async () => {},
   activeToast: null,
@@ -49,6 +62,7 @@ const NotificationContext = createContext<NotificationContextValue>({
 });
 
 const POLL_INTERVAL = 60_000; // 60s fallback (SSE is primary)
+const POLL_JITTER_MS = 5_000; // 0-5s random offset so clients don't poll in lockstep
 const SOUND_PREF_KEY = 'civic-notif-sound';
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
@@ -217,8 +231,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Initial fetch
     fetchUnreadCount();
 
+    // Fallback polling control — jittered so clients don't poll in lockstep
+    const startPolling = () => {
+      if (pollRef.current) return;
+      pollRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL + Math.random() * POLL_JITTER_MS);
+    };
+    const stopPolling = () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+
     // Try SSE connection
-    let sseConnected = false;
     try {
       const es = new EventSource('/api/notifications/stream');
       sseRef.current = es;
@@ -227,7 +252,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         try {
           const data = JSON.parse(e.data);
           setUnreadCount(data.unreadCount ?? 0);
-          sseConnected = true;
+          // SSE is healthy — fully stop the fallback polling
+          stopPolling();
         } catch { /* ignore */ }
       });
 
@@ -238,22 +264,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       });
 
       es.onerror = () => {
-        // SSE failed — ensure polling is active as fallback
-        if (!pollRef.current) {
-          pollRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
-        }
+        // SSE failed — ensure polling is active as fallback.
+        // EventSource auto-reconnects; on recovery the unread-count
+        // event fires again and stops polling.
+        startPolling();
       };
     } catch {
       // SSE not supported
     }
 
-    // Fallback polling (slower interval since SSE is primary)
-    if (!sseConnected) {
-      pollRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
-    }
+    // Fallback polling until SSE confirms it is healthy (slower interval since SSE is primary)
+    startPolling();
 
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      stopPolling();
       if (sseRef.current) sseRef.current.close();
     };
   }, [isAuthenticated, isLoading, fetchUnreadCount, handleSSENotification]);
@@ -277,26 +301,63 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const dismissToast = useCallback(() => setActiveToast(null), []);
 
+  // Memoized separately: count value changes frequently, actions value rarely
+  const countValue = useMemo<UnreadCountContextValue>(
+    () => ({ unreadCount, setUnreadCount }),
+    [unreadCount],
+  );
+
+  const actionsValue = useMemo<NotificationActionsValue>(
+    () => ({
+      markAllRead,
+      refresh: fetchUnreadCount,
+      activeToast,
+      dismissToast,
+      soundEnabled,
+      setSoundEnabled,
+    }),
+    [markAllRead, fetchUnreadCount, activeToast, dismissToast, soundEnabled, setSoundEnabled],
+  );
+
   return (
-    <NotificationContext.Provider
-      value={{
-        unreadCount,
-        setUnreadCount,
-        markAllRead,
-        refresh: fetchUnreadCount,
-        activeToast,
-        dismissToast,
-        soundEnabled,
-        setSoundEnabled,
-      }}
-    >
-      {children}
-    </NotificationContext.Provider>
+    <UnreadCountContext.Provider value={countValue}>
+      <NotificationContext.Provider value={actionsValue}>
+        {children}
+      </NotificationContext.Provider>
+    </UnreadCountContext.Provider>
   );
 }
 
-export function useNotifications() {
+/**
+ * Subscribe only to the unread badge count. Prefer this in components
+ * that just render the count (e.g. sidebar badge) — it avoids re-renders
+ * from toast/sound/action changes and keeps count ticks isolated.
+ */
+export function useUnreadCount(): UnreadCountContextValue {
+  return useContext(UnreadCountContext);
+}
+
+/**
+ * Subscribe only to actions/toast/sound — does NOT re-render on
+ * unread-count ticks. Prefer this for consumers that don't show the badge
+ * (e.g. toast host in app-shell, sound toggle in settings).
+ */
+export function useNotificationActions(): NotificationActionsValue {
   return useContext(NotificationContext);
+}
+
+/**
+ * Full notification API (back-compat). Note: subscribes to both contexts,
+ * so consumers re-render on count ticks — use useUnreadCount() for the
+ * badge, or useNotificationActions() for everything else, once consumers migrate.
+ */
+export function useNotifications(): NotificationContextValue {
+  const actions = useContext(NotificationContext);
+  const { unreadCount, setUnreadCount } = useContext(UnreadCountContext);
+  return useMemo(
+    () => ({ ...actions, unreadCount, setUnreadCount }),
+    [actions, unreadCount, setUnreadCount],
+  );
 }
 
 // ─── System notification helper ──────────────────────────────

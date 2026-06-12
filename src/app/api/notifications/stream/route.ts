@@ -12,14 +12,23 @@ import { dbGetUnreadCount } from '@/lib/social-store';
 // In-memory registry of active SSE connections per user
 const SSE_KEY = Symbol.for('civic.sse.connections');
 
+// Close connections after ~5 min without any real activity (events sent)
+const IDLE_TIMEOUT_MS = 5 * 60_000;
+const HEARTBEAT_INTERVAL_MS = 25_000;
+
 interface SSEStore {
   connections: Map<string, Set<ReadableStreamDefaultController>>;
+  // Last time a real event (not a heartbeat) was sent on a connection
+  lastActivity: WeakMap<ReadableStreamDefaultController, number>;
 }
 
 function getSSEStore(): SSEStore {
   const g = global as unknown as Record<symbol, SSEStore | undefined>;
   if (!g[SSE_KEY]) {
-    g[SSE_KEY] = { connections: new Map() };
+    g[SSE_KEY] = { connections: new Map(), lastActivity: new WeakMap() };
+  } else if (!g[SSE_KEY]!.lastActivity) {
+    // Backfill for stores created before lastActivity existed (dev hot-reload)
+    g[SSE_KEY]!.lastActivity = new WeakMap();
   }
   return g[SSE_KEY]!;
 }
@@ -37,6 +46,7 @@ export function pushSSEEvent(userId: string, event: string, data: unknown) {
   for (const controller of controllers) {
     try {
       controller.enqueue(bytes);
+      store.lastActivity.set(controller, Date.now());
     } catch {
       controllers.delete(controller);
     }
@@ -59,33 +69,44 @@ export async function GET(request: NextRequest) {
         store.connections.set(userId, new Set());
       }
       store.connections.get(userId)!.add(controller);
+      store.lastActivity.set(controller, Date.now());
 
-      // Send initial unread count
-      dbGetUnreadCount(userId).then((count) => {
-        try {
-          const msg = `event: unread-count\ndata: ${JSON.stringify({ unreadCount: count })}\n\n`;
-          controller.enqueue(new TextEncoder().encode(msg));
-        } catch { /* connection closed */ }
-      });
-
-      // Heartbeat every 25s to keep the connection alive
-      const heartbeat = setInterval(() => {
-        try {
-          controller.enqueue(new TextEncoder().encode(': heartbeat\n\n'));
-        } catch {
-          clearInterval(heartbeat);
-        }
-      }, 25000);
-
-      // Cleanup when the connection closes
-      request.signal.addEventListener('abort', () => {
+      // Shared teardown: stop heartbeat, deregister, close stream
+      const cleanup = () => {
         clearInterval(heartbeat);
         store.connections.get(userId)?.delete(controller);
         if (store.connections.get(userId)?.size === 0) {
           store.connections.delete(userId);
         }
         try { controller.close(); } catch { /* already closed */ }
+      };
+
+      // Send initial unread count
+      dbGetUnreadCount(userId).then((count) => {
+        try {
+          const msg = `event: unread-count\ndata: ${JSON.stringify({ unreadCount: count })}\n\n`;
+          controller.enqueue(new TextEncoder().encode(msg));
+          store.lastActivity.set(controller, Date.now());
+        } catch { /* connection closed */ }
       });
+
+      // Heartbeat every 25s to keep the connection alive;
+      // close idle connections (~5 min with no real events)
+      const heartbeat = setInterval(() => {
+        const last = store.lastActivity.get(controller) ?? 0;
+        if (Date.now() - last > IDLE_TIMEOUT_MS) {
+          cleanup();
+          return;
+        }
+        try {
+          controller.enqueue(new TextEncoder().encode(': heartbeat\n\n'));
+        } catch {
+          cleanup();
+        }
+      }, HEARTBEAT_INTERVAL_MS);
+
+      // Cleanup when the connection closes
+      request.signal.addEventListener('abort', cleanup);
     },
   });
 

@@ -13,7 +13,7 @@ import {
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
 import { clampInt, isValidId } from '@/lib/security/sanitize';
-import { getUserById } from '@/lib/user-registry';
+import { getUsersByIds } from '@/lib/user-registry';
 
 // ─── GET /api/notifications ──────────────────────────────────
 
@@ -55,21 +55,24 @@ export async function GET(request: NextRequest) {
   const result = await dbGetNotifications(currentUser, { limit, offset, unreadOnly });
 
   // Enrich actor display names from user registry (fixes follow notifications showing ID or wrong name)
-  const enriched = await Promise.all(
-    result.notifications.map(async (n) => {
-      if (!n.actorUserId) return n;
-      const actor = await getUserById(n.actorUserId);
-      if (!actor) return n;
-      return {
-        ...n,
-        metadata: {
-          ...n.metadata,
-          actorName: actor.displayName,
-          actorUsername: actor.username,
-        },
-      };
-    }),
-  );
+  // Batch-load all actors in one lookup (same userCache pattern as feed/route.ts) to avoid N+1
+  const actorIds = result.notifications
+    .map((n) => n.actorUserId)
+    .filter((id): id is string => Boolean(id));
+  const userCache = await getUsersByIds(actorIds);
+  const enriched = result.notifications.map((n) => {
+    if (!n.actorUserId) return n;
+    const actor = userCache.get(n.actorUserId);
+    if (!actor) return n;
+    return {
+      ...n,
+      metadata: {
+        ...n.metadata,
+        actorName: actor.displayName,
+        actorUsername: actor.username,
+      },
+    };
+  });
 
   return NextResponse.json({
     notifications: enriched,
