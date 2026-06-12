@@ -11,7 +11,7 @@ import { isFollowing } from '@/lib/social-store';
 import { getSessionUser, getClientIp, internalError, badRequest, tooManyRequests } from '@/lib/security/api-guard';
 import { isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
-import { readLimiter } from '@/lib/security/rate-limiter';
+import { readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
 import { mockCandidates, mockReplies } from '@/lib/data/mock-data';
 
 const permissionHelpers = {
@@ -183,6 +183,10 @@ export async function DELETE(
     if (!user) {
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     }
+
+    // Rate limit destructive writes per user (not the read limiter)
+    const rl = socialLimiter.check(user.id);
+    if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
     // Verify ownership
     const post = await getPostById(postId);

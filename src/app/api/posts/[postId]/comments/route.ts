@@ -12,7 +12,7 @@ import {
 } from '@/lib/post-data-store';
 import { isFollowing, dbCreateNotification } from '@/lib/social-store';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest, internalError } from '@/lib/security/api-guard';
-import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
+import { postLimiter, readLimiter, socialLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, clampInt, isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
 import { mockCandidates } from '@/lib/data/mock-data';
@@ -234,6 +234,10 @@ export async function PATCH(
   if (!user) {
     return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
   }
+
+  // Rate limit comment reactions (write action)
+  const rl = socialLimiter.check(user.id);
+  if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   try {
     const body = await request.json();

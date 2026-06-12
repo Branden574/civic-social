@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { postLimiter } from '@/lib/security/rate-limiter';
-import { hashPassword } from '@/lib/security/hash';
+import { hashPassword, hashToken } from '@/lib/security/hash';
 import { validatePassword } from '@/lib/security/password';
 import { isDbAvailable, prisma } from '@/lib/db';
 
@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Password reset requires a database connection.' }, { status: 503 });
   }
 
-  // Look up the token
+  // Look up the token — stored as a SHA-256 hash (see forgot-password),
+  // so hash the presented plaintext token before comparing.
   const rows = await prisma.$queryRaw<{
     id: string;
     userId: string;
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
   }[]>`
     SELECT "id", "userId", "expiresAt", "usedAt"
     FROM "PasswordResetToken"
-    WHERE "token" = ${token}
+    WHERE "token" = ${hashToken(token)}
     LIMIT 1
   `;
 

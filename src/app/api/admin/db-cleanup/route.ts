@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, isDbAvailable } from '@/lib/db';
-import { getSessionUser } from '@/lib/security/api-guard';
+import { requireAdmin } from '@/lib/security/api-guard';
 
 // POST /api/admin/db-cleanup — purge old data to free DB space
 export async function POST(request: NextRequest) {
-  const user = getSessionUser(request);
-  if (!user) {
-    return NextResponse.json({ error: 'Auth required' }, { status: 401 });
-  }
+  const auth = requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   if (!isDbAvailable()) {
     return NextResponse.json({ error: 'DB not available' }, { status: 500 });
@@ -65,10 +63,8 @@ export async function POST(request: NextRequest) {
 
 // GET — just show counts without deleting
 export async function GET(request: NextRequest) {
-  const user = getSessionUser(request);
-  if (!user) {
-    return NextResponse.json({ error: 'Auth required' }, { status: 401 });
-  }
+  const auth = requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
 
   if (!isDbAvailable()) {
     return NextResponse.json({ error: 'DB not available' }, { status: 500 });

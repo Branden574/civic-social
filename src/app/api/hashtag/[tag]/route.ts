@@ -10,7 +10,7 @@ import { getAllNews, type NewsArticle } from '@/lib/news-store';
 import { getDeletedPostIds } from '@/lib/deleted-posts';
 import { getClientIp, tooManyRequests } from '@/lib/security/api-guard';
 import { readLimiter } from '@/lib/security/rate-limiter';
-import { sanitizeText, clampInt } from '@/lib/security/sanitize';
+import { sanitizeHashtag, clampInt } from '@/lib/security/sanitize';
 import { getUserById } from '@/lib/user-registry';
 
 async function serializePost(p: PersistedPost, counts: Map<string, number>) {
@@ -72,7 +72,7 @@ export async function GET(
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   const { tag: rawTag } = await params;
-  const tag = sanitizeText(decodeURIComponent(rawTag)).toLowerCase();
+  const tag = sanitizeHashtag(decodeURIComponent(rawTag));
   if (!tag) {
     return NextResponse.json({ error: 'Tag is required.' }, { status: 400 });
   }

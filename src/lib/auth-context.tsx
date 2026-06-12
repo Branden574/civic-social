@@ -560,6 +560,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.error || 'Failed to create account.' };
       }
 
+      // Server returns a success-shaped response WITHOUT a user when the
+      // email may already be registered (prevents account enumeration).
+      // Surface the generic message instead of logging in.
+      if (!data.user) {
+        return {
+          success: false,
+          error: data.message || 'Unable to complete signup. If you already have an account, try logging in.',
+        };
+      }
+
       const newUser: AuthUser = {
         id: data.user.id,
         email: data.user.email,

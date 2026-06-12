@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { authLimiter } from '@/lib/security/rate-limiter';
-import { verifyPassword } from '@/lib/security/hash';
+import { verifyPassword, needsRehash, hashPassword } from '@/lib/security/hash';
 import { isDbAvailable, prisma } from '@/lib/db';
 import { secureLog } from '@/lib/security/logger';
 import { signSession, sessionCookieOptions } from '@/lib/security/session';
@@ -65,6 +65,16 @@ export async function POST(request: NextRequest) {
     }
 
     secureLog.info('POST /api/auth/login', `success id=${row.id} email=${email}`);
+
+    // Transparent hash upgrade: legacy (100k-iteration) hashes are
+    // re-hashed with the current versioned format after a successful
+    // verify. Non-blocking — login succeeds even if the upgrade fails.
+    if (needsRehash(row.passwordHash)) {
+      prisma.searchableUser.update({
+        where: { id: row.id },
+        data: { passwordHash: hashPassword(password) },
+      }).catch(() => {});
+    }
 
     // Check if user is suspended
     if (row.suspendedUntil && new Date(row.suspendedUntil) > new Date()) {

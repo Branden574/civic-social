@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser, getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
 import { socialLimiter, readLimiter } from '@/lib/security/rate-limiter';
+import { isValidId } from '@/lib/security/sanitize';
 import {
   toggleReaction,
   removeReaction,
@@ -27,6 +28,7 @@ type RouteContext = { params: Promise<{ postId: string }> };
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const { postId } = await context.params;
+  if (!isValidId(postId)) return badRequest('Invalid post ID.');
   const ip = getClientIp(request);
   const rl = readLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
@@ -47,6 +49,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   const { postId } = await context.params;
+  if (!isValidId(postId)) return badRequest('Invalid post ID.');
   const ip = getClientIp(request);
   const rl = socialLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
@@ -122,6 +125,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   const { postId } = await context.params;
+  if (!isValidId(postId)) return badRequest('Invalid post ID.');
   const ip = getClientIp(request);
   const rl = socialLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);

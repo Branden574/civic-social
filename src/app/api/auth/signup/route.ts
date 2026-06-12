@@ -78,7 +78,15 @@ export async function POST(request: NextRequest) {
       }),
     ]);
     if (existingEmail) {
-      return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 });
+      // WARNING: Do NOT reveal that the email is registered (account
+      // enumeration). Return a success-shaped generic response instead;
+      // the client (auth-context.tsx) detects the missing `user` field
+      // and shows this message without logging anyone in.
+      secureLog.info('POST /api/auth/signup', `duplicate_email_attempt email=${email}`);
+      return NextResponse.json({
+        success: true,
+        message: "If this email is new, you'll receive a verification link. If you already have an account, try logging in or resetting your password.",
+      });
     }
     if (existingName) {
       return NextResponse.json({ error: 'This display name is already taken. Please choose another.' }, { status: 409 });
@@ -110,10 +118,9 @@ export async function POST(request: NextRequest) {
       const tokenId = randomBytes(16).toString('hex');
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-      prisma.$executeRaw`
-        INSERT INTO "EmailVerificationToken" ("id", "userId", "email", "token", "expiresAt")
-        VALUES (${tokenId}, ${id}, ${email}, ${verifyToken}, ${expiresAt})
-      `.then(() => {
+      prisma.emailVerificationToken.create({
+        data: { id: tokenId, userId: id, email, token: verifyToken, expiresAt },
+      }).then(() => {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL
           ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
         const verifyUrl = `${appUrl}/api/auth/verify-email?token=${verifyToken}`;

@@ -58,6 +58,79 @@ function generateToken(): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// ─── Session HMAC verification (edge-compatible) ─────────────
+// Mirrors src/lib/security/session.ts verifySession(), but uses
+// Web Crypto because edge middleware cannot import node:crypto.
+// Never trust the session payload (auth gate, role checks, refresh)
+// without verifying the signature first.
+
+const SESSION_COOKIE = 'civic-session';
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // matches session.ts
+
+interface EdgeSessionPayload {
+  id?: string;
+  email?: string;
+  role?: string;
+  iat?: number;
+}
+
+function base64UrlToBytes(b64url: string): Uint8Array | null {
+  try {
+    const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+    const bin = atob(padded);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  } catch {
+    return null;
+  }
+}
+
+function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
+/** Verify an HMAC-SHA256 signed session token. Returns payload or null. */
+export async function verifySessionEdge(
+  token: string | undefined,
+  secret: string | undefined,
+): Promise<EdgeSessionPayload | null> {
+  if (!token || !secret) return null;
+
+  const dotIdx = token.lastIndexOf('.');
+  if (dotIdx < 1) return null;
+
+  const b64 = token.slice(0, dotIdx);
+  const sig = token.slice(dotIdx + 1);
+  const sigBytes = base64UrlToBytes(sig);
+  if (!sigBytes) return null;
+
+  try {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+    );
+    const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(b64)));
+    if (!timingSafeEqualBytes(mac, sigBytes)) return null;
+
+    const payloadBytes = base64UrlToBytes(b64);
+    if (!payloadBytes) return null;
+    const payload = JSON.parse(new TextDecoder().decode(payloadBytes)) as EdgeSessionPayload;
+    if (!payload?.id || !payload?.iat) return null;
+
+    // Server-side expiry — matches session.ts (browser maxAge isn't enough)
+    if (Date.now() - payload.iat > SESSION_MAX_AGE_MS) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Allowed origins for CORS ────────────────────────────────
 
 const ALLOWED_ORIGINS = new Set([
@@ -90,7 +163,17 @@ function isAllowedOrigin(origin: string | null, requestUrl: string): boolean {
 
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  // TODO: migrate to nonce-based CSP to remove 'unsafe-inline'
+  // KNOWN LIMITATION: 'unsafe-inline' in script-src cannot be removed yet.
+  // A nonce-based CSP ('strict-dynamic' + per-request nonce) was evaluated,
+  // but Next.js only injects the nonce into its inline bootstrap scripts on
+  // DYNAMICALLY rendered routes — statically prerendered pages ship inline
+  // scripts without a nonce and would be blocked, breaking hydration in
+  // production. The production build also can't currently be verified end-
+  // to-end (pre-existing 'server-only' import failure in src/lib/moderation
+  // breaks `npm run build`). Revisit once all routes render dynamically or
+  // Next.js supports hash-based CSP for static output. Mitigations in place:
+  // SameSite=Strict HttpOnly session cookie, Origin allowlist on /api/*,
+  // frame-ancestors 'none', object-src 'none'.
   "script-src 'self' 'unsafe-inline' https://vercel.live",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
@@ -139,7 +222,7 @@ const ADMIN_CSP = CSP_DIRECTIVES
 
 // ─── Middleware ──────────────────────────────────────────────
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')
@@ -167,20 +250,22 @@ export function middleware(request: NextRequest) {
     '/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/terms', '/privacy', '/contact', '/safety', '/how-it-works',
   ]);
   const isPublicRoute = PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/_next/');
-  const sessionCookie = request.cookies.get('civic-session')?.value;
+  const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
 
-  // Parse session payload once for reuse (auth gate + session refresh)
-  let sessionPayload: { iat?: number; role?: string } | null = null;
-  if (sessionCookie) {
-    try {
-      sessionPayload = JSON.parse(atob(sessionCookie.split('.')[0]));
-    } catch { /* invalid — handled below */ }
-  }
+  // Verify the session signature ONCE for reuse (auth gate + refresh).
+  // WARNING: payload is only trusted after the HMAC check passes.
+  const sessionPayload = sessionCookie
+    ? await verifySessionEdge(sessionCookie, process.env.SESSION_SECRET)
+    : null;
+  // Cookie present but signature/expiry invalid → clear it downstream
+  const hasInvalidSession = !!sessionCookie && !sessionPayload;
 
   if (!isPublicRoute) {
-    if (!sessionCookie) {
+    if (!sessionPayload) {
       const loginUrl = new URL('/', request.url);
-      return NextResponse.redirect(loginUrl);
+      const res = NextResponse.redirect(loginUrl);
+      if (hasInvalidSession) res.cookies.delete(SESSION_COOKIE);
+      return res;
     }
 
     // Banned users: redirect to landing page
@@ -232,13 +317,16 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 3b. Sliding session refresh ──────────────────────────
-  // If the session cookie is valid and past 50% of its lifetime,
-  // refresh the cookie expiry so active users aren't logged out.
+  // If the session cookie is past 50% of its lifetime, refresh the
+  // cookie expiry so active users aren't logged out. Only runs for
+  // cookies whose HMAC signature verified above — tampered or expired
+  // cookies are never refreshed (they're cleared instead).
   const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours (matches session.ts)
   let shouldRefreshSession = false;
   if (sessionPayload?.iat) {
-    const ageSeconds = Math.floor((Date.now() / 1000) - sessionPayload.iat);
-    if (ageSeconds > SESSION_MAX_AGE / 2) {
+    // NOTE: iat is in MILLISECONDS (session.ts signs with Date.now())
+    const ageMs = Date.now() - sessionPayload.iat;
+    if (ageMs > SESSION_MAX_AGE_MS / 2) {
       shouldRefreshSession = true;
     }
   }
@@ -284,8 +372,12 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 7. Sliding session refresh — extend cookie expiry ─────
+  // Invalid (tampered/expired) session cookies are cleared instead.
+  if (hasInvalidSession) {
+    response.cookies.delete(SESSION_COOKIE);
+  }
   if (shouldRefreshSession && sessionCookie) {
-    response.cookies.set('civic-session', sessionCookie, {
+    response.cookies.set(SESSION_COOKIE, sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

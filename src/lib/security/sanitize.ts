@@ -53,6 +53,18 @@ export function sanitizeUsername(input: string): string {
 }
 
 /**
+ * Sanitize a hashtag/topic slug: lowercase, allow only a-z 0-9 _ -, max 50 chars.
+ */
+export function sanitizeHashtag(input: string): string {
+  if (typeof input !== 'string') return '';
+
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9_\-]/g, '')
+    .slice(0, 50);
+}
+
+/**
  * Validate and sanitize a URL. Returns null if invalid or dangerous.
  */
 export function sanitizeUrl(input: string): string | null {

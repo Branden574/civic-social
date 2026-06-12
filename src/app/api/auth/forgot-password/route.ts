@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { getClientIp, tooManyRequests, badRequest } from '@/lib/security/api-guard';
-import { postLimiter } from '@/lib/security/rate-limiter';
+import { passwordResetLimiter } from '@/lib/security/rate-limiter';
+import { hashToken } from '@/lib/security/hash';
 import { isDbAvailable, prisma } from '@/lib/db';
 import { sendPasswordResetEmail } from '@/lib/email';
 
@@ -23,7 +24,7 @@ const OK_RESPONSE = NextResponse.json({
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const rl = postLimiter.check(ip);
+  const rl = passwordResetLimiter.check(ip);
   if (!rl.allowed) return tooManyRequests(rl.retryAfterMs);
 
   let body: Record<string, unknown>;
@@ -53,9 +54,11 @@ export async function POST(request: NextRequest) {
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
   try {
+    // WARNING: Store only the SHA-256 hash of the token — a DB leak must
+    // not expose usable reset links. The plaintext token goes in the email.
     await prisma.$executeRaw`
       INSERT INTO "PasswordResetToken" ("id", "userId", "token", "expiresAt")
-      VALUES (${tokenId}, ${user.id}, ${token}, ${expiresAt})
+      VALUES (${tokenId}, ${user.id}, ${hashToken(token)}, ${expiresAt})
     `;
   } catch (err) {
     console.error('[forgot-password] Failed to create token:', err);
