@@ -215,6 +215,35 @@ model Follow {
 }
 
 // ─────────────────────────────────────────────
+// MUTES & BLOCKS — enforced in feed visibility filter
+// ─────────────────────────────────────────────
+
+model UserMute {
+  id        String    @id @default(cuid())
+  muterId   String
+  mutedId   String
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+  reason    String?
+
+  @@unique([muterId, mutedId])
+  @@index([muterId])
+  @@index([expiresAt])
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+  reason    String?
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+// ─────────────────────────────────────────────
 // THREADS & CONVERSATIONS
 // ─────────────────────────────────────────────
 

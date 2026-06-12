@@ -5,10 +5,11 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateFeed } from '@/lib/algorithm';
+import { generateFeed, generateForYouFeed } from '@/lib/algorithm';
 import { generateColdStartFeed, type ColdStartProfile } from '@/lib/algorithm/cold-start';
 import { mockCandidates, mockUsers, mockReplies } from '@/lib/data/mock-data';
 import type { FeedCandidate } from '@/lib/algorithm';
+import { isDbAvailable } from '@/lib/db';
 import { getDeletedPostIds } from '@/lib/deleted-posts';
 import { getAllPublishedPosts, getCommentCountsBatch, type PersistedPost } from '@/lib/post-data-store';
 import { getReleasedNewPosts } from '@/lib/simulated-new-posts';
@@ -17,6 +18,35 @@ import { readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeUrl, clampInt } from '@/lib/security/sanitize';
 import { dbGetFollowingIds } from '@/lib/social-store';
 import { getUserById, getUsersByIds, registerUser } from '@/lib/user-registry';
+
+// ─── X-engine feature flag ───────────────────────────────────
+// Activate via env (FEATURE_X_ENGINE=1). The ?engine=x query escape
+// hatch only works outside production — callers must not be able to
+// flip experimental ranking on the live site.
+function shouldUseXEngine(request: NextRequest): boolean {
+  if (!isDbAvailable()) return false;
+  if (process.env.FEATURE_X_ENGINE === '1') return true;
+  const queryFlag = new URL(request.url).searchParams.get('engine') === 'x';
+  return queryFlag && process.env.NODE_ENV !== 'production';
+}
+
+// ─── Opaque cursor encode/decode ─────────────────────────────
+interface DecodedCursor { lastId: string; lastSort: number | string; mode: 'top' | 'latest' }
+function encodeCursor(c: DecodedCursor): string {
+  return Buffer.from(JSON.stringify(c), 'utf8').toString('base64url');
+}
+function decodeCursor(raw: string | null): DecodedCursor | null {
+  if (!raw) return null;
+  try {
+    const obj = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
+    if (typeof obj?.lastId === 'string' && (obj?.mode === 'top' || obj?.mode === 'latest')) {
+      return obj as DecodedCursor;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 // ─── Safety filter (shared by both modes) ────────────────────
 function applySafetyFilter(candidates: FeedCandidate[]): { safe: FeedCandidate[]; filtered: number } {
@@ -177,6 +207,61 @@ export async function GET(request: NextRequest) {
   }
   const viewerId = sessionUser?.id ?? mockUsers.current.id;
   const user = mockUsers.current;
+
+  // ════════════════════════════════════════════════════════════
+  // X-ENGINE PATH (feature-flagged)
+  // ════════════════════════════════════════════════════════════
+  if (shouldUseXEngine(request) && sort === 'top') {
+    const afterCursor = decodeCursor(searchParams.get('after'));
+    const followingOnly = tab === 'following';
+
+    try {
+      const result = await generateForYouFeed(
+        { ...user, id: viewerId },
+        {
+          limit,
+          hashtag: hashtag || undefined,
+          followingOnly,
+        },
+      );
+
+      // Apply cursor (top-mode): skip until we pass lastId/lastSort, then take limit
+      let posts = result.posts;
+      if (afterCursor && afterCursor.mode === 'top') {
+        const idx = posts.findIndex((p) => p.candidate.post.id === afterCursor.lastId);
+        posts = idx >= 0 ? posts.slice(idx + 1) : posts;
+      }
+      const window = posts.slice(0, limit);
+      const last = window[window.length - 1];
+      const nextCursor = last && window.length >= limit
+        ? encodeCursor({ lastId: last.candidate.post.id, lastSort: last.qualityScore, mode: 'top' })
+        : null;
+
+      const serialized = await Promise.all(
+        window.map((rp) => serializeRankedPost(rp, new Map(), undefined)),
+      );
+
+      return NextResponse.json({
+        tab,
+        sort: 'top',
+        engine: 'x',
+        posts: serialized,
+        diversity: result.diversity,
+        nextCursor,
+        meta: {
+          totalCandidates: result.totalCandidates,
+          filteredCount: result.filteredCount,
+          hashtag: hashtag || null,
+          sources: result.sources,
+          dropped: result.dropped,
+          timing: result.timing,
+        },
+      });
+    } catch (err) {
+      // Fall through to legacy engine on any failure — never break the feed.
+      console.error('[x-engine] failed, falling back to legacy', err);
+    }
+  }
 
   // ── Fetch user-created posts from server store ─────────────
   const deletedIds = getDeletedPostIds();

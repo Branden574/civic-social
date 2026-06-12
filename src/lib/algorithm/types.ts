@@ -114,6 +114,7 @@ export interface SignalScores {
   sourceCredibility: number;     // 0–1
   topicRelevance: number;        // 0–1
   authorReputation: number;      // 0–1
+  realGraph: number;             // 0–1 — viewer↔author affinity (X-port v1)
   penalty: number;               // 0–1 (subtracted)
 }
 
@@ -139,6 +140,7 @@ export interface AlgorithmWeights {
   sourceCredibility: number;
   topicRelevance: number;
   authorReputation: number;
+  realGraph: number;             // viewer↔author affinity (X-port v1)
 }
 
 export interface DiversityConstraints {
@@ -160,16 +162,20 @@ export interface AlgorithmConfig {
  * the platform's ranking philosophy.
  *
  * Key design choice: Civility (0.25) has the highest weight,
- * signaling that constructive tone is the #1 priority.
+ * signaling that constructive tone is the #1 priority. RealGraph
+ * (viewer↔author affinity, X-port v1) takes weight from
+ * engagement-quality and author-reputation so personalization
+ * acts without engagement-maximization creeping in. Sums to 1.00.
  */
 export const DEFAULT_CONFIG: AlgorithmConfig = {
   weights: {
-    engagementQuality: 0.20,
-    civility: 0.25,
+    engagementQuality: 0.15,   // was 0.20 — trimmed for realGraph
+    civility: 0.25,            // unchanged — civility supremacy preserved
     viewpointDiversity: 0.15,
     sourceCredibility: 0.15,
     topicRelevance: 0.15,
-    authorReputation: 0.10,
+    authorReputation: 0.05,    // was 0.10 — realGraph subsumes viewer-specific reputation
+    realGraph: 0.10,           // NEW — viewer↔author affinity
   },
   diversity: {
     windowSize: 5,
@@ -180,3 +186,52 @@ export const DEFAULT_CONFIG: AlgorithmConfig = {
   recencyHalfLifeHours: 24,
   penaltyMultiplier: 1.5,
 };
+
+// ═══════════════════════════════════════════════════════════════
+// X-Algorithm Port v1 — Pipeline interfaces
+// ═══════════════════════════════════════════════════════════════
+
+/** Quota per candidate source. Total cap = sum of all sources. */
+export interface CandidateBudget {
+  inNetwork: number;          // followed users — default 750
+  outOfNetworkTopic: number;  // topic-match strangers — default 500
+  crossParty: number;         // opposite-affiliation high-civility — default 150
+  trending: number;           // hot-rising civil posts — default 100
+}
+
+export const DEFAULT_CANDIDATE_BUDGET: CandidateBudget = {
+  inNetwork: 750,
+  outOfNetworkTopic: 500,
+  crossParty: 150,
+  trending: 100,
+};
+
+export type CandidateSourceName =
+  | 'in-network'
+  | 'out-of-network-topic'
+  | 'cross-party'
+  | 'trending';
+
+/** Telemetry from each candidate-generation source. */
+export interface CandidateSourceResult {
+  source: CandidateSourceName;
+  fetched: number;
+  queryMs: number;
+}
+
+/** Viewer↔author affinity row from mv_real_graph_affinity. */
+export interface RealGraphEdge {
+  viewerId: string;
+  authorId: string;
+  affinity: number; // 0–1
+}
+
+/** Cursor for paginated feed responses. */
+export interface FeedCursor {
+  /** Last seen post id — exclusive. */
+  lastId: string;
+  /** Last seen score (top) or timestamp ISO (latest). */
+  lastSort: number | string;
+  /** Sort mode the cursor was issued for. */
+  mode: 'top' | 'latest';
+}

@@ -474,3 +474,25 @@ export function computePenalty(post: AlgoPost): number {
     [0.10, spamScore],
   ]);
 }
+
+// ═══════════════════════════════════════════════════════════════
+// G — REAL-GRAPH (viewer ↔ author affinity)  — X-port v1
+// ═══════════════════════════════════════════════════════════════
+//
+//   G(viewer, author) = mv_real_graph_affinity.affinity ∈ [0, 1]
+//
+// Looked up from the materialized view (mv_real_graph_affinity),
+// passed into scoring via the precomputed map. Returns 0 when
+// the (viewer, author) pair has no affinity row.
+//
+// We do NOT fall back to engagement-prediction. If a viewer has
+// no interaction history with an author, the signal is 0 — the
+// other six signals still drive ranking.
+
+export function computeRealGraph(
+  authorId: string,
+  affinityMap: ReadonlyMap<string, number>,
+): number {
+  const v = affinityMap.get(authorId);
+  return v === undefined ? 0 : clamp01(v);
+}

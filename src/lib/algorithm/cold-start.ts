@@ -62,7 +62,8 @@ const FEED_QUOTAS = {
 // ─── Cold-start configuration by phase ───────────────────────
 
 const PHASE_CONFIGS: Record<0 | 1 | 2, AlgorithmConfig> = {
-  // Phase 0: first session — maximum curation, minimal personalization
+  // Phase 0: first session — maximum curation, minimal personalization.
+  // realGraph stays 0 — new users have no interaction history yet.
   0: {
     weights: {
       engagementQuality: 0.05,
@@ -71,6 +72,7 @@ const PHASE_CONFIGS: Record<0 | 1 | 2, AlgorithmConfig> = {
       sourceCredibility: 0.25,
       topicRelevance: 0.05,
       authorReputation: 0.05,
+      realGraph: 0.00,
     },
     diversity: {
       windowSize: 3,
@@ -81,15 +83,17 @@ const PHASE_CONFIGS: Record<0 | 1 | 2, AlgorithmConfig> = {
     recencyHalfLifeHours: 72,
     penaltyMultiplier: 3.0,
   },
-  // Phase 1: days 1-3 or <50 interactions — mixed curation + early signals
+  // Phase 1: days 1-3 or <50 interactions — mixed curation + early signals.
+  // realGraph weak — limited interaction history.
   1: {
     weights: {
       engagementQuality: 0.10,
       civility: 0.30,
-      viewpointDiversity: 0.20,
+      viewpointDiversity: 0.18,
       sourceCredibility: 0.20,
       topicRelevance: 0.15,
       authorReputation: 0.05,
+      realGraph: 0.02,
     },
     diversity: {
       windowSize: 4,
@@ -100,15 +104,16 @@ const PHASE_CONFIGS: Record<0 | 1 | 2, AlgorithmConfig> = {
     recencyHalfLifeHours: 48,
     penaltyMultiplier: 2.5,
   },
-  // Phase 2: after early signals — gradual personalization increase
+  // Phase 2: after early signals — gradual personalization increase.
   2: {
     weights: {
-      engagementQuality: 0.20,
+      engagementQuality: 0.18,
       civility: 0.25,
       viewpointDiversity: 0.15,
       sourceCredibility: 0.15,
-      topicRelevance: 0.20,
+      topicRelevance: 0.17,
       authorReputation: 0.05,
+      realGraph: 0.05,
     },
     diversity: {
       windowSize: 5,
@@ -360,6 +365,7 @@ function blendConfigs(phaseConfig: AlgorithmConfig, warmup: number): AlgorithmCo
       sourceCredibility: blend(phaseConfig.weights.sourceCredibility, DEFAULT_CONFIG.weights.sourceCredibility),
       topicRelevance: blend(phaseConfig.weights.topicRelevance, DEFAULT_CONFIG.weights.topicRelevance),
       authorReputation: blend(phaseConfig.weights.authorReputation, DEFAULT_CONFIG.weights.authorReputation),
+      realGraph: blend(phaseConfig.weights.realGraph, DEFAULT_CONFIG.weights.realGraph),
     },
     diversity: warmup < 0.5 ? phaseConfig.diversity : DEFAULT_CONFIG.diversity,
     recencyHalfLifeHours: blend(phaseConfig.recencyHalfLifeHours, DEFAULT_CONFIG.recencyHalfLifeHours),

@@ -32,7 +32,19 @@ import {
   computeTopicRelevance,
   computeAuthorReputation,
   computePenalty,
+  computeRealGraph,
 } from './signals';
+
+/**
+ * Optional per-call context the heavy ranker needs that isn't on
+ * the candidate or user directly.
+ */
+export interface ScoringContext {
+  /** Map authorId → affinity ∈ [0,1] from mv_real_graph_affinity. */
+  affinityMap?: ReadonlyMap<string, number>;
+}
+
+const EMPTY_AFFINITY: ReadonlyMap<string, number> = new Map();
 
 // ─── Main scoring function ───────────────────────────────────
 
@@ -45,8 +57,10 @@ export function scoreCandidate(
   candidate: FeedCandidate,
   user: AlgoUser,
   config: AlgorithmConfig = DEFAULT_CONFIG,
+  ctx: ScoringContext = {},
 ): RankedPost {
   const { weights, recencyHalfLifeHours, penaltyMultiplier } = config;
+  const affinityMap = ctx.affinityMap ?? EMPTY_AFFINITY;
 
   // ── Compute each signal ──────────────────────────────────
   const signals: SignalScores = {
@@ -60,12 +74,13 @@ export function scoreCandidate(
       recencyHalfLifeHours,
     ),
     authorReputation: computeAuthorReputation(candidate.author),
+    realGraph: computeRealGraph(candidate.author.id, affinityMap),
     penalty: computePenalty(candidate.post),
   };
 
   // ── Composite score ──────────────────────────────────────
   //
-  //   Q = w₁E + w₂C + w₃D + w₄S + w₅T + w₆R − P × multiplier
+  //   Q = w₁E + w₂C + w₃D + w₄S + w₅T + w₆R + w₇G − P × multiplier
   //
   const rawScore =
     weights.engagementQuality * signals.engagementQuality +
@@ -73,7 +88,8 @@ export function scoreCandidate(
     weights.viewpointDiversity * signals.viewpointDiversity +
     weights.sourceCredibility * signals.sourceCredibility +
     weights.topicRelevance * signals.topicRelevance +
-    weights.authorReputation * signals.authorReputation;
+    weights.authorReputation * signals.authorReputation +
+    weights.realGraph * signals.realGraph;
 
   const qualityScore = Math.max(
     0,
@@ -103,9 +119,10 @@ export function scoreCandidates(
   candidates: FeedCandidate[],
   user: AlgoUser,
   config: AlgorithmConfig = DEFAULT_CONFIG,
+  ctx: ScoringContext = {},
 ): RankedPost[] {
   return candidates
-    .map((c) => scoreCandidate(c, user, config))
+    .map((c) => scoreCandidate(c, user, config, ctx))
     .sort((a, b) => b.qualityScore - a.qualityScore);
 }
 
@@ -241,6 +258,16 @@ function generateExplanation(
   } else if (signals.topicRelevance > 0.5) {
     tags.push('trending');
     reasons.push('Trending in topics related to your interests');
+  }
+
+  // ── Real-Graph (viewer ↔ author affinity, X-port v1) ────
+  if (signals.realGraph > 0.6) {
+    tags.push('familiar-author');
+    reasons.push(
+      `You've engaged with ${candidate.author.displayName} before`,
+    );
+  } else if (signals.realGraph > 0.3) {
+    tags.push('related-author');
   }
 
   // ── Author Reputation ────────────────────────────────────

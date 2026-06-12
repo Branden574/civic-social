@@ -83,9 +83,16 @@ describe('Cold-Start Feed Engine v2', () => {
     expect(phase1.weights.civility).toBe(0.30);
     expect(phase1.penaltyMultiplier).toBe(2.5);
 
-    // Phase 2: more balanced
-    expect(phase2.weights.topicRelevance).toBe(0.20);
+    // Phase 2: more balanced. topicRelevance trimmed 0.20 → 0.17
+    // when X-port v1 added realGraph signal (0.03 of weight redistributed).
+    expect(phase2.weights.topicRelevance).toBe(0.17);
+    expect(phase2.weights.realGraph).toBe(0.05);
     expect(phase2.penaltyMultiplier).toBe(2.0);
+
+    // Civility supremacy is preserved across every phase.
+    expect(phase0.weights.civility).toBeGreaterThan(phase0.weights.realGraph);
+    expect(phase1.weights.civility).toBeGreaterThan(phase1.weights.realGraph);
+    expect(phase2.weights.civility).toBeGreaterThan(phase2.weights.realGraph);
   });
 
   it('produces diverse viewpoints from day 1', () => {
