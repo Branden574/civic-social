@@ -10,160 +10,62 @@ import {
   Lightbulb,
   Layers,
   Bookmark,
-  BookmarkCheck,
   Share2,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
-  Info,
-  ShieldCheck,
-  Award,
   BadgeCheck,
   MessageCircle,
-  Users,
-  Check,
-  TrendingUp,
-  X,
-  BarChart3,
   Flag,
   Trash2,
   MoreHorizontal,
-  LogIn,
-  LinkIcon,
-  Shield,
-  AlertTriangle,
-  CheckCircle2,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
-import { CredibilityMeter, type CredibilityData } from './credibility-meter';
 import { ContextPanel } from './context-panel';
 import { DeleteConfirmModal } from '@/components/ui/delete-confirm-modal';
 import { useAuth } from '@/lib/auth-context';
 import { MentionText } from '@/components/ui/mention-text';
-import { analyzeCivility } from '@/lib/civility';
+import { CredibilityBar } from './post-card/credibility-bar';
+import { AlgorithmExplainer } from './post-card/algorithm-explainer';
+import { InlineReportPanel } from './post-card/inline-report-panel';
+import { ReplyCard } from './post-card/reply-card';
+import { FeedbackModal } from './post-card/feedback-modal';
+import { verificationIcons, ideologyTextColor, threadTypeLabels } from './post-card/constants';
+import type { PostData, ReactionType } from './post-card/types';
 
-// ─── Types ───────────────────────────────────────────────────
-
-interface PostAuthor {
-  id: string;
-  displayName: string;
-  avatarUrl?: string | null;
-  affiliations: string[];
-  verificationLevel: string;
-  civicReputation?: number;
-}
-
-interface PostSource {
-  url: string;
-  domain: string;
-  trustScore: number;
-}
-
-interface PostReactions {
-  agree: number;
-  disagree: number;
-  insightful: number;
-  nuance: number;
-}
-
-interface PostThread {
-  id: string;
-  type: string;
-  topics: string[];
-  participantCount: number;
-  civilityScore: number;
-  diversityScore: number;
-}
-
-interface PostAlgorithm {
-  qualityScore: number;
-  signals: {
-    engagementQuality: number;
-    civility: number;
-    viewpointDiversity: number;
-    sourceCredibility: number;
-    topicRelevance: number;
-    authorReputation: number;
-    penalty: number;
-  };
-  explanation: string;
-  explanationTags: string[];
-}
-
-interface PostReply {
-  id: string;
-  content: string;
-  author: PostAuthor;
-  createdAt: string;
-  civilityScore: number;
-  reactions: { agree: number; disagree: number; insightful: number };
-}
-
-export interface PostData {
-  id: string;
-  content: string;
-  createdAt: string;
-  topics: string[];
-  author: PostAuthor;
-  thread: PostThread | null;
-  sources: PostSource[];
-  reactions: PostReactions;
-  algorithm: PostAlgorithm;
-  replies: PostReply[];
-  comment_policy?: 'everyone' | 'followers_only' | 'off';
-  comment_count?: number;
-  is_thread_locked?: boolean;
-  postType?: string;
-  _optimistic?: boolean;
-  _failed?: boolean;
-}
+// Re-export the public type so existing imports keep working unchanged.
+export type {
+  PostData,
+  PostAuthor,
+  PostSource,
+  PostReactions,
+  PostThread,
+  PostAlgorithm,
+  PostReply,
+  ReactionType,
+} from './post-card/types';
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-const ideologyColors: Record<string, string> = {
-  left: 'bg-ideology-left/15 text-ideology-left',
-  'center-left': 'bg-ideology-center-left/15 text-ideology-center-left',
-  center: 'bg-ideology-center/15 text-ideology-center',
-  'center-right': 'bg-ideology-center-right/15 text-ideology-center-right',
-  right: 'bg-ideology-right/15 text-ideology-right',
-};
-
-const verificationIcons: Record<string, { icon: typeof ShieldCheck; label: string; color: string }> = {
-  EXPERT_VERIFIED: { icon: Award, label: 'Verified Expert', color: 'text-positive' },
-  CITIZEN_VERIFIED: { icon: BadgeCheck, label: 'Verified Citizen', color: 'text-info' },
-  EMAIL_VERIFIED: { icon: ShieldCheck, label: 'Verified', color: 'text-text-muted' },
-  OFFICIAL_VERIFIED: { icon: Award, label: 'Verified Official', color: 'text-warning' },
-};
-
-const threadTypeLabels: Record<string, { label: string; color: string }> = {
-  POLICY_PROPOSAL: { label: 'Policy Proposal', color: 'bg-positive/10 text-positive-light' },
-  STRUCTURED_DEBATE: { label: 'Structured Debate', color: 'bg-warning/10 text-warning-light' },
-  CROSS_PARTY_ROUNDTABLE: { label: 'Cross-Party Roundtable', color: 'bg-civic-subtle text-civic-light' },
-  EXPERT_AMA: { label: 'Expert Q&A', color: 'bg-info/10 text-info-light' },
-  NEWS_DISCUSSION: { label: 'News Discussion', color: 'bg-danger/10 text-danger-light' },
-  OPEN_DISCUSSION: { label: 'Discussion', color: 'bg-surface-active text-text-secondary' },
-};
-
 function formatNumber(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`;
   return n.toString();
 }
 
-function buildCredibilityData(post: PostData): CredibilityData {
-  return {
-    sourceCredibility: post.algorithm.signals.sourceCredibility,
-    authorReputation: post.algorithm.signals.authorReputation,
-    civility: post.algorithm.signals.civility,
-    penalty: post.algorithm.signals.penalty,
-    sourceCount: post.sources.length,
-    hasPrimarySources: post.sources.some((s) => s.trustScore >= 0.9),
-    verificationLevel: post.author.verificationLevel,
-    flagCount: post.algorithm.signals.penalty > 0.2 ? Math.round(post.algorithm.signals.penalty * 15) : 0,
-  };
+/**
+ * Derive the 0–100 credibility score shown in the inline bar from the post
+ * algorithm signals. Weighting mirrors the prior CredibilityMeter so the
+ * surfaced number stays consistent across the app.
+ */
+function computeCredibilityScore(post: PostData): number {
+  const s = post.algorithm.signals;
+  const raw =
+    0.35 * s.sourceCredibility +
+    0.25 * s.authorReputation +
+    0.2 * s.civility +
+    0.2 * (1 - s.penalty);
+  return Math.round(Math.max(0, Math.min(1, raw)) * 100);
 }
-
-type ReactionType = 'agree' | 'disagree' | 'insightful' | 'nuance';
 
 // ─── Toast Component ─────────────────────────────────────────
 
@@ -174,21 +76,47 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   }, [onDone]);
 
   return createPortal(
-    <div className="fixed bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 bg-surface-elevated border border-border-subtle rounded-xl shadow-lg text-sm text-text-primary animate-slide-up">
+    <div
+      role="status"
+      className="fixed bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 bg-surface-elevated border border-border-subtle rounded-xl shadow-lg text-sm text-text-primary animate-slide-up"
+    >
       {message}
     </div>,
     document.body,
   );
 }
 
+// ─── Reaction button definitions (colors per prototype RX_DEFS) ──────────
+const REACTION_DEFS: {
+  type: ReactionType;
+  icon: typeof ThumbsUp;
+  label: string;
+  color: string;
+  bgActive: string;
+}[] = [
+  { type: 'agree', icon: ThumbsUp, label: 'Agree', color: 'text-positive-light', bgActive: 'bg-positive/[0.12]' },
+  { type: 'disagree', icon: ThumbsDown, label: 'Disagree', color: 'text-danger-light', bgActive: 'bg-danger/10' },
+  { type: 'insightful', icon: Lightbulb, label: 'Insightful', color: 'text-warning-light', bgActive: 'bg-warning/[0.12]' },
+  { type: 'nuance', icon: Layers, label: 'Nuance', color: 'text-ideology-center-left', bgActive: 'bg-ideology-center-left/[0.12]' },
+];
+
 // ─── Post Card Component ─────────────────────────────────────
 
-export const PostCard = memo(function PostCard({ post, index, onDelete }: { post: PostData; index: number; onDelete?: (postId: string) => void }) {
+export const PostCard = memo(function PostCard({
+  post,
+  index,
+  onDelete,
+}: {
+  post: PostData;
+  index: number;
+  onDelete?: (postId: string) => void;
+}) {
   const { isAuthenticated, user } = useAuth();
   const vtRouter = useViewTransitionRouter();
   const [expanded, setExpanded] = useState(false);
   const [showAlgorithm, setShowAlgorithm] = useState(false);
-  const [showReplies, setShowReplies] = useState(false);
+  const [showTrust, setShowTrust] = useState(false);
+  const [showReplies] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -198,10 +126,14 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
 
   // Reaction state (server-authoritative)
   const [viewerReaction, setViewerReaction] = useState<ReactionType | null>(null);
-  const [reactionDeltas, setReactionDeltas] = useState<Record<ReactionType, number>>({ agree: 0, disagree: 0, insightful: 0, nuance: 0 });
+  const [reactionDeltas, setReactionDeltas] = useState<Record<ReactionType, number>>({
+    agree: 0,
+    disagree: 0,
+    insightful: 0,
+    nuance: 0,
+  });
   const [reactionLoading, setReactionLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState<ReactionType | null>(null);
-  const [hasFeedback, setHasFeedback] = useState(false);
 
   const isOwnPost = Boolean(user && post.author.id === user.id);
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -240,130 +172,142 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
   };
 
   // ── Reaction handler (calls server) ────────────────────────
-  const handleReaction = useCallback(async (e: React.MouseEvent, reaction: ReactionType) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleReaction = useCallback(
+    async (e: React.MouseEvent, reaction: ReactionType) => {
+      e.stopPropagation();
+      e.preventDefault();
 
-    if (!isAuthenticated) {
-      setToast('Please log in to react to posts');
-      return;
-    }
-    if (reactionLoading) return;
-
-    // Optimistic update
-    const prevReaction = viewerReaction;
-    const prevDeltas = { ...reactionDeltas };
-
-    const newDeltas = { ...reactionDeltas };
-    if (prevReaction === reaction) {
-      // Toggle off
-      setViewerReaction(null);
-      newDeltas[reaction] = Math.max(0, newDeltas[reaction] - 1);
-    } else {
-      // Switch or add
-      if (prevReaction) newDeltas[prevReaction] = Math.max(0, newDeltas[prevReaction] - 1);
-      newDeltas[reaction] = newDeltas[reaction] + 1;
-      setViewerReaction(reaction);
-    }
-    setReactionDeltas(newDeltas);
-
-    setReactionLoading(true);
-    try {
-      const res = await fetch(`/api/posts/${encodeURIComponent(post.id)}/reactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reaction }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setViewerReaction(data.viewer_reaction);
-        setReactionDeltas(data.deltas);
-        setHasFeedback(data.has_feedback);
-
-        // Show feedback panel for agree/disagree on first reaction
-        if (data.viewer_reaction && !data.has_feedback &&
-            (data.viewer_reaction === 'agree' || data.viewer_reaction === 'disagree')) {
-          setShowFeedback(data.viewer_reaction);
-        }
-      } else if (res.status === 401) {
+      if (!isAuthenticated) {
         setToast('Please log in to react to posts');
-        setViewerReaction(prevReaction);
-        setReactionDeltas(prevDeltas);
-      } else {
-        // Rollback
-        setViewerReaction(prevReaction);
-        setReactionDeltas(prevDeltas);
-        setToast('Failed to save reaction');
+        return;
       }
-    } catch {
-      setViewerReaction(prevReaction);
-      setReactionDeltas(prevDeltas);
-      setToast('Network error — please try again');
-    } finally {
-      setReactionLoading(false);
-    }
-  }, [isAuthenticated, viewerReaction, reactionDeltas, reactionLoading, post.id]);
+      if (reactionLoading) return;
+
+      // Optimistic update
+      const prevReaction = viewerReaction;
+      const prevDeltas = { ...reactionDeltas };
+
+      const newDeltas = { ...reactionDeltas };
+      if (prevReaction === reaction) {
+        // Toggle off
+        setViewerReaction(null);
+        newDeltas[reaction] = Math.max(0, newDeltas[reaction] - 1);
+      } else {
+        // Switch or add
+        if (prevReaction) newDeltas[prevReaction] = Math.max(0, newDeltas[prevReaction] - 1);
+        newDeltas[reaction] = newDeltas[reaction] + 1;
+        setViewerReaction(reaction);
+      }
+      setReactionDeltas(newDeltas);
+
+      setReactionLoading(true);
+      try {
+        const res = await fetch(`/api/posts/${encodeURIComponent(post.id)}/reactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reaction }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setViewerReaction(data.viewer_reaction);
+          setReactionDeltas(data.deltas);
+
+          // Show feedback panel for agree/disagree on first reaction
+          if (
+            data.viewer_reaction &&
+            !data.has_feedback &&
+            (data.viewer_reaction === 'agree' || data.viewer_reaction === 'disagree')
+          ) {
+            setShowFeedback(data.viewer_reaction);
+          }
+        } else if (res.status === 401) {
+          setToast('Please log in to react to posts');
+          setViewerReaction(prevReaction);
+          setReactionDeltas(prevDeltas);
+        } else {
+          // Rollback
+          setViewerReaction(prevReaction);
+          setReactionDeltas(prevDeltas);
+          setToast('Failed to save reaction');
+        }
+      } catch {
+        setViewerReaction(prevReaction);
+        setReactionDeltas(prevDeltas);
+        setToast('Network error — please try again');
+      } finally {
+        setReactionLoading(false);
+      }
+    },
+    [isAuthenticated, viewerReaction, reactionDeltas, reactionLoading, post.id],
+  );
 
   // ── Share handler ──────────────────────────────────────────
-  const handleShare = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleShare = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
 
-    const url = `${window.location.origin}/post/${encodeURIComponent(post.id)}`;
-    const title = `${post.author.displayName} on Civic Social`;
-    const text = post.content.slice(0, 140) + (post.content.length > 140 ? '...' : '');
+      const url = `${window.location.origin}/post/${encodeURIComponent(post.id)}`;
+      const title = `${post.author.displayName} on Civic Social`;
+      const text = post.content.slice(0, 140) + (post.content.length > 140 ? '...' : '');
 
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({ title, text, url });
-        return;
-      } catch {
-        // User cancelled or share failed, fall through to clipboard
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        try {
+          await navigator.share({ title, text, url });
+          return;
+        } catch {
+          // User cancelled or share failed, fall through to clipboard
+        }
       }
-    }
 
-    try {
-      await navigator.clipboard.writeText(url);
-      setToast('Link copied to clipboard');
-    } catch {
-      setToast('Could not copy link');
-    }
-  }, [post.id, post.author.displayName, post.content]);
+      try {
+        await navigator.clipboard.writeText(url);
+        setToast('Link copied to clipboard');
+      } catch {
+        setToast('Could not copy link');
+      }
+    },
+    [post.id, post.author.displayName, post.content],
+  );
 
   // ── Feedback submit handler ────────────────────────────────
-  const handleFeedbackSubmit = useCallback(async (reasons: string[]) => {
-    try {
-      await fetch(`/api/posts/${encodeURIComponent(post.id)}/reactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'feedback',
-          reaction: showFeedback,
-          reasons,
-        }),
-      });
-      setHasFeedback(true);
-    } catch {
-      // Feedback submission is best-effort
-    }
-    setShowFeedback(null);
-  }, [post.id, showFeedback]);
+  const handleFeedbackSubmit = useCallback(
+    async (reasons: string[]) => {
+      try {
+        await fetch(`/api/posts/${encodeURIComponent(post.id)}/reactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'feedback',
+            reaction: showFeedback,
+            reasons,
+          }),
+        });
+      } catch {
+        // Feedback submission is best-effort
+      }
+      setShowFeedback(null);
+    },
+    [post.id, showFeedback],
+  );
 
   const verification = verificationIcons[post.author.verificationLevel];
   const threadType = post.thread ? threadTypeLabels[post.thread.type] : null;
-  const postTypeLabel = !threadType && post.postType && post.postType !== 'OPEN_DISCUSSION'
-    ? threadTypeLabels[post.postType] || null
-    : null;
+  const postTypeLabel =
+    !threadType && post.postType && post.postType !== 'OPEN_DISCUSSION'
+      ? threadTypeLabels[post.postType] || null
+      : null;
   const displayType = threadType || postTypeLabel;
   const ideology = post.author.affiliations[0];
-  const ideologyStyle = ideology ? ideologyColors[ideology] : '';
-  const credibilityData = buildCredibilityData(post);
+  const ideologyClass = ideology ? ideologyTextColor[ideology] ?? 'text-text-muted' : '';
+  const credibilityScore = computeCredibilityScore(post);
+  const hasMeta = post.sources.length > 0 || post.thread !== null;
 
   const isLong = post.content.length > 300;
   const displayContent = isLong && !expanded ? post.content.slice(0, 300) + '...' : post.content;
 
-  // Merged counts = base (from mock data) + deltas (from real reactions)
+  // Merged counts = base (from server data) + deltas (from real reactions)
   const counts: Record<ReactionType, number> = {
     agree: post.reactions.agree + reactionDeltas.agree,
     disagree: post.reactions.disagree + reactionDeltas.disagree,
@@ -371,127 +315,166 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
     nuance: post.reactions.nuance + reactionDeltas.nuance,
   };
 
+  const commentsDisabled = post.comment_policy === 'off' || post.is_thread_locked;
+
   return (
     <article
       className={clsx(
-        'feed-item animate-fade-in opacity-0 bg-surface-elevated rounded-2xl mb-3 transition-colors duration-150',
-        post._optimistic && 'opacity-70',
-        post._failed && 'opacity-50 border-l-2 border-l-danger',
+        'feed-item animate-fade-in opacity-0 border-b border-border-hairline px-4 sm:px-[18px] pt-3.5 pb-2 transition-[background-color,opacity] duration-150 hover:bg-surface',
+        post._optimistic && 'opacity-[0.55]',
+        post._failed && 'opacity-[0.55] border-l-2 border-l-danger',
       )}
       style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'forwards' }}
     >
       {post._optimistic && (
-        <div className="px-4 sm:px-6 pt-2 pb-0 flex items-center gap-1.5 text-xs text-text-muted">
-          <div className="w-3 h-3 border-2 border-civic/40 border-t-civic rounded-full animate-spin" />
-          Posting...
+        <div className="flex items-center gap-[7px] text-[11.5px] text-civic-light mb-2 pl-[56px]">
+          <span
+            className="w-[11px] h-[11px] border-2 border-civic-muted border-t-civic rounded-full animate-spin"
+            aria-hidden="true"
+          />
+          Posting…
         </div>
       )}
       {post._failed && (
-        <div className="px-4 sm:px-6 pt-2 pb-0 flex items-center gap-1.5 text-xs text-danger-light">
-          <span className="font-semibold">Failed to post</span>
+        <div className="flex items-center gap-1.5 text-[11.5px] mb-2 pl-[56px]">
+          <span className="font-semibold text-danger-light">Failed to post</span>
           <span className="text-text-muted">— tap to retry or dismiss</span>
         </div>
       )}
-      <div className="px-5 sm:px-6 py-6">
-        {/* ── Header ── */}
-        <div className="flex items-start gap-3.5 mb-3">
-          <TransitionLink
-            href={`/profile/${encodeURIComponent(post.author.id)}`}
-            transitionType="avatar-morph"
-            viewTransitionName={`avatar-${post.author.id}`}
-            className="w-11 h-11 rounded-full shrink-0 cursor-pointer overflow-hidden"
-          >
-            {post.author.avatarUrl ? (
-              <img src={post.author.avatarUrl} alt={post.author.displayName} className="w-11 h-11 rounded-full object-cover" />
-            ) : (
-              <div className="w-11 h-11 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary text-sm font-semibold">
-                {post.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-              </div>
-            )}
-          </TransitionLink>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <TransitionLink
-                href={`/profile/${encodeURIComponent(post.author.id)}`}
-                transitionType="avatar-morph"
-                viewTransitionName={`author-name-${post.author.id}`}
-                className="font-semibold text-sm text-text-primary hover:text-civic-light hover:underline transition-colors"
-              >
-                {post.author.displayName}
-              </TransitionLink>
-              {verification && (
-                <span title={verification.label}>
-                  <verification.icon className={clsx('w-3.5 h-3.5', verification.color)} />
-                </span>
-              )}
-              {ideology && (
-                <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-surface-hover text-text-muted">
-                  {ideology}
-                </span>
-              )}
+      <div className="flex gap-3">
+        {/* ── Avatar ── */}
+        <TransitionLink
+          href={`/profile/${encodeURIComponent(post.author.id)}`}
+          transitionType="avatar-morph"
+          viewTransitionName={`avatar-${post.author.id}`}
+          className="w-11 h-11 rounded-full shrink-0 cursor-pointer overflow-hidden"
+          aria-label={`${post.author.displayName} profile`}
+        >
+          {post.author.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={post.author.avatarUrl}
+              alt={post.author.displayName}
+              className="w-11 h-11 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary text-sm font-bold">
+              {post.author.displayName
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .slice(0, 2)}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs text-text-muted">
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-              </span>
-              {displayType && (
-                <>
-                  <span className="text-text-muted">·</span>
-                  <span className="text-xs text-text-muted">
-                    {displayType.label}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
+          )}
+        </TransitionLink>
 
-          <div className="flex items-center gap-1">
-            <button
-              className="text-xs text-text-muted hover:text-text-secondary p-1.5 rounded-xl hover:bg-surface-hover transition-colors"
-              onClick={(e) => { e.stopPropagation(); setShowAlgorithm(!showAlgorithm); }}
-              title="Quality score"
+        <div className="flex-1 min-w-0">
+          {/* ── Author row ── */}
+          <div className="flex items-center gap-[7px] flex-wrap">
+            <TransitionLink
+              href={`/profile/${encodeURIComponent(post.author.id)}`}
+              transitionType="avatar-morph"
+              viewTransitionName={`author-name-${post.author.id}`}
+              className="text-[15px] font-bold text-text-primary hover:underline transition-colors break-words [overflow-wrap:anywhere] min-w-0"
             >
-              <BarChart3 className="w-3.5 h-3.5" />
-            </button>
-
-            {isOwnPost && (
-              <div className="relative" ref={moreMenuRef}>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowMoreMenu(!showMoreMenu); }}
-                  className="p-2 rounded-xl text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  title="More options"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-
-                {showMoreMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-surface-elevated rounded-xl border border-border-subtle shadow-lg z-50 animate-fade-in overflow-hidden">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowMoreMenu(false);
-                        setShowDeleteConfirm(true);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-danger-light hover:bg-danger/5 transition-colors text-left min-h-[44px]"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete Post
-                    </button>
-                  </div>
+              {post.author.displayName}
+            </TransitionLink>
+            {verification && (
+              <span title={verification.label} className="inline-flex">
+                {verification.icon === BadgeCheck ? (
+                  <BadgeCheck className="w-[15px] h-[15px] text-civic" aria-hidden="true" />
+                ) : (
+                  <verification.icon className={clsx('w-[15px] h-[15px]', verification.color)} aria-hidden="true" />
                 )}
-              </div>
+              </span>
             )}
-          </div>
-        </div>
+            {ideology && (
+              <span
+                className={clsx(
+                  'text-[10.5px] font-semibold px-2 py-0.5 rounded-full border border-border-subtle',
+                  ideologyClass,
+                )}
+              >
+                {ideology}
+              </span>
+            )}
+            <span className="text-[12.5px] text-text-muted">
+              · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+            </span>
 
-        {/* ── Content (clickable → thread view) ── */}
-        <div className="ml-[58px]">
+            <span className="ml-auto flex items-center gap-0.5">
+              {displayType && (
+                <span
+                  className={clsx(
+                    'text-[10.5px] font-semibold px-[9px] py-[3px] rounded-full whitespace-nowrap',
+                    displayType.bg,
+                    displayType.text,
+                  )}
+                >
+                  {displayType.label}
+                </span>
+              )}
+
+              {isOwnPost ? (
+                <div className="relative" ref={moreMenuRef}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMoreMenu(!showMoreMenu);
+                    }}
+                    aria-label="More options"
+                    aria-haspopup="menu"
+                    aria-expanded={showMoreMenu}
+                    className="flex items-center justify-center w-7 h-7 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                  >
+                    <MoreHorizontal className="w-[15px] h-[15px]" aria-hidden="true" />
+                  </button>
+
+                  {showMoreMenu && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-full mt-1 w-48 bg-surface-elevated rounded-xl border border-border-subtle shadow-lg z-50 animate-fade-in overflow-hidden"
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMoreMenu(false);
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-danger-light hover:bg-danger/[0.07] transition-colors text-left min-h-[44px]"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        Delete post
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAlgorithm(!showAlgorithm);
+                  }}
+                  aria-label="Why am I seeing this?"
+                  aria-expanded={showAlgorithm}
+                  className="flex items-center justify-center w-7 h-7 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                >
+                  <MoreHorizontal className="w-[15px] h-[15px]" aria-hidden="true" />
+                </button>
+              )}
+            </span>
+          </div>
+
+          {/* ── Body (clickable → thread view) ── */}
           <div
             role="link"
             tabIndex={0}
             onClick={(e) => {
-              // Don't navigate if user clicked a link inside (e.g. @mention)
               if ((e.target as HTMLElement).closest('a')) return;
               vtRouter.push(`/post/${encodeURIComponent(post.id)}`, { transitionType: 'post-expand' });
             }}
@@ -500,30 +483,39 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
                 vtRouter.push(`/post/${encodeURIComponent(post.id)}`, { transitionType: 'post-expand' });
               }
             }}
-            className="block text-sm leading-relaxed text-text-primary whitespace-pre-line hover:text-text-primary/90 transition-colors cursor-pointer"
+            className="block mt-[5px] text-[15px] leading-[1.6] text-text-primary whitespace-pre-line [text-wrap:pretty] break-words [overflow-wrap:anywhere] cursor-pointer"
           >
             <MentionText text={displayContent} />
           </div>
           {isLong && (
             <button
-              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className="text-text-secondary text-sm font-medium mt-1 hover:text-text-primary flex items-center gap-1 min-h-[44px]"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
+              className="text-civic-light text-[13px] font-medium mt-1 hover:underline flex items-center gap-1 min-h-[44px]"
             >
               {expanded ? (
-                <>Show less <ChevronUp className="w-3.5 h-3.5" /></>
+                <>
+                  Show less <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
+                </>
               ) : (
-                <>Read more <ChevronDown className="w-3.5 h-3.5" /></>
+                <>
+                  Read more <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                </>
               )}
             </button>
           )}
 
           {post.topics.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex flex-wrap gap-2.5 mt-2">
               {post.topics.map((topic) => (
                 <Link
                   key={topic}
                   href={`/hashtag/${encodeURIComponent(topic)}`}
-                  className="text-xs text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-[13px] font-medium text-civic-light hover:underline transition-colors cursor-pointer break-all"
                 >
                   #{topic}
                 </Link>
@@ -531,134 +523,118 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
             </div>
           )}
 
-          <CredibilityMeter data={credibilityData} />
+          {/* ── Credibility meter (thin bar + expandable sources) ── */}
+          {hasMeta && (
+            <CredibilityBar
+              score={credibilityScore}
+              sources={post.sources}
+              thread={post.thread}
+              open={showTrust}
+              onToggle={() => setShowTrust((v) => !v)}
+            />
+          )}
+
           <ContextPanel topics={post.topics} />
 
-          {post.sources.length > 0 && (
-            <div className="mt-3 space-y-1.5">
-              {post.sources.map((source, i) => (
-                <a
-                  key={i}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-text-muted hover:text-text-secondary transition-colors group"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  <span className="truncate">{source.domain}</span>
-                  <span className={clsx(
-                    'text-xs font-medium',
-                    source.trustScore >= 0.8 ? 'text-positive-light/70' : source.trustScore >= 0.5 ? 'text-warning-light/70' : 'text-danger-light/70',
-                  )}>
-                    {Math.round(source.trustScore * 100)}%
-                  </span>
-                </a>
-              ))}
-            </div>
-          )}
+          {/* ── "Why am I seeing this?" expansion ── */}
+          {showAlgorithm && <AlgorithmExplainer algorithm={post.algorithm} postContent={post.content} />}
 
-          {post.thread && (
-            <div className="mt-3 flex items-center gap-3 text-xs text-text-muted flex-wrap">
-              <span className="flex items-center gap-1"><Users className="w-3 h-3" />{post.thread.participantCount} participants</span>
-              <span>Civility: <span className={clsx('font-medium', post.thread.civilityScore >= 0.7 ? 'text-positive-light/70' : post.thread.civilityScore >= 0.4 ? 'text-warning-light/70' : 'text-danger-light/70')}>{Math.round(post.thread.civilityScore * 100)}%</span></span>
-              <span>Diversity: <span className="font-medium text-text-secondary">{Math.round(post.thread.diversityScore * 100)}%</span></span>
-            </div>
-          )}
-
-          {/* ── Reactions Bar ── */}
-          <div className="border-t border-border-subtle/50 mt-4 pt-3 flex items-center gap-1 flex-wrap">
-            {([
-              { type: 'agree' as ReactionType, icon: ThumbsUp, label: 'Agree', color: 'text-positive', bgActive: 'bg-positive/15' },
-              { type: 'disagree' as ReactionType, icon: ThumbsDown, label: 'Disagree', color: 'text-danger', bgActive: 'bg-danger/15' },
-              { type: 'insightful' as ReactionType, icon: Lightbulb, label: 'Insightful', color: 'text-warning', bgActive: 'bg-warning/15' },
-              { type: 'nuance' as ReactionType, icon: Layers, label: 'Nuance', color: 'text-civic-light', bgActive: 'bg-civic-muted' },
-            ]).map((btn) => {
+          {/* ── Reactions row ── */}
+          <div className="flex items-center gap-0.5 flex-wrap mt-[5px] -ml-2">
+            {REACTION_DEFS.map((btn) => {
               const isActive = viewerReaction === btn.type;
               return (
                 <button
                   key={btn.type}
+                  type="button"
                   onClick={(e) => handleReaction(e, btn.type)}
                   disabled={reactionLoading}
+                  aria-pressed={isActive}
+                  aria-label={`${btn.label} (${counts[btn.type]})`}
                   className={clsx(
-                    'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-xl transition-colors duration-150 min-h-[44px] select-none',
-                    isActive
-                      ? `${btn.color} ${btn.bgActive} font-semibold`
-                      : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                    'flex items-center gap-1.5 px-2.5 py-[7px] rounded-[10px] text-[12.5px] font-semibold transition-colors duration-150 min-h-[44px] select-none',
+                    isActive ? `${btn.color} ${btn.bgActive}` : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                     reactionLoading && 'opacity-60',
                   )}
                   title={btn.label}
                 >
-                  <btn.icon className="w-4 h-4" />
+                  <btn.icon className="w-4 h-4" aria-hidden="true" />
                   <span>{formatNumber(counts[btn.type])}</span>
                 </button>
               );
             })}
 
-            <div className="flex-1" />
-
             <TransitionLink
               href={`/post/${post.id}`}
               transitionType="post-expand"
               onClick={(e) => {
-                if (post.comment_policy === 'off' || post.is_thread_locked) e.preventDefault();
+                if (commentsDisabled) e.preventDefault();
                 e.stopPropagation();
               }}
+              aria-disabled={commentsDisabled}
               className={clsx(
-                'flex items-center gap-1.5 text-xs px-3 py-2.5 rounded-xl transition-colors min-h-[44px]',
-                post.comment_policy === 'off' || post.is_thread_locked
+                'flex items-center gap-1.5 px-2.5 py-[7px] rounded-[10px] text-[12.5px] font-semibold transition-colors min-h-[44px]',
+                commentsDisabled
                   ? 'text-text-muted/50 cursor-default'
                   : 'text-text-muted hover:text-civic-light hover:bg-surface-hover',
               )}
               title={
-                post.is_thread_locked ? 'Thread locked' :
-                post.comment_policy === 'off' ? 'Comments turned off' :
-                'Reply'
+                post.is_thread_locked
+                  ? 'Thread locked'
+                  : post.comment_policy === 'off'
+                    ? 'Comments turned off'
+                    : 'Reply'
               }
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4" aria-hidden="true" />
               {(() => {
                 const count = post.comment_count ?? post.replies?.length ?? 0;
-                return count > 0 ? count : 'Reply';
+                return count > 0 ? formatNumber(count) : 'Reply';
               })()}
             </TransitionLink>
 
+            <span className="flex-1" />
+
             <button
-              onClick={(e) => { e.stopPropagation(); setBookmarked(!bookmarked); }}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setBookmarked(!bookmarked);
+              }}
+              aria-label={bookmarked ? 'Remove bookmark' : 'Save post'}
+              aria-pressed={bookmarked}
+              title={bookmarked ? 'Remove bookmark' : 'Save'}
               className={clsx(
-                'p-2.5 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
-                bookmarked ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                'flex items-center justify-center w-11 h-11 rounded-[10px] transition-colors',
+                bookmarked ? 'text-civic-light' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
               )}
-              title={bookmarked ? 'Remove bookmark' : 'Save post'}
             >
-              {bookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+              <Bookmark className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); setShowReport(!showReport); }}
-              className={clsx(
-                'p-2.5 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
-                showReport ? 'text-danger-light bg-danger/10' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
-              )}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReport(!showReport);
+              }}
+              aria-label="Report content"
+              aria-expanded={showReport}
               title="Report content"
-            >
-              <Flag className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleShare}
-              className="p-2.5 rounded-xl text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-              title="Share"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowAlgorithm(!showAlgorithm); }}
               className={clsx(
-                'p-2.5 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center',
-                showAlgorithm ? 'text-civic-light bg-civic-subtle' : 'text-text-muted hover:text-text-secondary hover:bg-surface-hover',
+                'flex items-center justify-center w-11 h-11 rounded-[10px] transition-colors',
+                showReport ? 'text-danger-light bg-danger/10' : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
               )}
-              title="Why am I seeing this?"
             >
-              <Info className="w-4 h-4" />
+              <Flag className="w-4 h-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              aria-label="Share"
+              title="Share"
+              className="flex items-center justify-center w-11 h-11 rounded-[10px] text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            >
+              <Share2 className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
 
@@ -672,10 +648,12 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
           )}
 
           {showReport && <InlineReportPanel postId={post.id} onClose={() => setShowReport(false)} />}
-          {showAlgorithm && <AlgorithmExplainer algorithm={post.algorithm} postContent={post.content} />}
+
           {showReplies && post.replies.length > 0 && (
             <div className="mt-4 space-y-3 border-l-2 border-border-subtle pl-4 animate-fade-in">
-              {post.replies.map((reply) => <ReplyCard key={reply.id} reply={reply} />)}
+              {post.replies.map((reply) => (
+                <ReplyCard key={reply.id} reply={reply} />
+              ))}
             </div>
           )}
         </div>
@@ -686,7 +664,12 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
 
       <DeleteConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { if (!deleting) { setShowDeleteConfirm(false); setDeleteError(null); } }}
+        onClose={() => {
+          if (!deleting) {
+            setShowDeleteConfirm(false);
+            setDeleteError(null);
+          }
+        }}
         onConfirm={handleDelete}
         deleting={deleting}
         contentPreview={post.content}
@@ -695,345 +678,3 @@ export const PostCard = memo(function PostCard({ post, index, onDelete }: { post
     </article>
   );
 });
-
-// ═══════════════════════════════════════════════════════════════
-// Feedback Modal (Portal-based bottom sheet)
-// ═══════════════════════════════════════════════════════════════
-
-const FEEDBACK_REASONS: Record<string, { id: string; label: string }[]> = {
-  agree: [
-    { id: 'well-sourced', label: 'Well-sourced & cited' },
-    { id: 'solution-oriented', label: 'Solution-oriented thinking' },
-    { id: 'changed-perspective', label: 'Changed my perspective' },
-    { id: 'fair-to-all', label: 'Fair to all sides' },
-    { id: 'expert-analysis', label: 'Expert-level analysis' },
-    { id: 'strong-evidence', label: 'Strong evidence presented' },
-  ],
-  disagree: [
-    { id: 'missing-sources', label: 'Missing credible sources' },
-    { id: 'misleading-claims', label: 'Contains misleading claims' },
-    { id: 'ignores-counter', label: 'Ignores counter-arguments' },
-    { id: 'one-sided', label: 'One-sided perspective' },
-    { id: 'inflammatory', label: 'Inflammatory language' },
-    { id: 'logical-fallacy', label: 'Logical fallacy' },
-  ],
-};
-
-function FeedbackModal({
-  reactionType,
-  onSubmit,
-  onSkip,
-}: {
-  reactionType: ReactionType;
-  onSubmit: (reasons: string[]) => void;
-  onSkip: () => void;
-}) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [submitted, setSubmitted] = useState(false);
-  const reasons = FEEDBACK_REASONS[reactionType] || FEEDBACK_REASONS.agree;
-
-  const toggle = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const handleSubmit = () => {
-    if (selected.size === 0) return;
-    setSubmitted(true);
-    onSubmit(Array.from(selected));
-  };
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
-
-  const isAgree = reactionType === 'agree';
-  const title = isAgree ? 'Why do you agree?' : 'Why do you disagree?';
-  const Icon = isAgree ? ThumbsUp : ThumbsDown;
-  const color = isAgree ? 'text-positive-light' : 'text-danger-light';
-
-  if (submitted) {
-    return createPortal(
-      <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
-        <div className="absolute inset-0 bg-black/50" onClick={onSkip} />
-        <div className="relative bg-bg rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-6 pb-safe text-center animate-slide-up">
-          <div className="w-12 h-12 rounded-full bg-positive/10 flex items-center justify-center mx-auto mb-3">
-            <Check className="w-6 h-6 text-positive-light" />
-          </div>
-          <p className="text-base font-semibold text-text-primary mb-1">Thanks for your feedback!</p>
-          <p className="text-sm text-text-muted mb-4">Your input helps improve content ranking for everyone.</p>
-          <button
-            onClick={onSkip}
-            className="px-6 py-3 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
-          >
-            Done
-          </button>
-        </div>
-      </div>,
-      document.body,
-    );
-  }
-
-  return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onSkip} />
-      <div className="relative bg-bg rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md animate-slide-up shadow-2xl">
-        <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <div className="flex items-center gap-2">
-            <Icon className={clsx('w-5 h-5', color)} />
-            <span className={clsx('text-sm font-semibold', color)}>{title}</span>
-          </div>
-          <button
-            onClick={onSkip}
-            className="p-2 -mr-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex justify-center mb-2">
-          <div className="w-10 h-1 rounded-full bg-surface-active" />
-        </div>
-
-        <div className="px-5 pb-5 space-y-2">
-          {reasons.map((reason) => {
-            const isSelected = selected.has(reason.id);
-            return (
-              <button
-                key={reason.id}
-                onClick={() => toggle(reason.id)}
-                className={clsx(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-colors min-h-[48px]',
-                  isSelected
-                    ? 'bg-civic/10 border border-civic/30 text-text-primary font-medium'
-                    : 'bg-surface-elevated border border-border-subtle text-text-secondary hover:bg-surface-hover',
-                )}
-              >
-                <div className={clsx(
-                  'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
-                  isSelected ? 'bg-civic border-civic text-white' : 'border-border-strong',
-                )}>
-                  {isSelected && <Check className="w-3.5 h-3.5" />}
-                </div>
-                <span>{reason.label}</span>
-              </button>
-            );
-          })}
-
-          <div className="flex gap-2 pt-2">
-            <button
-              onClick={onSkip}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-text-muted hover:bg-surface-hover transition-colors min-h-[44px]"
-            >
-              Skip
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={selected.size === 0}
-              className={clsx(
-                'flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors min-h-[44px]',
-                selected.size > 0
-                  ? 'bg-civic text-white hover:bg-civic-dark'
-                  : 'bg-surface-active text-text-muted cursor-not-allowed',
-              )}
-            >
-              Submit ({selected.size})
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Sub-components (Algorithm, Report, Reply)
-// ═══════════════════════════════════════════════════════════════
-
-function AlgorithmExplainer({ algorithm, postContent }: { algorithm: PostAlgorithm; postContent: string }) {
-  const signals = algorithm.signals;
-  const civility = analyzeCivility(postContent);
-
-  return (
-    <div className="mt-4 p-4 bg-surface-elevated rounded-xl border border-border-subtle animate-slide-up">
-      <div className="flex items-center gap-2 mb-3">
-        <Info className="w-4 h-4 text-civic-light" />
-        <h4 className="text-xs font-semibold text-text-primary">Why am I seeing this?</h4>
-      </div>
-      <p className="text-sm text-text-secondary mb-4">{algorithm.explanation}</p>
-      <div className="space-y-2">
-        <SignalBar label="Civility" value={signals.civility} weight="25%" color="bg-positive" />
-        <SignalBar label="Engagement Quality" value={signals.engagementQuality} weight="20%" color="bg-info" />
-        <SignalBar label="Viewpoint Diversity" value={signals.viewpointDiversity} weight="15%" color="bg-civic" />
-        <SignalBar label="Source Credibility" value={signals.sourceCredibility} weight="15%" color="bg-warning" />
-        <SignalBar label="Topic Relevance" value={signals.topicRelevance} weight="15%" color="bg-civic-light" />
-        <SignalBar label="Author Reputation" value={signals.authorReputation} weight="10%" color="bg-info-light" />
-        {signals.penalty > 0 && <SignalBar label="Penalty" value={signals.penalty} weight="SUB" color="bg-danger" isNegative />}
-      </div>
-
-      {/* Civility breakdown — shows specific issues that lowered the score */}
-      {civility.issues.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-border-subtle">
-          <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-3.5 h-3.5 text-warning-light" />
-            <span className="text-xs font-semibold text-text-primary">
-              Civility Issues ({Math.round(civility.score * 100)}%)
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            {civility.issues.map((issue, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-text-secondary">
-                <AlertTriangle className="w-3 h-3 text-warning-light mt-0.5 shrink-0" />
-                <span>{issue}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {civility.issues.length === 0 && civility.score >= 0.8 && (
-        <div className="mt-3 pt-3 border-t border-border-subtle">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-positive-light" />
-            <span className="text-xs text-positive-light font-medium">
-              This post promotes constructive civic discourse
-            </span>
-          </div>
-        </div>
-      )}
-
-      {algorithm.explanationTags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border-subtle">
-          {algorithm.explanationTags.map((tag) => (
-            <span key={tag} className="text-xs font-medium text-text-muted bg-surface-active px-2 py-0.5 rounded-full">{tag}</span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SignalBar({ label, value, weight, color, isNegative }: { label: string; value: number; weight: string; color: string; isNegative?: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-text-muted w-32 shrink-0 truncate">{label}</span>
-      <div className="flex-1 h-1.5 bg-surface-active rounded-full overflow-hidden">
-        <div className={clsx('h-full rounded-full transition-colors duration-500', color)} style={{ width: `${Math.round(value * 100)}%` }} />
-      </div>
-      <span className={clsx('text-xs font-mono w-10 text-right', isNegative ? 'text-danger-light' : 'text-text-secondary')}>
-        {isNegative ? '-' : ''}{Math.round(value * 100)}%
-      </span>
-      <span className="text-[9px] text-text-muted w-8 text-right">{weight}</span>
-    </div>
-  );
-}
-
-const REPORT_CATEGORIES = [
-  { id: 'threats', label: 'Threats or violence', severity: 'high' },
-  { id: 'harassment', label: 'Harassment or bullying', severity: 'high' },
-  { id: 'misinfo', label: 'Misinformation / misleading', severity: 'medium' },
-  { id: 'hate', label: 'Hate speech or extremism', severity: 'high' },
-  { id: 'spam', label: 'Spam or manipulation', severity: 'medium' },
-  { id: 'impersonation', label: 'Impersonation', severity: 'medium' },
-  { id: 'other', label: 'Other', severity: 'low' },
-];
-
-function InlineReportPanel({ postId, onClose }: { postId: string; onClose: () => void }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-
-  if (submitted) {
-    return (
-      <div className="mt-3 p-4 bg-surface-elevated rounded-xl border border-border-subtle animate-slide-up">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-positive/10 flex items-center justify-center">
-            <Check className="w-4 h-4 text-positive-light" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-text-primary">Report submitted</p>
-            <p className="text-xs text-text-muted">Our moderation team will review within 24 hours.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-3 bg-surface-elevated rounded-xl border border-border-subtle overflow-hidden animate-slide-up">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle">
-        <div className="flex items-center gap-2">
-          <Flag className="w-4 h-4 text-danger-light" />
-          <span className="text-xs font-semibold text-text-primary">Report Content</span>
-        </div>
-        <button onClick={onClose} className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <div className="p-4 space-y-1.5">
-        {REPORT_CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={(e) => { e.stopPropagation(); setSelected(cat.id); }}
-            className={clsx(
-              'w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left text-xs transition-colors min-h-[44px]',
-              selected === cat.id
-                ? 'bg-civic/10 border border-civic/30 text-text-primary'
-                : 'bg-surface border border-border-subtle text-text-secondary hover:bg-surface-hover',
-            )}
-          >
-            <div className={clsx('w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0', selected === cat.id ? 'bg-civic border-civic' : 'border-border-strong')}>
-              {selected === cat.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-            </div>
-            {cat.label}
-          </button>
-        ))}
-        <button
-          onClick={(e) => { e.stopPropagation(); if (selected) setSubmitted(true); }}
-          disabled={!selected}
-          className={clsx(
-            'w-full mt-2 py-2.5 rounded-xl text-xs font-semibold transition-colors min-h-[44px]',
-            selected ? 'bg-danger text-white hover:bg-danger/80' : 'bg-surface-active text-text-muted cursor-not-allowed',
-          )}
-        >
-          Submit Report
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ReplyCard({ reply }: { reply: PostReply }) {
-  const verification = verificationIcons[reply.author.verificationLevel];
-  const ideology = reply.author.affiliations[0];
-  const ideologyStyle = ideology ? ideologyColors[ideology] : '';
-
-  return (
-    <div className="animate-fade-in">
-      <div className="flex items-center gap-2 mb-1">
-        {reply.author.avatarUrl ? (
-          <img src={reply.author.avatarUrl} alt={reply.author.displayName} className="w-6 h-6 rounded-full object-cover" />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-surface-active flex items-center justify-center text-text-muted text-xs font-semibold">
-            {reply.author.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-          </div>
-        )}
-        <span className="text-xs font-semibold text-text-primary">{reply.author.displayName}</span>
-        {verification && <verification.icon className={clsx('w-3 h-3', verification.color)} />}
-        {ideology && <span className={clsx('text-[9px] font-medium px-1 py-0.5 rounded-full', ideologyStyle)}>{ideology}</span>}
-        <span className="text-xs text-text-muted">{formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}</span>
-      </div>
-      <p className="text-sm text-text-secondary leading-relaxed ml-8">{reply.content}</p>
-      <div className="flex items-center gap-3 mt-1.5 ml-8">
-        <span className="text-xs text-text-muted flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {reply.reactions.agree}</span>
-        <span className="text-xs text-text-muted flex items-center gap-1"><Lightbulb className="w-3 h-3" /> {reply.reactions.insightful}</span>
-        <span className={clsx('text-xs font-medium px-1.5 py-0.5 rounded', reply.civilityScore >= 0.8 ? 'bg-positive/10 text-positive-light' : 'bg-warning/10 text-warning-light')}>
-          Civility: {Math.round(reply.civilityScore * 100)}%
-        </span>
-      </div>
-    </div>
-  );
-}

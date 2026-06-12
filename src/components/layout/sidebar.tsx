@@ -11,7 +11,6 @@ import {
   Bell,
   User,
   Settings,
-  Shield,
   PenSquare,
   Search,
   Bookmark,
@@ -60,29 +59,40 @@ export function Sidebar({ onCompose }: SidebarProps) {
   const { user, isAuthenticated, isAdmin, isCreator, logout } = useAuth();
   const { unreadCount } = useNotifications();
 
+  const navLinkClass = (isActive: boolean) =>
+    clsx(
+      'flex items-center gap-[13px] px-3 py-2.5 rounded-xl text-[14.5px] transition-colors',
+      isActive
+        ? 'bg-surface-elevated text-text-primary font-bold'
+        : 'text-text-secondary font-medium hover:text-text-primary hover:bg-surface-hover',
+    );
+
+  const navIconClass = (isActive: boolean) =>
+    clsx('w-5 h-5 shrink-0', isActive ? 'text-civic-light' : 'text-current');
+
   return (
-    <aside className="hidden lg:flex flex-col w-[240px] h-screen sticky top-0 border-r border-border-subtle bg-bg-alt" style={{ viewTransitionName: 'sidebar' }}>
+    <aside className="hidden lg:flex flex-col w-[264px] h-screen sticky top-0 border-r border-border-hairline bg-bg" style={{ viewTransitionName: 'sidebar' }}>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b border-border-subtle">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-text-primary shrink-0">
+      <div className="flex items-center gap-[11px] px-5 pt-5 pb-3.5">
+        <svg width="27" height="27" viewBox="0 0 24 24" fill="none" className="text-civic shrink-0" aria-hidden="true">
           <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
         </svg>
         <div>
-          <h1 className="text-sm font-bold text-text-primary tracking-tight">
+          <h1 className="text-[15px] font-extrabold text-text-primary tracking-[-0.02em] leading-none">
             Civic Social
           </h1>
-          <p className="text-xs text-text-muted">
-            Discourse Platform
+          <p className="text-[11px] text-text-muted mt-px">
+            Discourse, with receipts
           </p>
         </div>
       </div>
 
       {/* Compose button */}
       {onCompose && (
-        <div className="px-4 pt-5">
+        <div className="px-4 pt-1.5 pb-1">
           <button
             onClick={onCompose}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-civic text-white text-sm font-semibold rounded-xl hover:bg-civic-dark transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-civic text-[#16130d] text-sm font-bold rounded-xl shadow-[0_2px_14px_rgba(194,168,120,0.22)] transition-[filter] duration-150 hover:brightness-[1.08]"
           >
             <PenSquare className="w-4 h-4" />
             New Post
@@ -91,7 +101,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
       )}
 
       {/* Main nav */}
-      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-3 flex flex-col gap-0.5 overflow-y-auto" aria-label="Primary">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -101,20 +111,11 @@ export function Sidebar({ onCompose }: SidebarProps) {
               key={item.href}
               href={item.href}
               transitionType={getNavTransitionType(pathname, item.href)}
-              className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-surface-elevated text-text-primary font-semibold'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
-              )}
+              aria-current={isActive ? 'page' : undefined}
+              className={navLinkClass(isActive)}
             >
-              <item.icon
-                className={clsx(
-                  'w-5 h-5',
-                  isActive ? 'text-text-primary' : 'text-text-muted',
-                )}
-              />
-              <span>{item.label}</span>
+              <item.icon className={navIconClass(isActive)} />
+              <span className="flex-1">{item.label}</span>
               {(() => {
                 const badgeValue = item.badge === '__NOTIF__'
                   ? (unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null)
@@ -122,7 +123,7 @@ export function Sidebar({ onCompose }: SidebarProps) {
                 return badgeValue ? (
                   <span
                     className={clsx(
-                      'ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center',
+                      'text-[11px] font-bold px-[7px] py-0.5 rounded-full min-w-[20px] text-center',
                       item.badge === '__NOTIF__'
                         ? 'bg-danger/15 text-danger-light'
                         : badgeValue === 'LIVE'
@@ -138,8 +139,8 @@ export function Sidebar({ onCompose }: SidebarProps) {
           );
         })}
 
-        <div className="pt-4 pb-2 px-3">
-          <p className="text-xs font-semibold text-text-muted">
+        <div className="pt-4 pb-1.5 px-3">
+          <p className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-text-muted">
             Account
           </p>
         </div>
@@ -151,23 +152,19 @@ export function Sidebar({ onCompose }: SidebarProps) {
               key={item.href}
               href={item.href}
               transitionType={getNavTransitionType(pathname, item.href)}
-              className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-surface-elevated text-text-primary font-semibold'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
-              )}
+              aria-current={isActive ? 'page' : undefined}
+              className={navLinkClass(isActive)}
             >
-              <item.icon className={clsx('w-5 h-5', isActive ? 'text-text-primary' : 'text-text-muted')} />
-              <span>{item.label}</span>
+              <item.icon className={navIconClass(isActive)} />
+              <span className="flex-1">{item.label}</span>
             </TransitionLink>
           );
         })}
 
         {(isAdmin || isCreator) && (
           <>
-            <div className="pt-4 pb-2 px-3">
-              <p className="text-xs font-semibold text-text-muted">
+            <div className="pt-4 pb-1.5 px-3">
+              <p className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-text-muted">
                 Admin
               </p>
             </div>
@@ -178,15 +175,11 @@ export function Sidebar({ onCompose }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   transitionType={getNavTransitionType(pathname, item.href)}
-                  className={clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-surface-elevated text-text-primary font-semibold'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
-                  )}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={navLinkClass(isActive)}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
+                  <item.icon className={navIconClass(isActive)} />
+                  <span className="flex-1">{item.label}</span>
                 </TransitionLink>
               );
             })}
@@ -195,41 +188,45 @@ export function Sidebar({ onCompose }: SidebarProps) {
       </nav>
 
       {/* Footer: user account */}
-      <div className="p-4 border-t border-border-subtle space-y-1">
+      <div className="p-3 border-t border-border-hairline">
         {isAuthenticated && user ? (
           <Link
             href="/profile"
-            className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
+            className="flex items-center gap-[11px] px-2.5 py-2.5 rounded-xl hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
           >
             {(user.avatarUrl || user.avatar) ? (
+              // eslint-disable-next-line @next/next/no-img-element -- avatar uses an onError DOM-replacement initials fallback that next/image does not support
               <img
                 src={(user.avatarUrl || user.avatar) as string}
                 alt={user.displayName}
-                className="w-9 h-9 rounded-full object-cover"
+                className="w-9 h-9 rounded-full object-cover shrink-0"
                 onError={(e) => {
                   const el = e.currentTarget;
                   const parent = el.parentElement;
                   if (parent) {
                     const fallback = document.createElement('div');
-                    fallback.className = 'w-9 h-9 rounded-full bg-civic-muted flex items-center justify-center text-civic-light text-sm font-semibold';
+                    fallback.className = 'w-9 h-9 rounded-full bg-civic-muted flex items-center justify-center text-civic-light text-[13px] font-bold shrink-0';
                     fallback.textContent = user.displayName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
                     parent.replaceChild(fallback, el);
                   }
                 }}
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-civic-muted flex items-center justify-center text-civic-light text-sm font-semibold">
+              <div className="w-9 h-9 rounded-full bg-civic-muted flex items-center justify-center text-civic-light text-[13px] font-bold shrink-0">
                 {user.displayName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-text-primary truncate">{user.displayName}</p>
-              <p className="text-xs text-text-muted truncate">{user.email}</p>
+              <p className="text-[13.5px] font-semibold text-text-primary truncate">{user.displayName}</p>
+              <p className="text-[11.5px] text-text-muted truncate">
+                {user.username ? `@${user.username}` : user.email}
+              </p>
             </div>
+            <MoreHorizontal className="w-4 h-4 text-text-muted shrink-0" aria-hidden="true" />
           </Link>
         ) : (
-          <Link href="/login" className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-hover transition-colors">
-            <div className="w-9 h-9 rounded-full bg-surface-active flex items-center justify-center text-text-muted"><User className="w-4 h-4" /></div>
+          <Link href="/login" className="flex items-center gap-[11px] px-2.5 py-2.5 rounded-xl hover:bg-surface-hover transition-colors">
+            <div className="w-9 h-9 rounded-full bg-surface-active flex items-center justify-center text-text-muted shrink-0"><User className="w-4 h-4" /></div>
             <span className="text-sm font-medium text-civic-light">Sign In</span>
           </Link>
         )}
@@ -237,9 +234,9 @@ export function Sidebar({ onCompose }: SidebarProps) {
         {isAuthenticated && (
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-danger-light hover:bg-danger/5 transition-colors duration-150"
+            className="w-full flex items-center gap-[13px] px-3 py-2 mt-0.5 rounded-xl text-[13px] font-medium text-text-muted hover:text-danger-light hover:bg-danger/[0.07] transition-colors duration-150"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-[17px] h-[17px]" />
             <span>Sign Out</span>
           </button>
         )}
@@ -258,14 +255,18 @@ interface MobileNavProps {
 
 export function MobileNav({ onCompose }: MobileNavProps) {
   const pathname = usePathname();
-  const { isAuthenticated, isAdmin, isCreator, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isCreator, logout } = useAuth();
   const { unreadCount: mobileUnreadCount } = useNotifications();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // Close "More" sheet on route change
-  useEffect(() => {
-    setMoreOpen(false);
-  }, [pathname]);
+  // Close "More" sheet on route change — adjust state during render via the
+  // official "storing information from previous renders" pattern (no
+  // setState-in-effect, no ref-read-during-render).
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    if (moreOpen) setMoreOpen(false);
+  }
 
   // Close on Escape key
   useEffect(() => {
@@ -324,7 +325,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
       {onCompose && (
         <button
           onClick={onCompose}
-          className="lg:hidden fixed right-4 z-[60] w-14 h-14 bg-civic text-white rounded-2xl flex items-center justify-center shadow-md hover:bg-civic-dark transition-colors duration-150"
+          className="lg:hidden fixed right-4 z-[60] w-14 h-14 bg-civic text-[#16130d] rounded-full flex items-center justify-center shadow-[0_6px_20px_rgba(194,168,120,0.35)] transition-[filter] duration-150 hover:brightness-[1.08]"
           style={{ bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))' }}
           aria-label="New Post"
         >
@@ -440,7 +441,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                       handleCloseMore();
                       logout();
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger-light hover:bg-danger/5 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger-light hover:bg-danger/[0.07] transition-colors"
                   >
                     <LogOut className="w-5 h-5" />
                     <span>Sign Out</span>
@@ -453,7 +454,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
       )}
 
       {/* ── Bottom Tab Bar ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-alt/90 backdrop-blur-2xl border-t border-border-subtle pb-safe">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-glass backdrop-blur-2xl border-t border-border-hairline pb-safe" aria-label="Primary">
         <div className="flex items-center justify-around px-1 pt-1.5 pb-1">
           {tabs.map((item) => {
             const isActive =
@@ -475,7 +476,7 @@ export function MobileNav({ onCompose }: MobileNavProps) {
                     strokeWidth={isActive ? 2.2 : 1.8}
                   />
                   {item.badge && mobileUnreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-0.5 bg-danger text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-0.5 bg-danger-light text-[#16130d] text-xs font-bold rounded-full flex items-center justify-center">
                       {mobileUnreadCount > 99 ? '99+' : mobileUnreadCount}
                     </span>
                   )}

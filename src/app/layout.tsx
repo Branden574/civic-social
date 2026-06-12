@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Cormorant_Garamond } from 'next/font/google';
+import { Inter, JetBrains_Mono, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider, ThemeScript } from '@/lib/theme-context';
 import { AuthProvider } from '@/lib/auth-context';
@@ -10,7 +10,15 @@ import { AppShell } from './app-shell';
 
 const inter = Inter({
   subsets: ['latin'],
+  weight: 'variable', // variable font covers 400-800
   variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: 'variable',
+  variable: '--font-jetbrains-mono',
   display: 'swap',
 });
 
@@ -79,7 +87,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body
-        className={`${inter.variable} ${cormorant.variable} font-sans antialiased bg-bg text-text-primary`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${cormorant.variable} font-sans antialiased bg-bg text-text-primary`}
       >
         <a
           href="#main"
