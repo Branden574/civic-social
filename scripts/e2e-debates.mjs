@@ -13,9 +13,14 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { chromium } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
 
 const BASE = process.argv[2] || 'http://localhost:3000';
 const TS = Date.now();
+// Per-run random password for the throwaway accounts. Generated at
+// runtime (never a committed literal) so it can't be reconstructed from
+// this public source, and satisfies the app's complexity rules.
+const RUN_SECRET = `Aa1!${randomBytes(18).toString('base64url')}`;
 const PASS = [];
 const FAIL = [];
 
@@ -60,7 +65,7 @@ async function waitText(page, text, timeout = 10000) {
 async function makeUser(browser, label) {
   const context = await browser.newContext({ permissions: ['camera', 'microphone'] });
   const email = `e2e-${label}-${TS}@example.com`;
-  const password = `E2e!pass-${TS}-${label}AA`;
+  const password = RUN_SECRET;
   const displayName = `E2E ${label} ${TS % 10000}`;
   const res = await context.request.post(`${BASE}/api/auth/signup`, {
     data: { email, password, displayName },
