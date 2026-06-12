@@ -13,6 +13,7 @@ import {
   Shield,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { moderateLocal } from '@/lib/moderation/analyzer';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -27,38 +28,19 @@ interface CivilityResult {
   label: string;
 }
 
-// ─── Civility heuristic ──────────────────────────────────────
-
-const HOSTILE_WORDS = [
-  'stupid', 'dumb', 'idiot', 'moron', 'liar', 'evil',
-  'trash', 'garbage', 'pathetic', 'disgusting', 'scum',
-  'shut up', 'you people', 'sheep', 'sheeple', 'clown',
-];
+// ─── Civility (shared moderation engine) ─────────────────────
+// Uses the same analyzer as compose + the posts API, so debate
+// composers see the same verdicts the server will enforce.
+// (Previously this file had its own divergent word-list heuristic.)
 
 function analyzeCivility(text: string): CivilityResult {
   if (!text || text.length < 5) return { level: 'green', label: 'Civil' };
 
-  const lower = text.toLowerCase();
-  let score = 1.0;
-
-  // Check for excessive caps
-  const letters = text.replace(/[^a-zA-Z]/g, '');
-  const capsRatio = letters.length > 0
-    ? text.replace(/[^A-Z]/g, '').length / letters.length
-    : 0;
-  if (capsRatio > 0.5 && text.length > 20) score -= 0.4;
-
-  // Check for hostile words
-  for (const word of HOSTILE_WORDS) {
-    if (lower.includes(word)) score -= 0.3;
-  }
-
-  // Check for excessive punctuation
-  if (/!!!+/.test(text) || /\?\?\?+/.test(text)) score -= 0.2;
-
-  if (score >= 0.7) return { level: 'green', label: 'Civil' };
-  if (score >= 0.4) return { level: 'yellow', label: 'Caution' };
-  return { level: 'red', label: 'Hostile' };
+  const r = moderateLocal(text);
+  if (r.action === 'block') return { level: 'red', label: 'Not allowed' };
+  if (r.severity === 'medium' || r.score < 0.45) return { level: 'red', label: 'Hostile' };
+  if (r.score < 0.65 || r.severity === 'low') return { level: 'yellow', label: 'Caution' };
+  return { level: 'green', label: 'Civil' };
 }
 
 const CIVILITY_STYLES: Record<string, { dot: string; text: string; bg: string }> = {

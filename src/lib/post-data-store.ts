@@ -145,8 +145,11 @@ export async function createPost(input: {
   comment_policy?: CommentPolicy;
   visibility?: PostVisibility;
   postType?: string;
+  /** Moderation outcome: 'pending_review' holds the post out of feeds. */
+  status?: PostStatus;
 }): Promise<PersistedPost> {
   const id = `user-post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const status: PostStatus = input.status ?? 'published';
 
   if (isDbAvailable()) {
     const row = await prisma.storedPost.create({
@@ -157,7 +160,7 @@ export async function createPost(input: {
         topics: input.topics,
         articleUrl: input.articleUrl ?? null,
         civilityScore: input.civilityScore,
-        status: 'published',
+        status,
         visibility: input.visibility ?? 'public',
         commentPolicy: input.comment_policy ?? 'everyone',
         isThreadLocked: false,
@@ -175,7 +178,7 @@ export async function createPost(input: {
     articleUrl: input.articleUrl,
     civilityScore: input.civilityScore,
     createdAt: new Date().toISOString(),
-    status: 'published',
+    status,
     deletedAt: null,
     visibility: input.visibility ?? 'public',
     comment_policy: input.comment_policy ?? 'everyone',

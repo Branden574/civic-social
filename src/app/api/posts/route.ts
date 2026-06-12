@@ -18,7 +18,7 @@ import { postLimiter, readLimiter } from '@/lib/security/rate-limiter';
 import { sanitizeText, sanitizeTopics, sanitizeUrl, isValidId } from '@/lib/security/sanitize';
 import { secureLog } from '@/lib/security/logger';
 import { getUserById, getUserByUsername, registerUser } from '@/lib/user-registry';
-import { analyzeCivility } from '@/lib/civility';
+import { moderateContent } from '@/lib/moderation/moderate.server';
 import { incrementalCredibilityUpdate } from '@/lib/credibility-recompute';
 import { recordCivilityEvent } from '@/lib/civility-events';
 import { dbCreateNotification } from '@/lib/social-store';
@@ -166,9 +166,50 @@ export async function POST(request: NextRequest) {
       return badRequest('Content cannot be empty after sanitization.');
     }
 
-    // Compute civility server-side — never trust client-provided scores
-    const civilityResult = analyzeCivility(sanitizedContent);
-    const civilityScore = civilityResult.score;
+    // Moderate server-side — never trust client-provided scores.
+    // Hybrid engine: deterministic safety gate + quality signals,
+    // plus optional AI provider blend (env-driven, local floor wins).
+    const moderation = await moderateContent(sanitizedContent);
+    const civilityScore = moderation.score;
+
+    // Legacy-shaped result for civility events + credibility update
+    const civilityResult = {
+      score: moderation.score,
+      issues: moderation.issues,
+      severity: moderation.severity,
+      category: moderation.category,
+    };
+
+    // ── BLOCK: refuse to publish severe content ──────────────
+    if (moderation.action === 'block') {
+      // Record the violation durably even though no post is created —
+      // blocked attempts are behavioral history.
+      recordCivilityEvent(userId, `blocked-${Date.now()}`, civilityResult).catch(() => {});
+      incrementalCredibilityUpdate(userId, civilityScore, false, moderation.severity).catch(() => {});
+      secureLog.audit('post_blocked', userId, {
+        severity: moderation.severity,
+        category: moderation.category,
+        evasion: moderation.evasionDetected,
+      });
+      return NextResponse.json({
+        error: 'Post cannot be published.',
+        moderation: {
+          action: 'block',
+          message: moderation.userMessage,
+          issues: moderation.issues,
+          suggestions: moderation.suggestions,
+        },
+      }, { status: 422 });
+    }
+
+    // ── RATE_LIMIT: publish, but burn extra posting budget ──
+    if (moderation.action === 'rate_limit') {
+      postLimiter.check(userId); // consume an extra token
+      secureLog.audit('post_rate_limit_flag', userId, {
+        severity: moderation.severity,
+        evasion: moderation.evasionDetected,
+      });
+    }
 
     // Sanitize topics
     const sanitizedTopics = sanitizeTopics(topics);
@@ -187,6 +228,9 @@ export async function POST(request: NextRequest) {
     const VALID_POST_TYPES = ['OPEN_DISCUSSION', 'STRUCTURED_DEBATE', 'POLICY_PROPOSAL', 'CROSS_PARTY_ROUNDTABLE', 'EXPERT_AMA', 'NEWS_DISCUSSION'];
     const safePostType = VALID_POST_TYPES.includes(postType) ? postType : 'OPEN_DISCUSSION';
 
+    // ── HOLD_FOR_REVIEW: store as pending, invisible to feeds ─
+    const postStatus = moderation.action === 'hold_for_review' ? 'pending_review' : 'published';
+
     // Create the post
     const post = await createPost({
       authorId: userId,
@@ -196,25 +240,36 @@ export async function POST(request: NextRequest) {
       civilityScore,
       comment_policy: safePolicy,
       postType: safePostType,
+      status: postStatus,
     });
 
     secureLog.info(
       'POST /api/posts',
-      `created post_id=${post.id} author_id=${userId} status=${post.status} visibility=${post.visibility} created_at=${post.createdAt}`,
+      `created post_id=${post.id} author_id=${userId} status=${post.status} action=${moderation.action} visibility=${post.visibility} created_at=${post.createdAt}`,
     );
 
     // Record durable civility event (persists even if post is later deleted)
     recordCivilityEvent(userId, post.id, civilityResult).catch(() => {});
 
     // Fire-and-forget credibility update based on this post
-    incrementalCredibilityUpdate(userId, civilityScore, !!safeArticleUrl, civilityResult.severity).catch(() => {});
+    incrementalCredibilityUpdate(userId, civilityScore, !!safeArticleUrl, moderation.severity).catch(() => {});
 
     // Extract @mentions and create notifications (fire-and-forget)
-    extractAndNotifyMentions(sanitizedContent, post.id, userId, user.displayName).catch(() => {});
+    // — skip for held posts (they aren't visible yet)
+    if (postStatus === 'published') {
+      extractAndNotifyMentions(sanitizedContent, post.id, userId, user.displayName).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,
       post: await serializePost(post),
+      moderation: {
+        action: moderation.action,
+        message: moderation.userMessage,
+        suggestions: moderation.suggestions,
+        score: Math.round(moderation.score * 100) / 100,
+        held: postStatus === 'pending_review',
+      },
       serverTime: new Date().toISOString(),
     });
   } catch (err) {

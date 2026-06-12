@@ -7,14 +7,23 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { isDbAvailable, prisma } from './db';
-import type { CivilityResult } from './civility';
+
+/** Structural subset of CivilityResult/ModerationResult that events need.
+ *  Category is stored as a string column, so the wider new-engine
+ *  vocabulary (doxxing, threat, spam, evasion) is accepted as-is. */
+export interface CivilityEventInput {
+  score: number;
+  issues: string[];
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'none';
+  category: string;
+}
 
 // ─── Create a civility event ─────────────────────────────────
 
 export async function recordCivilityEvent(
   userId: string,
   postId: string,
-  result: CivilityResult,
+  result: CivilityEventInput,
 ): Promise<void> {
   if (!isDbAvailable()) return;
 
