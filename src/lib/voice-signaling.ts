@@ -207,7 +207,11 @@ export async function joinVoiceRoom(
     userId,
     displayName,
     role: asListener ? 'listener' : 'speaker',
-    isMuted: true,
+    // Speakers join able to talk immediately (debates are conversations);
+    // listeners have no outbound audio so their mute state is moot.
+    // Mute is now enforced on the actual mic track client-side, so a
+    // speaker who later mutes really goes silent.
+    isMuted: asListener ? true : false,
     isServerMuted: false,
     joinedAt: new Date().toISOString(),
   };

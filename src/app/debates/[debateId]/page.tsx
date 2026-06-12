@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -142,19 +141,19 @@ export default function DebateDetailPage() {
   const [localWebRTCStream, setLocalWebRTCStream] = useState<MediaStream | null>(null);
   const [voiceCameraOn, setVoiceCameraOn] = useState(false);
 
-  // ── Single VoiceChat instance, portaled between layouts ────
+  // ── Single VoiceChat instance, layout-gated ────────────────
   // There must be EXACTLY ONE mounted VoiceChat per debate page.
-  // The old markup rendered one in the mobile panel and one in the
-  // desktop column, hidden via CSS — but CSS hiding doesn't unmount
-  // React components, so BOTH WebRTC engines ran simultaneously:
-  // they consumed each other's signals, sent competing offers under
-  // the same userId, and overwrote the page's stream state through
-  // the shared callbacks (which is why a debater could transmit
-  // video the host saw, while their own preview tile stayed empty).
-  // A portal moves the single instance between slots without
-  // remounting it, so voice survives layout/panel changes.
-  const [mobileVoiceSlot, setMobileVoiceSlot] = useState<HTMLDivElement | null>(null);
-  const [desktopVoiceSlot, setDesktopVoiceSlot] = useState<HTMLDivElement | null>(null);
+  // The original markup rendered one in the mobile panel and one in
+  // the desktop column, hidden via CSS — but CSS hiding doesn't
+  // unmount React, so BOTH WebRTC engines ran at once and ate each
+  // other's signals.
+  //
+  // We gate mounting on a JS layout boolean so exactly one renders.
+  // We do NOT portal/move the instance between DOM slots: moving a
+  // <video>/<audio> node resets its srcObject, which silently killed
+  // camera preview and audio playback. On mobile the single instance
+  // stays mounted and we show/hide its container with CSS, so media
+  // elements never move.
   const [isDesktopLayout, setIsDesktopLayout] = useState(false);
 
   useEffect(() => {
@@ -164,13 +163,6 @@ export default function DebateDetailPage() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
-
-  // Mobile with the voice panel open → mobile slot. Everything else →
-  // desktop slot (CSS-hidden below lg, which keeps voice running in
-  // the background when the mobile panel is closed).
-  const voiceSlot = !isDesktopLayout && showMobilePanel === 'voice' && mobileVoiceSlot
-    ? mobileVoiceSlot
-    : desktopVoiceSlot;
 
   // Overdrive: side-pick modal for invited users
   const [showSidePickModal, setShowSidePickModal] = useState(true);
@@ -251,29 +243,31 @@ export default function DebateDetailPage() {
     }
   }, [debate, debateId]);
 
-  // Auto-refresh debate state every 2s (only updates if data changed to avoid re-renders)
-  const debateLoadedRef = useRef(false);
+  // Auto-refresh debate state every 2s so the host sees participants
+  // join, status changes, and kicks in near-real-time (no manual
+  // refresh). Only commits state when the payload actually changed,
+  // so the live video/camera tiles don't reset on every poll.
+  //
+  // Gate on `debateLoaded` (a value that flips false→true when the
+  // initial fetch resolves) — NOT on a ref checked during the mount
+  // run, which fired before `debate` existed and left the interval
+  // permanently unset.
+  const debateLoaded = debate !== null;
   useEffect(() => {
-    if (!debate && !debateLoadedRef.current) return;
-    debateLoadedRef.current = true;
+    if (!debateLoaded) return;
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/debates/${encodeURIComponent(debateId)}?_t=${Date.now()}`);
-        if (res.ok) {
-          const data = await res.json();
-          // Only update state if something actually changed (avoids re-renders that reset video/camera)
-          setDebate((prev) => {
-            if (!prev || !data.debate) return data.debate;
-            const prevJson = JSON.stringify(prev);
-            const nextJson = JSON.stringify(data.debate);
-            return prevJson === nextJson ? prev : data.debate;
-          });
-        }
-      } catch { /* ignore */ }
+        if (!res.ok) return;
+        const data = await res.json();
+        setDebate((prev) => {
+          if (!prev || !data.debate) return data.debate;
+          return JSON.stringify(prev) === JSON.stringify(data.debate) ? prev : data.debate;
+        });
+      } catch { /* ignore transient poll failures */ }
     }, 2000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debateId]);
+  }, [debateId, debateLoaded]);
 
   // ── Creator actions ──────────────────────────────────────────
   const doAction = useCallback(async (action: string, extra?: Record<string, string>) => {
@@ -899,12 +893,26 @@ export default function DebateDetailPage() {
             </div>
           )}
 
-          {/* ── Mobile: Voice panel slot (single VoiceChat portals here) ── */}
-          {showMobilePanel === 'voice' && (
-            <div
-              ref={setMobileVoiceSlot}
-              className="lg:hidden px-4 sm:px-6 pb-4 animate-fade-in"
-            />
+          {/* ── Mobile: Voice panel (the single mobile VoiceChat) ──
+              Always mounted while on mobile so the connection persists;
+              shown/hidden with CSS when the panel toggles (no remount,
+              no DOM move → media elements keep playing). */}
+          {!isDesktopLayout && (
+            <div className={clsx(
+              'lg:hidden px-4 sm:px-6 pb-4',
+              showMobilePanel === 'voice' ? 'block animate-fade-in' : 'hidden',
+            )}>
+              <VoiceChat
+                debateId={debate.id}
+                debateStatus={debate.status}
+                isCreator={isCreator}
+                isDebater={isDebater}
+                currentUserId={currentUserId}
+                onRemoteStreamsChange={handleRemoteStreamsChange}
+                onLocalStreamChange={handleLocalStreamChange}
+                onCameraChange={handleCameraChange}
+              />
+            </div>
           )}
 
           <div className="h-20 lg:h-8" />
@@ -920,29 +928,23 @@ export default function DebateDetailPage() {
             spectatorCount={debate.spectatorCount}
             debaterCount={debate.participants.length}
           />
-          {/* Desktop voice slot — also hosts the (CSS-hidden) instance on
-              mobile when the panel is closed, so voice keeps running. */}
-          <div ref={setDesktopVoiceSlot} />
+          {/* Desktop: the single desktop VoiceChat. Only mounts on
+              desktop layout so it never coexists with the mobile one. */}
+          {isDesktopLayout && (
+            <VoiceChat
+              debateId={debate.id}
+              debateStatus={debate.status}
+              isCreator={isCreator}
+              isDebater={isDebater}
+              currentUserId={currentUserId}
+              onRemoteStreamsChange={handleRemoteStreamsChange}
+              onLocalStreamChange={handleLocalStreamChange}
+              onCameraChange={handleCameraChange}
+            />
+          )}
         </div>
 
         </div> {/* end flex row */}
-
-        {/* THE single VoiceChat instance. Portaled into whichever slot the
-            current layout shows. Never render a second one — two engines
-            consume each other's WebRTC signals and break video. */}
-        {voiceSlot && createPortal(
-          <VoiceChat
-            debateId={debate.id}
-            debateStatus={debate.status}
-            isCreator={isCreator}
-            isDebater={isDebater}
-            currentUserId={currentUserId}
-            onRemoteStreamsChange={handleRemoteStreamsChange}
-            onLocalStreamChange={handleLocalStreamChange}
-            onCameraChange={handleCameraChange}
-          />,
-          voiceSlot,
-        )}
 
         {/* Toast */}
         {toast && (
